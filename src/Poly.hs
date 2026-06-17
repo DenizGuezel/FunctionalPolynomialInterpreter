@@ -37,3 +37,22 @@ newtype kann nur einen Konstruktor, auch nur einen Parameter haben, und auch gen
 
 newtype Poly = P [Monom] 
  deriving (Show,Eq)
+
+{-
+
+Infix ermöglicht es, anstatt der Schreibweise (#^) 3 2, die Schreibweise 3 #^ 2 anzuwenden.
+Diese Infixoperation erstellt ein Polynom mit genau einem Monom
+
+-}
+
+infix 8 #^ 
+a #^  b = P [M a b] 
+
+
+{-
+
+Bsp Anwendung der Infixoperation: 3#^2 macht ganz einfach P [M 3 2]
+
+-}
+
+polyEx = 3#^2
