@@ -41,7 +41,7 @@ newtype Poly = P [Monom]
 {-
 
 Infix ermöglicht es, anstatt der Schreibweise (#^) 3 2, die Schreibweise 3 #^ 2 anzuwenden.
-Diese Infixoperation erstellt ein Polynom mit genau einem Monom
+Dieser Infixoperator erstellt ein Polynom mit genau einem Monom
 
 -}
 
@@ -55,4 +55,34 @@ Bsp Anwendung der Infixoperation: 3#^2 macht ganz einfach P [M 3 2]
 
 -}
 
+polyEx :: Poly 
 polyEx = 3#^2
+
+{-
+
+Evaluate ist die Funktion, welche die Auswertund durchführt.
+Der Infixoperator § steht für die Auswertung da.
+
+Hier wird List Comprehension angewendet, welche die allgemeine Notation [Ausdruck | Generator]
+besitzt. z.B bedeuted [x * 2 | x <- [1,2,3]] dass x jeden Wert aus der Liste [1,2,3] animmt und somit 
+dass [1*2,2*2,3*2] = [2,4,6] rauskommt.
+
+M k e bedeuted k*x^e
+
+(P xs) ist das Liste die als Polynom interpretiert wird und x ist der Wert, welcher in der Formel eingesetzt wird.
+
+Für jedes Monom M k e aus der Liste xs wird k*(x^e) berechnet. Anschließend werden alle Ergebnisse mit sum addiert.
+
+z.B rechnet evaluate (P [M 3 2, M 2 1, M 1 0]) 3
+3·3² + 2·3 + 1 = 3·9 + 6 + 1 = 27 + 6 + 1 = 34 aus
+
+-}
+
+evaluate :: Poly -> Rational -> Rational
+evaluate (P xs) x = sum [k * (x ^ e) | M k e <- xs]
+
+infix 9 §
+(§) :: Poly -> Rational -> Rational 
+(§) = evaluate
+ 
+
