@@ -200,6 +200,6 @@ vor dem Monom mit Exponent 2 einsortiert.
 -}
 
 compareExponent :: Monom -> Monom -> Ordering
-compareExponent (M _ e1) (M _ e2) =
+compareExponent (M k1 e1) (M k2 e2) =
     compare e2 e1
 
