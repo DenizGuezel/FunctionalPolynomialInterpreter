@@ -25,7 +25,6 @@ data Monom = M Rational Int
 
 
 
-
 {-
 Der neu definierte Datentyp Poly ist eine Liste von Monomen, also z.b im Code wäre es als Bsp sowas:
 P [M 2 3, M 3 4, M 2 1], mathematisch würde es so aussehen: [2x^3, 3x^4,2x^1]
@@ -46,6 +45,7 @@ Dieser Infixoperator erstellt ein Polynom mit genau einem Monom
 -}
 
 infix 8 #^ 
+(#^) :: Rational -> Int -> Poly
 a #^  b = P [M a b] 
 
 
@@ -203,3 +203,24 @@ compareExponent :: Monom -> Monom -> Ordering
 compareExponent (M k1 e1) (M k2 e2) =
     compare e2 e1
 
+{-
+
+Diese Funktion soll ein Polynomaddition realisieren, sprich: (p1 + p2) (x) = p1(x) + p2(x)
+Dabei soll das Ergebnispolynom normalisiert sein. 
+
+Wir dürfen nicht einfach normalize (p1+p2) schreiben, da p1+p2 = add p1 p2 oben definiert ist.
+Das würde eine Endlosschleife sein, da es sich immer selbst wieder aufrufen würde.
+
+Wir können anstatt add p1 p2, lieber add (P xs1) (P xs2) schreiben, um an die Monomlisten ranzukommen.
+
+mathmematisch geht es so, da: (2x² + 2x + 2) + (4x + 4) wird zuerst zu: 2x² + 2x + 2 + 4x + 4
+Das ist mathematisch völlig korrekt. Erst DANACH vereinfacht man 2x + 4x = 6x zu 2 + 4 = 6 , Ergebnis: 2x² + 6x + 6
+
+Das macht das Programm auch: Schritt 1 — Listen zusammenfügen: xs1 ++ xs2 macht: [M 2 2, M 2 1, M 2 0, M 4 1, M 4 0]
+Das bedeutet mathematisch 2x² + 2x + 2 + 4x + 4, Schritt 2 — normalize:
+Dann erkennt normalize die gleichen Exponenten, Also: 2x + 4x = 6x und 2 + 4 = 6
+
+-}
+
+add ::  Poly -> Poly -> Poly
+add (P xs1) (P xs2) = normalize (P (xs1 ++ xs2))

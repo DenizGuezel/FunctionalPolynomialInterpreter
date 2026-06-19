@@ -246,7 +246,6 @@ werden sollen und negiert werden sollen. Es wird eingesetzt wo (in) das erste Mo
 
 
 
-
 > -- ====================================================================
 > -- Aufgabe 1e: Multiplikation von zwei Polynomen
 > -- ====================================================================
