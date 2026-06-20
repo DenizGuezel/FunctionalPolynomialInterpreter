@@ -87,6 +87,30 @@ infix 9 §
  
 
 {-
+
+Diese Funktion soll ein Polynomaddition realisieren, sprich: (p1 + p2) (x) = p1(x) + p2(x)
+Dabei soll das Ergebnispolynom normalisiert sein. 
+
+Wir dürfen nicht einfach normalize (p1+p2) schreiben, da p1+p2 = add p1 p2 oben definiert ist.
+Das würde eine Endlosschleife sein, da es sich immer selbst wieder aufrufen würde.
+
+Wir können anstatt add p1 p2, lieber add (P xs1) (P xs2) schreiben, um an die Monomlisten ranzukommen.
+
+mathmematisch geht es so, da: (2x² + 2x + 2) + (4x + 4) wird zuerst zu: 2x² + 2x + 2 + 4x + 4
+Das ist mathematisch völlig korrekt. Erst DANACH vereinfacht man 2x + 4x = 6x zu 2 + 4 = 6 , Ergebnis: 2x² + 6x + 6
+
+Das macht das Programm auch: Schritt 1 — Listen zusammenfügen: xs1 ++ xs2 macht: [M 2 2, M 2 1, M 2 0, M 4 1, M 4 0]
+Das bedeutet mathematisch 2x² + 2x + 2 + 4x + 4, Schritt 2 — normalize:
+Dann erkennt normalize die gleichen Exponenten, Also: 2x + 4x = 6x und 2 + 4 = 6
+
+-}
+
+add ::  Poly -> Poly -> Poly
+add (P xs1) (P xs2) = normalize (P (xs1 ++ xs2))
+
+
+{-
+
 normalize bringt ein Polynom in eine eindeutige Normalform.
 
 Falls das Polynom leer ist, wird einfach ein leeres Polynom
@@ -174,6 +198,7 @@ normalize (P ((M k1 e1):(M k2 e2):xs))
 
 
 {-
+
 compareExponent wird von sortBy verwendet, um zwei Monome
 anhand ihrer Exponenten zu vergleichen.
 
