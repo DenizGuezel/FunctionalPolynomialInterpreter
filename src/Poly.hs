@@ -205,22 +205,39 @@ compareExponent (M k1 e1) (M k2 e2) =
 
 {-
 
-Diese Funktion soll ein Polynomaddition realisieren, sprich: (p1 + p2) (x) = p1(x) + p2(x)
-Dabei soll das Ergebnispolynom normalisiert sein. 
+Diese Funktion soll ein Polynom in ein negatives Polynom verwandeln.
 
-Wir dürfen nicht einfach normalize (p1+p2) schreiben, da p1+p2 = add p1 p2 oben definiert ist.
-Das würde eine Endlosschleife sein, da es sich immer selbst wieder aufrufen würde.
+Das unäre "-" wird in Haskell von der Typklasse `Num` als `negate` interpretiert. Wenn ich hier direkt `-(P xs)` oder `negate (P xs)` schreiben würde, ruft Haskell intern `negate (P xs)` auf. Unten wurde jedoch definiert:
+negate p = negat p, dadurch würde negate wieder negat aufrufen und negat wieder negate, wodurch eine Endlosschleife entstehen würde. Deshalb wird der Koeffizient jedes Monoms direkt mit (-k) negiert.
 
-Wir können anstatt add p1 p2, lieber add (P xs1) (P xs2) schreiben, um an die Monomlisten ranzukommen.
+Zum Beispiel macht negat (P [M 2 2, M 2 1])
+mathematisch aus `2x² + 2x` das Polynom -(2x² + 2x) bzw. -2x² - 2x.
 
-mathmematisch geht es so, da: (2x² + 2x + 2) + (4x + 4) wird zuerst zu: 2x² + 2x + 2 + 4x + 4
-Das ist mathematisch völlig korrekt. Erst DANACH vereinfacht man 2x + 4x = 6x zu 2 + 4 = 6 , Ergebnis: 2x² + 6x + 6
+Als Erstes wird die Hilfsfunktion `negatRec` aufgerufen. Diese läuft rekursiv durch alle Monome und negiert nur die Koeffizienten. Erst nachdem alle Monome bearbeitet wurden, wird einmal `normalize` auf das gesamte Ergebnis angewendet.
+Dadurch ist sichergestellt, dass auch dann ein normalisiertes Polynom zurückgegeben wird, wenn ein nicht normalisiertes Polynom als Parameter übergeben wurde. Gleichzeitig wird `normalize` nur einmal am Ende ausgeführt und nicht bei jedem Rekursionsschritt, wodurch die Laufzeit verbessert wird.
 
-Das macht das Programm auch: Schritt 1 — Listen zusammenfügen: xs1 ++ xs2 macht: [M 2 2, M 2 1, M 2 0, M 4 1, M 4 0]
-Das bedeutet mathematisch 2x² + 2x + 2 + 4x + 4, Schritt 2 — normalize:
-Dann erkennt normalize die gleichen Exponenten, Also: 2x + 4x = 6x und 2 + 4 = 6
+Wenn ein leeres Polynom als Argument übergeben wird, dann wird ein leeres Polynom zurückgegeben.
+
+Wenn ein Polynom mit genau einem Monom übergeben wird, wird ganz einfach das Polynom mit dem Monom zurückgegeben, der Koeffizient ist hierbei aber negiert.
+
+Wenn ein Polynom mit mehr als einem Monom übergeben wird, erstellen wir einen Auspacker
+
+let P rest = negatRec (P xs).
+
+Wie bereits zuvor entsteht rechts ein `Poly` der Form `P [Monom]`. `rest` übernimmt dabei automatisch den inneren Teil `[Monom]` und kann deshalb hinter
+
+`(M (-k) e) :`
+
+eingesetzt werden.
+
+Mit dem `let` wird also festgelegt, dass die Restliste, also alle Monome außer dem ersten, rekursiv weiter durchlaufen und negiert werden sollen.
+Anschließend wird das erste Monom mit negiertem Koeffizienten vorne angefügt und die bereits negierte Restliste dahinter gesetzt.
+Nachdem `negatRec` alle Monome bearbeitet hat, wird das komplette Ergebnis noch einmal durch `normalize` normalisiert, sodass am Ende immer ein vollständig negiertes und normalisiertes Polynom entsteht.
 
 -}
 
-add ::  Poly -> Poly -> Poly
-add (P xs1) (P xs2) = normalize (P (xs1 ++ xs2))
+negat ::  Poly -> Poly
+negat (P xs) = normalize (negatRec (P xs))
+    where negatRec (P []) = P []
+          negatRec (P [M k e]) = P [M (-k) e]
+          negatRec (P ((M k e) : xs)) = let P rest = negatRec (P xs) in P ((M (-k) e):rest)
