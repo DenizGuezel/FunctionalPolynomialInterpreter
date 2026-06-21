@@ -88,7 +88,6 @@ infix 9 §
 (§) :: Poly -> Rational -> Rational 
 (§) = evaluate
  
- 
 {-
 
 Diese Funktion soll ein Polynomaddition realisieren, sprich: (p1 + p2) (x) = p1(x) + p2(x)
@@ -116,94 +115,180 @@ add (P xs1) (P xs2) = normalize (P (xs1 ++ xs2))
 
 normalize bringt ein Polynom in eine eindeutige Normalform.
 
-Falls das Polynom leer ist, wird einfach ein leeres Polynom
-zurückgegeben.
-
-Falls das Polynom nur aus einem Monom besteht, ist dieses bereits
-normalisiert und wird unverändert zurückgegeben.
-
-Ansonsten werden immer die ersten beiden Monome betrachtet.
-
-Zuerst wird geprüft, ob der Koeffizient des ersten Monoms 0 ist.
-Ist das der Fall, wird dieses Monom entfernt, da 0*x^e immer 0 ergibt.
-
-Danach wird geprüft, ob der Koeffizient des zweiten Monoms 0 ist.
-Ist das der Fall, wird dieses Monom ebenfalls entfernt.
-
-Als Nächstes wird geprüft, ob beide Monome den gleichen Exponenten
-besitzen. Falls ja, werden beide Koeffizienten addiert und zu einem
-Monom zusammengefasst.
-
-Beispiel:
-
-2x² + 5x² = 7x²
-
-Es kann jedoch passieren, dass sich beide Koeffizienten gegenseitig
-aufheben.
-
-Beispiel:
-
-2x² + (-2x²) = 0
-
-In diesem Fall werden beide Monome entfernt und die Normalisierung
-wird mit dem Rest der Liste fortgesetzt.
-
-Falls die Exponenten verschieden sind und bereits in der richtigen
-Reihenfolge stehen (größter Exponent vorne), bleibt das erste Monom
-erhalten und nur der Rest wird rekursiv normalisiert.
-
-Falls die Monome nicht in der richtigen Reihenfolge stehen,
-wird die komplette Liste zunächst mit sortBy nach den Exponenten
+Dazu wird die Liste der Monome zuerst einmal nach den Exponenten
 absteigend sortiert.
+
+Die Liste der Monome wird dabei an sortBy übergeben.
 
 sortBy ist eine Funktion aus Data.List und ermöglicht es, Listen
 nach einer selbst definierten Vergleichsregel zu sortieren.
 
-Hierzu wird die Hilfsfunktion compareExponent verwendet.
-Sie vergleicht zwei Monome ausschließlich anhand ihrer Exponenten.
+Die Vergleichsregel ist hier compareExponent.
 
-Dadurch stehen Monome mit gleichem Exponenten nach dem Sortieren
-automatisch nebeneinander und können in den nächsten
-Rekursionsschritten einfach zusammengefasst werden.
+Wichtig ist dabei: compareExponent bekommt nicht die ganze Liste übergeben. Die ganze Liste bekommt sortBy.
 
-Beispiel: [M 3 2, M 5 5, M 2 1] wird zu [M 5 5, M 3 2, M 2 1]
-dadurch ist am Ende ist garantiert:
+sortBy nimmt sich beim Sortieren immer zwei einzelne Monome aus
+der Liste und ruft damit compareExponent auf.
+
+Also zum Beispiel: compareExponent (M 3 2) (M 5 4)
+
+Dadurch weiß sortBy, welches der beiden Monome weiter vorne
+stehen soll.
+
+Hierzu vergleicht compareExponent zwei Monome ausschließlich
+anhand ihrer Exponenten.
+
+Da nach dem Sortieren Monome mit gleichem Exponenten direkt
+nebeneinander stehen, können diese danach einfach zusammengefasst
+werden.
+
+Das eigentliche Zusammenfassen und Entfernen von 0-Koeffizienten
+übernimmt die Hilfsfunktion combine.
+
+Dadurch wird normalize nicht unnötig oft aufgerufen.
+
+Beispiel:
+
+[M 3 2, M 5 5, M 2 1] wird zuerst zu
+[M 5 5, M 3 2, M 2 1]
+
+Falls gleiche Exponenten vorkommen, stehen diese nach dem Sortieren
+direkt nebeneinander.
+
+Beispiel:
+
+[M 2 2, M 5 5, M 3 2] wird zuerst zu
+[M 5 5, M 2 2, M 3 2]
+
+Danach kann combine die beiden Monome mit Exponent 2 zu einem
+Monom zusammenfassen.
+
+Am Ende ist garantiert:
 
 - keine Monome mit Koeffizient 0 vorhanden
 - gleiche Exponenten wurden zusammengefasst
 - die Monome sind nach Exponenten absteigend sortiert
 
 Das Ergebnis ist somit immer ein vollständig normalisiertes Polynom.
+
 -}
 
 normalize :: Poly -> Poly
-normalize (P []) = P []
-normalize (P [m]) = P [m]
-normalize (P ((M k1 e1):(M k2 e2):xs))
+normalize (P xs) =
+    P (combine (sortBy compareExponent xs))
+
+{-
+
+combine fasst eine bereits sortierte Liste von Monomen zusammen.
+
+Wichtig ist: combine geht davon aus, dass die Liste schon nach Exponenten absteigend sortiert wurde.
+
+Deshalb müssen gleiche Exponenten nicht mehr gesucht werden,
+sondern stehen direkt nebeneinander.
+
+Falls die Liste leer ist, wird einfach eine leere Liste zurückgegeben.
+
+Fall: combine [] ergibt []
+
+Falls die Liste nur aus einem Monom besteht, wird geprüft, ob der
+Koeffizient 0 ist.
+
+Ist der Koeffizient 0, wird das Monom entfernt, da 0*x^e immer 0
+ergibt.
+
+Beispiel: combine [M 0 3] ergibt []
+
+Ist der Koeffizient nicht 0, bleibt das Monom erhalten.
+
+Beispiel: combine [M 5 3] ergibt [M 5 3]
+
+Falls die Liste aus mindestens zwei Monomen besteht, werden immer
+die ersten beiden Monome betrachtet.
+
+Zuerst wird geprüft, ob der Koeffizient des ersten Monoms 0 ist.
+
+Ist das der Fall, wird dieses Monom entfernt und combine wird mit
+dem zweiten Monom und dem Rest der Liste fortgesetzt.
+
+Beispiel: combine [M 0 4, M 3 2] ergibt dasselbe wie combine [M 3 2]
+
+Danach wird geprüft, ob der Koeffizient des zweiten Monoms 0 ist.
+
+Ist das der Fall, wird dieses Monom ebenfalls entfernt und combine
+wird mit dem ersten Monom und dem Rest der Liste fortgesetzt.
+
+Beispiel: combine [M 5 4, M 0 2] ergibt dasselbe wie combine [M 5 4]
+
+Als Nächstes wird geprüft, ob beide Monome den gleichen Exponenten
+besitzen.
+
+Falls ja, werden beide Koeffizienten addiert und zu einem Monom
+zusammengefasst.
+
+Beispiel: 2x² + 5x² = 7x² , also: combine [M 2 2, M 5 2] ergibt [M 7 2]
+
+Es kann jedoch passieren, dass sich beide Koeffizienten gegenseitig
+aufheben.
+
+Beispiel: 2x² + (-2x²) = 0 , also: combine [M 2 2, M (-2) 2] ergibt []
+
+In diesem Fall werden beide Monome entfernt und das Zusammenfassen
+wird mit dem Rest der Liste fortgesetzt.
+
+Falls die Exponenten verschieden sind, bleibt das erste Monom
+erhalten.
+
+Der Grund dafür ist, dass die Liste bereits sortiert ist.
+
+Wenn also der Exponent des ersten Monoms verschieden vom Exponenten
+des zweiten Monoms ist, kann später kein weiteres Monom mit diesem
+Exponent kommen.
+
+Deshalb kann das erste Monom direkt in das Ergebnis übernommen
+werden.
+
+Danach wird nur der Rest der Liste weiter zusammengefasst.
+
+Beispiel: combine [M 5 4, M 3 2, M 1 1] ergibt M 5 4 : combine [M 3 2, M 1 1]
+
+Da die Liste vorher bereits sortiert wurde, muss combine nicht
+nochmal sortieren.
+
+-}
+
+combine :: [Monom] -> [Monom]
+combine [] = []
+combine [M k e]
+    | k == 0    = []
+    | otherwise = [M k e]
+combine ((M k1 e1):(M k2 e2):xs)
     | k1 == 0 =
-        normalize (P ((M k2 e2):xs))
+        combine ((M k2 e2):xs)
 
     | k2 == 0 =
-        normalize (P ((M k1 e1):xs))
+        combine ((M k1 e1):xs)
 
     | e1 == e2 =
-        if k1 + k2 == 0
-        then normalize (P xs)
-        else normalize (P ((M (k1 + k2) e1):xs))
-
-    | e1 > e2 =
-        let P rest = normalize (P ((M k2 e2):xs))
-        in P ((M k1 e1):rest)
+        let k = k1 + k2
+        in if k == 0
+           then combine xs
+           else combine ((M k e1):xs)
 
     | otherwise =
-        let sorted = sortBy compareExponent ((M k1 e1):(M k2 e2):xs)
-        in normalize (P sorted)
+        (M k1 e1) : combine ((M k2 e2):xs)
 
 
 {-
 
-compareExponent wird von sortBy verwendet, um zwei Monome
+compareExponent wird von sortBy verwendet, um zwei einzelne Monome
 anhand ihrer Exponenten zu vergleichen.
+
+compareExponent bekommt also nicht die ganze Monomliste.
+
+Die ganze Liste bekommt sortBy.
+
+sortBy ruft compareExponent intern immer wieder mit zwei Monomen
+aus der Liste auf.
 
 Die Funktion compare liefert einen Wert vom Typ Ordering zurück.
 Dieser Datentyp besitzt die drei möglichen Werte:
@@ -216,15 +301,11 @@ Da hier compare e2 e1 und nicht compare e1 e2 verwendet wird,
 erfolgt die Sortierung in absteigender Reihenfolge der Exponenten.
 
 Beispiel:
-
-compareExponent (M 3 2) (M 5 4)
-
-entspricht dem Vergleich
-
-compare 4 2
+compareExponent (M 3 2) (M 5 4) entspricht dem Vergleich compare 4 2
 
 und liefert GT zurück. Dadurch wird das Monom mit Exponent 4
 vor dem Monom mit Exponent 2 einsortiert.
+
 -}
 
 compareExponent :: Monom -> Monom -> Ordering
