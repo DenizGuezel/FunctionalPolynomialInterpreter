@@ -3,6 +3,7 @@ module Poly where
 
 import Data.Ratio
 import Data.List
+import qualified Control.Applicative as Liste
 
 {-
 
@@ -316,7 +317,7 @@ compareExponent (M k1 e1) (M k2 e2) =
 
 Diese Funktion soll ein Polynom in ein negatives Polynom verwandeln.
 
-Das unäre "-" wird in Haskell von der Typklasse `Num` als `negate` interpretiert. Wenn ich hier direkt `-(P xs)` oder `negate (P xs)` schreiben würde, ruft Haskell intern `negate (P xs)` auf. Unten wurde jedoch definiert:
+Das unäre "-" wird in Haskell von der Typklasse Num als negate interpretiert. Wenn ich hier direkt -(P xs) oder negate (P xs) schreiben würde, ruft Haskell intern negate (P xs) auf. Unten wurde jedoch definiert:
 negate p = negat p, dadurch würde negate wieder negat aufrufen und negat wieder negate, wodurch eine Endlosschleife entstehen würde. Deshalb wird der Koeffizient jedes Monoms direkt mit (-k) negiert.
 
 Zum Beispiel macht negat (P [M 2 2, M 2 1])
@@ -362,7 +363,9 @@ negatRec (P ((M k e) : xs)) = let P rest = negatRec (P xs) in P ((M (-k) e):rest
 Diese Funktion soll eine Subtraktion zweier Polynome durchführen-
 
 Hier können wir einfach die Funktion add benutezn, um zwei Polynome zu addieren, es gilt aber:
-Das 2te Polynom muss negiert sein, damit es quasi als ein -(P xs2) interpretiert wird. Es wird erfüllt: P xs1 + (- P xs2) = P xs1 - P xs2
+Das 2te Polynom muss negiert sein, damit es quasi als ein -(P xs2) interpretiert wird. Es wird erfüllt: 
+
+P xs1 + (- P xs2) = P xs1 - P xs2
 
 Mathematisches Bsp: 2x + 2 + (- 6x + 1) = 2x + 2 - 6x + 1
 
@@ -371,3 +374,25 @@ Mathematisches Bsp: 2x + 2 + (- 6x + 1) = 2x + 2 - 6x + 1
 sub :: Poly -> Poly -> Poly
 sub (P xs1) (P xs2) = add (P xs1) (negatRec (P xs2))
 
+{-
+
+Diese Funktion soll zwei Polynome miteinander multiplizieren.
+
+Die Polynome werden zuerst ausgepackt in der Form (P xs1) und (P xs2), 
+denn wenn wir beispielsweise P [M 2 1, M 3 0] haben ist xs1 = [M 2 1, M 3 0]
+
+Wir wenden List-Comprehension an. Es wird jedes Monom durchgangen aus dem ersten Polynom bei dem die Koeffizienten ungleich 0 sind, der Name von jedem i-ten Monom in dem
+ersten Polynom ist M k1 e1. Dasselbe für den zweiten Polynom mit M k2 e2.
+
+Es entsteht ein neues Polynom, wobei bei dem i-ten Monom der Koeffizient wie folgt entsteht: Koeffizient des aktuellen Monoms von 
+dem ersten Polynom multipliziert mit dem Koeffizienten des aktuellen Monoms der zweiten Liste.
+
+Für den i-ten Exponenten des i-ten Monoms des neuen Polynoms gilt folgendes: i-ter Exponent des i-ten Monoms von dem ersten Polynom addiert
+mit dem i-ten Exponenten des i-ten Monoms von dem zweiten Polynom.
+
+Das Ergebnis wird logischerweise normalisiert
+
+-}
+
+mult :: Poly -> Poly -> Poly
+mult (P xs1) (P xs2) = normalize (P [ M (k1 * k2) (e1 + e2) | M k1 e1 <- xs1, k1 /= 0, M k2 e2 <- xs2, k2 /= 0])
