@@ -246,23 +246,19 @@ werden sollen und negiert werden sollen. Es wird eingesetzt wo (in) das erste Mo
 
 
 
-> -- ====================================================================
-> -- Aufgabe 1e: Multiplikation von zwei Polynomen
-> -- ====================================================================
+
 > mult :: Poly -> Poly -> Poly
 > mult (P ps1) (P ps2) =
 >   normalize (P [ M (k1 * k2) (e1 + e2) | M k1 e1 <- ps1, M k2 e2 <- ps2 ])
 
--- Erklärung: Setzt das mathematische Distributivgesetz ("Jedes Glied mal jedes Glied") um.
--- Die Formel zieht jedes Monom aus Liste 1 (M k1 e1) und kombiniert es mit jedem Monom
--- aus Liste 2 (M k2 e2). Dabei werden die Koeffizienten multipliziert (k1 * k2)
--- und die Exponenten addiert (e1 + e2).
--- Am Ende wird das Ergebnis sauber normalisiert.
+Erklärung: Setzt das mathematische Distributivgesetz ("Jedes Glied mal jedes Glied") um.
+Die Formel zieht jedes Monom aus Liste 1 (M k1 e1) und kombiniert es mit jedem Monom
+aus Liste 2 (M k2 e2). Dabei werden die Koeffizienten multipliziert (k1 * k2)
+und die Exponenten addiert (e1 + e2).
+Am Ende wird das Ergebnis sauber normalisiert.
 
 
-> -- ====================================================================
-> -- Aufgabe 1f: Polynomdivision mit Rest (/% analog zur Schulmathematik)
-> -- ====================================================================
+
 > infix 2 /%
 >
 > (/%) :: Poly -> Poly -> (Poly, Poly)
@@ -280,56 +276,58 @@ werden sollen und negiert werden sollen. Es wird eingesetzt wo (in) das erste Mo
 >               nextRest   = add (P (M kr er : rs)) (negat subtrahend)
 >           in divStep nextRest pDiv (qMonom : qAcc)
 
--- Hilfsfunktion für die rekursiven Teilungsschritte.
--- Argumente:
---   Aktueller Rest-Dividend
---   Der Divisor
---   Bisher gesammelte Quotienten-Monome
---
--- Wenn kein Rest mehr vorhanden ist (P []), ist die Division beendet.
---
--- Abbruchbedingung:
--- Ist der höchste Exponent des aktuellen Rests kleiner als der höchste
--- Exponent des Divisors, kann nicht weiter dividiert werden.
--- Der aktuelle Rest wird zum Endrest.
---
--- Rekursionsschritt:
--- 1. Führendes Monom des Rests durch führendes Monom des Divisors teilen.
--- 2. Ergebnis-Monom mit dem gesamten Divisor multiplizieren.
--- 3. Dieses Produkt vom aktuellen Rest abziehen.
--- 4. Mit dem neuen Rest erneut dividieren.
---
--- Dies entspricht exakt der schriftlichen Polynomdivision aus der Mathematik.
+Hilfsfunktion für die rekursiven Teilungsschritte.
+
+Argumente:
+  Aktueller Rest-Dividend
+  Der Divisor
+  Bisher gesammelte Quotienten-Monome
+
+Wenn kein Rest mehr vorhanden ist (P []), ist die Division beendet.
+
+Abbruchbedingung:
+
+Ist der höchste Exponent des aktuellen Rests kleiner als der höchste
+Exponent des Divisors, kann nicht weiter dividiert werden.
+Der aktuelle Rest wird zum Endrest.
+
+Rekursionsschritt:
+
+1. Führendes Monom des Rests durch führendes Monom des Divisors teilen.
+2. Ergebnis-Monom mit dem gesamten Divisor multiplizieren.
+3. Dieses Produkt vom aktuellen Rest abziehen.
+4. Mit dem neuen Rest erneut dividieren.
+
+Dies entspricht exakt der schriftlichen Polynomdivision aus der Mathematik.
 
 
-> -- ====================================================================
-> -- Aufgabe 1g: Erste Ableitung eines Polynoms berechnen
-> -- ====================================================================
+
 > derivation :: Poly -> Poly
 > derivation (P xs) =
 >   normalize (P [ M (k * fromIntegral e) (e - 1) | M k e <- xs, e > 0 ])
 
--- Erklärung:
--- Wendet die klassische Potenzregel an:
---
---     k*x^e  ->  (k*e)*x^(e-1)
---
--- Der neue Koeffizient wird mit dem Exponenten multipliziert.
--- Der Exponent wird um 1 verringert.
---
--- Die Bedingung "e > 0" filtert konstante Terme heraus,
--- da deren Ableitung immer 0 ist.
---
--- Beispiel:
---     5*x^3 + 2*x
---
--- wird zu:
---     15*x^2 + 2
+Erklärung:
+
+Wendet die klassische Potenzregel an:
+
+    k*x^e -> (k*e)*x^(e-1)
+
+Der neue Koeffizient wird mit dem Exponenten multipliziert.
+Der Exponent wird um 1 verringert.
+
+Die Bedingung e > 0 filtert konstante Terme heraus,
+da deren Ableitung immer 0 ist.
+
+Beispiel:
+
+    5*x^3 + 2*x
+
+wird zu:
+
+    15*x^2 + 2
 
 
-> -- ====================================================================
-> -- Aufgabe 1h: Poly als Instanz der Typklasse Num registrieren
-> -- ====================================================================
+
 > instance Num Poly where
 >   fromInteger x = P [M (fromInteger x % 1) 0]
 >
@@ -343,38 +341,52 @@ werden sollen und negiert werden sollen. Es wird eingesetzt wo (in) das erste Mo
 >
 >   signum _ = error "signum nicht implementiert für Polynome"
 
--- fromInteger:
--- Wandelt eine normale Zahl in ein konstantes Polynom um.
---
--- Beispiel:
---     5
---
--- wird zu:
---     5*x^0
---
--- negate:
--- Verknüpft das Standard-Minuszeichen mit unserer Funktion negat.
---
--- Beispiel:
---     -(3*x^2)
---
--- wird intern zu:
---     negate (3*x^2)
---
--- und ruft damit:
---     negat (3*x^2)
---
--- auf.
---
--- (+):
--- Verknüpft den Standardoperator + mit unserer add-Funktion.
---
--- (*):
--- Verknüpft den Standardoperator * mit unserer mult-Funktion.
---
--- abs und signum:
--- Für allgemeine Polynome mathematisch nicht sinnvoll definiert.
--- Deshalb werfen sie absichtlich einen Laufzeitfehler.
+fromInteger:
+
+Wandelt eine normale Zahl in ein konstantes Polynom um.
+
+Beispiel:
+
+    5
+
+wird zu:
+
+    5*x^0
+
+
+negate:
+
+Verknüpft das Standard-Minuszeichen mit unserer Funktion negat.
+
+Beispiel:
+
+    -(3*x^2)
+
+wird intern zu:
+
+    negate (3*x^2)
+
+und ruft damit
+
+    negat (3*x^2)
+
+auf.
+
+
+(+):
+
+Verknüpft den Standardoperator + mit unserer add-Funktion.
+
+
+(*):
+
+Verknüpft den Standardoperator * mit unserer mult-Funktion.
+
+
+abs und signum:
+
+Für allgemeine Polynome mathematisch nicht sinnvoll definiert.
+Deshalb werfen sie absichtlich einen Laufzeitfehler.
 
 
 > example1 = 6 #^ 6 - 2 #^ 5 - 4 #^ 3 + 3 #^ 1 + 3
@@ -383,15 +395,20 @@ werden sollen und negiert werden sollen. Es wird eingesetzt wo (in) das erste Mo
 > res1 = example1 /% example1
 > res2 = example1 /% example2
 
--- Beispielpolynome zum Testen.
---
--- res1:
--- Ein Polynom durch sich selbst geteilt.
--- Ergebnis:
--- Quotient = 1
--- Rest = 0
---
--- res2:
--- Beispiel einer echten Polynomdivision mit Rest.
+Beispielpolynome zum Testen.
+
+res1:
+
+Ein Polynom durch sich selbst geteilt.
+
+Ergebnis:
+
+    Quotient = 1
+    Rest = 0
+
+
+res2:
+
+Beispiel einer echten Polynomdivision mit Rest.
 
 
