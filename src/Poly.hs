@@ -5,6 +5,7 @@ import Data.Ratio
 import Data.List
 
 {-
+
 Ein Monom ist ein einzelner Term, z.b 3x^2 oder 5x
 Das Rational ist hier der Koeffizient (z.B 3 oder 5) und das Int der Exponent (also z.b ^2)
 Bei dem Rational ist hier das Einsetzen einer Ganzzahl auch möglich, Haskell interpretiert das automatisch.
@@ -26,12 +27,14 @@ data Monom = M Rational Int
 
 
 {-
+
 Der neu definierte Datentyp Poly ist eine Liste von Monomen, also z.b im Code wäre es als Bsp sowas:
 P [M 2 3, M 3 4, M 2 1], mathematisch würde es so aussehen: [2x^3, 3x^4,2x^1]
 P ist der Konstruktor, was einen richtiges Poly erzeugt (siehe eine Zeile davor Bsp.). Ohne das P, also nur [M 2 3, M 3 4, M 2 1]
 wäre es lediglich eine Monomliste, aber mit P sagen wir nochmal, dass diese Liste als Polynom behandelt werden soll
 
 newtype kann nur einen Konstruktor, auch nur einen Parameter haben, und auch genau nur einen Wert speichern.
+
 -}
 
 newtype Poly = P [Monom] 
@@ -85,7 +88,7 @@ infix 9 §
 (§) :: Poly -> Rational -> Rational 
 (§) = evaluate
  
-
+ 
 {-
 
 Diese Funktion soll ein Polynomaddition realisieren, sprich: (p1 + p2) (x) = p1(x) + p2(x)
@@ -236,10 +239,10 @@ Das unäre "-" wird in Haskell von der Typklasse `Num` als `negate` interpretier
 negate p = negat p, dadurch würde negate wieder negat aufrufen und negat wieder negate, wodurch eine Endlosschleife entstehen würde. Deshalb wird der Koeffizient jedes Monoms direkt mit (-k) negiert.
 
 Zum Beispiel macht negat (P [M 2 2, M 2 1])
-mathematisch aus `2x² + 2x` das Polynom -(2x² + 2x) bzw. -2x² - 2x.
+mathematisch aus 2x² + 2x das Polynom -(2x² + 2x) bzw. -2x² - 2x.
 
-Als Erstes wird die Hilfsfunktion `negatRec` aufgerufen. Diese läuft rekursiv durch alle Monome und negiert nur die Koeffizienten. Erst nachdem alle Monome bearbeitet wurden, wird einmal `normalize` auf das gesamte Ergebnis angewendet.
-Dadurch ist sichergestellt, dass auch dann ein normalisiertes Polynom zurückgegeben wird, wenn ein nicht normalisiertes Polynom als Parameter übergeben wurde. Gleichzeitig wird `normalize` nur einmal am Ende ausgeführt und nicht bei jedem Rekursionsschritt, wodurch die Laufzeit verbessert wird.
+Als Erstes wird die Hilfsfunktion negatRec aufgerufen. Diese läuft rekursiv durch alle Monome und negiert nur die Koeffizienten. Erst nachdem alle Monome bearbeitet wurden, wird einmal normalize auf das gesamte Ergebnis angewendet.
+Dadurch ist sichergestellt, dass auch dann ein normalisiertes Polynom zurückgegeben wird, wenn ein nicht normalisiertes Polynom als Parameter übergeben wurde. Gleichzeitig wird normalize nur einmal am Ende ausgeführt und nicht bei jedem Rekursionsschritt, wodurch die Laufzeit verbessert wird.
 
 Wenn ein leeres Polynom als Argument übergeben wird, dann wird ein leeres Polynom zurückgegeben.
 
@@ -249,20 +252,41 @@ Wenn ein Polynom mit mehr als einem Monom übergeben wird, erstellen wir einen A
 
 let P rest = negatRec (P xs).
 
-Wie bereits zuvor entsteht rechts ein `Poly` der Form `P [Monom]`. `rest` übernimmt dabei automatisch den inneren Teil `[Monom]` und kann deshalb hinter
+Wie bereits zuvor entsteht rechts ein Poly der Form P [Monom]. rest übernimmt dabei automatisch den inneren Teil [Monom] und kann deshalb hinter
 
-`(M (-k) e) :`
+(M (-k) e) :`
 
 eingesetzt werden.
 
-Mit dem `let` wird also festgelegt, dass die Restliste, also alle Monome außer dem ersten, rekursiv weiter durchlaufen und negiert werden sollen.
+Mit dem let wird also festgelegt, dass die Restliste, also alle Monome außer dem ersten, rekursiv weiter durchlaufen und negiert werden sollen.
 Anschließend wird das erste Monom mit negiertem Koeffizienten vorne angefügt und die bereits negierte Restliste dahinter gesetzt.
-Nachdem `negatRec` alle Monome bearbeitet hat, wird das komplette Ergebnis noch einmal durch `normalize` normalisiert, sodass am Ende immer ein vollständig negiertes und normalisiertes Polynom entsteht.
+Nachdem negatRec alle Monome bearbeitet hat, wird das komplette Ergebnis noch einmal durch `normalize` normalisiert, sodass am Ende immer ein vollständig negiertes und normalisiertes Polynom entsteht.
+
+Wir definieren die Hilfsfunktion nicht mit where, da wir negatRec brauchen um ein Polynom zu negieren, aber noch ohne, dass wir normalize aufrufen, denn bei sub, rufen wir mit add schon normalize auf.
+Würden wir negat negat verwenden, die negatRec als Hilfsfunktion mit where implementiert hat, würden wir unnöritg ein 2-mal normalize aufrufen, deswegen besser die Negierung an sich trennen und die Normalisierung auf die Negierung.
 
 -}
 
-negat ::  Poly -> Poly
+negat :: Poly -> Poly
 negat (P xs) = normalize (negatRec (P xs))
-    where negatRec (P []) = P []
-          negatRec (P [M k e]) = P [M (-k) e]
-          negatRec (P ((M k e) : xs)) = let P rest = negatRec (P xs) in P ((M (-k) e):rest)
+
+negatRec :: Poly -> Poly
+negatRec (P []) = P []
+negatRec (P [M k e]) = P [M (-k) e]
+negatRec (P ((M k e) : xs)) = let P rest = negatRec (P xs) in P ((M (-k) e):rest)
+
+
+{-
+
+Diese Funktion soll eine Subtraktion zweier Polynome durchführen-
+
+Hier können wir einfach die Funktion add benutezn, um zwei Polynome zu addieren, es gilt aber:
+Das 2te Polynom muss negiert sein, damit es quasi als ein -(P xs2) interpretiert wird. Es wird erfüllt: P xs1 + (- P xs2) = P xs1 - P xs2
+
+Mathematisches Bsp: 2x + 2 + (- 6x + 1) = 2x + 2 - 6x + 1
+
+-}
+
+sub :: Poly -> Poly -> Poly
+sub (P xs1) (P xs2) = add (P xs1) (negatRec (P xs2))
+
