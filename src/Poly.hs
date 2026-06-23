@@ -396,3 +396,20 @@ Das Ergebnis wird logischerweise normalisiert
 
 mult :: Poly -> Poly -> Poly
 mult (P xs1) (P xs2) = normalize (P [ M (k1 * k2) (e1 + e2) | M k1 e1 <- xs1, k1 /= 0, M k2 e2 <- xs2, k2 /= 0])
+
+{-
+
+Diese Funktion berechnet die Ableitung eines Polynoms.
+
+Wir durchlaufen die Monomliste des Polynoms und erstellen ein i-tes, bzw. aktuelles, Monom. Es werden nur die Exponenten, welche
+Größer als 0 sind betrachtet, da bei der Ableitung des Monoms mit einem 0-Exponenten, der Monom verschwindet, so wie wir es aus der Mathematik kennen.
+
+Es wird ein neues Polynom erstellt, für den i-ten Koeffizienten des i-ten Monoms von dem neuen Polynom gilt: Koeffizient * Exponent, der Exponent wird in einen beliebigen Datentypen angepasst,
+damit die Multiplikation von den Datentypen her funktioniert.
+
+Für den i-ten Exponenten des i-ten Monoms von dem neuen Polynom gilt: Der Exponent verringert sich um Eins, so wie wir es aus der Mathematik kennen.
+
+-}
+
+derivation :: Poly -> Poly
+derivation (P xs) = normalize (P [ M (k * fromIntegral e) (e - 1) | M k e <- xs, e > 0 ])
