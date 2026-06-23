@@ -4,6 +4,7 @@ module Poly where
 import Data.Ratio
 import Data.List
 import qualified Control.Applicative as Liste
+import qualified Control.Applicative as Polynoms
 
 {-
 
@@ -62,32 +63,6 @@ Bsp Anwendung der Infixoperation: 3#^2 macht ganz einfach P [M 3 2]
 polyEx :: Poly 
 polyEx = 3#^2
 
-{-
-
-Evaluate ist die Funktion, welche die Auswertund durchführt.
-Der Infixoperator § steht für die Auswertung da.
-
-Hier wird List Comprehension angewendet, welche die allgemeine Notation [Ausdruck | Generator]
-besitzt. z.B bedeuted [x * 2 | x <- [1,2,3]] dass x jeden Wert aus der Liste [1,2,3] animmt und somit 
-dass [1*2,2*2,3*2] = [2,4,6] rauskommt.
-
-M k e bedeuted k*x^e
-
-(P xs) ist das Liste die als Polynom interpretiert wird und x ist der Wert, welcher in der Formel eingesetzt wird.
-
-Für jedes Monom M k e aus der Liste xs wird k*(x^e) berechnet. Anschließend werden alle Ergebnisse mit sum addiert.
-
-z.B rechnet evaluate (P [M 3 2, M 2 1, M 1 0]) 3
-3·3² + 2·3 + 1 = 3·9 + 6 + 1 = 27 + 6 + 1 = 34 aus
-
--}
-
-evaluate :: Poly -> Rational -> Rational
-evaluate (P xs) x = sum [k * (x ^ e) | M k e <- xs]
-
-infix 9 §
-(§) :: Poly -> Rational -> Rational 
-(§) = evaluate
  
 {-
 
@@ -409,7 +384,224 @@ damit die Multiplikation von den Datentypen her funktioniert.
 
 Für den i-ten Exponenten des i-ten Monoms von dem neuen Polynom gilt: Der Exponent verringert sich um Eins, so wie wir es aus der Mathematik kennen.
 
+Beispiel: 5*x^3 + 2*x wird zu: 15*x^2 + 2
+
 -}
 
 derivation :: Poly -> Poly
 derivation (P xs) = normalize (P [ M (k * fromIntegral e) (e - 1) | M k e <- xs, e > 0 ])
+
+{-
+
+Diese Funktion führt eine Auswertung für ein Polynom durch.
+Der Infixoperator § steht für die Auswertung da.
+
+Hier wird List Comprehension angewendet, welche die allgemeine Notation [Ausdruck | Generator]
+besitzt. z.B bedeuted [x * 2 | x <- [1,2,3]] dass x jeden Wert aus der Liste [1,2,3] animmt und somit 
+dass [1*2,2*2,3*2] = [2,4,6] rauskommt.
+
+M k e bedeuted k*x^e
+
+(P xs) ist das Liste die als Polynom interpretiert wird und x ist der Wert, welcher in der Formel eingesetzt wird.
+
+Für jedes Monom M k e aus der Liste xs wird k*(x^e) berechnet. Anschließend werden alle Ergebnisse mit sum addiert.
+
+z.B rechnet evaluate (P [M 3 2, M 2 1, M 1 0]) 3
+3·3² + 2·3 + 1 = 3·9 + 6 + 1 = 27 + 6 + 1 = 34 aus
+
+-}
+
+evaluate :: Poly -> Rational -> Rational
+evaluate (P xs) x = sum [k * (x ^ e) | M k e <- xs]
+
+infix 9 §
+(§) :: Poly -> Rational -> Rational 
+(§) = evaluate
+
+
+{-
+
+Diese Funktion soll zwei Polynome dividieren, dabei gibt p1 /% p2 am Ende ein Paar zurück.
+
+Der erste Wert in diesem Paar ist der Quotient und der zweite Wert ist
+der Rest.
+
+Zum Beispiel bedeutet p1 /% p2 = (q, r) mathematisch: p1 = q * p2 + r
+
+Als Erstes werden beide Polynome normalisiert.
+
+let dividend = normalize p1
+    divisor  = normalize p2
+
+dividend ist dabei das normalisierte Polynom, das geteilt werden soll.
+divisor ist das normalisierte Polynom, durch das geteilt wird.
+
+Das ist wichtig, weil die Polynomdivision immer mit dem größten
+Exponenten vorne arbeitet. Wenn die Polynome nicht normalisiert wären,
+könnte die Funktion das führende Monom nicht zuverlässig benutzen.
+
+Danach wird geprüft, ob der Divisor das Nullpolynom ist.
+
+Wenn normalize p2 also P [] ergibt, dann kann nicht dividiert werden,
+weil man nicht durch 0 teilen darf.
+
+Deshalb wird in diesem Fall ein Fehler ausgegeben: error "division by zero polynomial"
+
+Falls der Divisor nicht leer ist, wird die eigentliche Division mit
+divStep gestartet.
+
+Dabei wird als dritter Parameter eine leere Liste [] übergeben.
+
+Diese Liste sammelt nach und nach die Monome des Quotienten.
+
+Also: divStep dividend divisor [] bedeutet: Starte die Polynomdivision mit dem normalisierten Dividend, dem
+normalisierten Divisor und einem noch leeren Quotienten.
+
+normalize wird hier nur am Anfang auf p1 und p2 angewendet.
+Dadurch muss nicht bei jedem einzelnen Schritt wieder neu sortiert und
+zusammengefasst werden.
+
+-}
+
+infix 2 /%
+(/%) :: Poly -> Poly -> (Poly, Poly)
+p1 /% p2 = let dividend = normalize p1
+               divisor  = normalize p2
+  in case divisor of
+       P [] ->
+         error "division by zero polynomial"
+
+       P ds ->
+         divStep dividend divisor []
+
+{-
+
+divStep führt die eigentliche Polynomdivision Schritt für Schritt aus.
+
+Der erste Parameter ist der aktuelle Rest, also das Polynom, das noch
+weiter geteilt werden soll.
+
+Der zweite Parameter ist der Divisor. Dieser bleibt während der ganzen
+Division gleich.
+
+Der dritte Parameter ist qAcc. In dieser Liste werden die Monome des
+Quotienten gesammelt.
+
+Falls der aktuelle Rest leer ist, also P [], dann ist nichts mehr zu
+teilen.
+
+In diesem Fall wird der gesammelte Quotient normalisiert zurückgegeben
+und der Rest ist P [].
+
+Also: divStep (P []) divisor qAcc ergibt: (normalize (P qAcc), P [])
+
+Falls der Divisor leer ist, wird wieder ein Fehler ausgegeben.
+Eigentlich sollte dieser Fall nicht passieren, weil schon in /% geprüft
+wurde, ob der Divisor P [] ist.
+
+Trotzdem steht der Fall hier nochmal, damit divStep nicht mit einem
+leeren Divisor weiterrechnet.
+
+Wenn beide Polynome nicht leer sind, werden jeweils die ersten Monome
+betrachtet.
+
+Beim aktuellen Rest ist das: M kr er
+
+kr ist der Koeffizient vom führenden Monom des aktuellen Restes.
+er ist der Exponent vom führenden Monom des aktuellen Restes.
+
+Beim Divisor ist das: M kd ed
+
+kd ist der Koeffizient vom führenden Monom des Divisors.
+ed ist der Exponent vom führenden Monom des Divisors.
+
+Danach wird geprüft, ob er < ed gilt.
+
+Wenn der größte Exponent vom aktuellen Rest kleiner ist als der größte
+Exponent vom Divisor, kann nicht mehr weiter dividiert werden.
+
+Zum Beispiel kann man 3x nicht weiter durch x² teilen, weil der
+Exponent 1 kleiner ist als 2.
+
+Dann ist qAcc der Quotient und der aktuelle Rest bleibt als Rest übrig.
+
+Falls er >= ed gilt, kann ein weiterer Divisionsschritt gemacht werden.
+
+Dazu wird zuerst das nächste Monom des Quotienten berechnet: qMonom = M (kr / kd) (er - ed)
+
+Dabei werden die Koeffizienten geteilt und die Exponenten voneinander
+abgezogen.
+
+Zum Beispiel: 6x³ / 2x = 3x²
+
+Danach wird dieses neue Quotienten-Monom mit dem Divisor multipliziert.
+
+subtrahend = multMonom qMonom (P (M kd ed : ds))
+
+Anschließend wird dieser subtrahend vom aktuellen Rest abgezogen.
+
+Da es hier keine eigene direkte Subtraktion gibt, wird der subtrahend
+erst mit negat negiert und dann mit add addiert.
+
+nextRest = add (P (M kr er : rs)) (negat subtrahend)
+
+Das entspricht mathematisch: aktueller Rest - subtrahend
+
+Danach wird divStep rekursiv mit dem neuen Rest aufgerufen.
+Das neue Quotienten-Monom wird vorne an qAcc angehängt.
+
+So läuft die Division weiter, bis der Rest leer ist oder der Exponent
+vom Rest kleiner als der Exponent vom Divisor ist.
+
+-}
+
+divStep :: Poly -> Poly -> [Monom] -> (Poly, Poly)
+divStep (P []) divisor qAcc = (normalize (P qAcc), P [])
+divStep rest (P []) qAcc = error "division by zero polynomial"
+divStep (P (M kr er : rs)) (P (M kd ed : ds)) qAcc
+  | er < ed = (normalize (P qAcc), normalize (P (M kr er : rs)))
+  | otherwise =
+      let qMonom     = M (kr / kd) (er - ed)
+          subtrahend = multMonom qMonom (P (M kd ed : ds))
+          nextRest   = add (P (M kr er : rs)) (negat subtrahend)
+      in divStep nextRest (P (M kd ed : ds)) (qMonom : qAcc)
+
+{-
+
+multMonom multipliziert ein einzelnes Monom mit einem ganzen Polynom.
+
+Diese Hilfsfunktion wird bei der Polynomdivision benutzt.
+
+Man könnte hier auch die normale mult Funktion verwenden, also zum
+Beispiel: mult (P [qMonom]) divisor, das würde mathematisch auch funktionieren.
+
+Das Problem ist aber, dass mult am Ende wieder normalize aufruft.
+Bei der Polynomdivision passiert dieser Schritt sehr oft, also würde
+normalize dadurch unnötig oft ausgeführt werden, deshalb gibt es hier multMonom.
+
+multMonom bekommt ein Monom M k e und ein Polynom P xs 
+
+Wir durchlaufen die Monomliste aus dem übergebenem Monomparameter und erstellen davon immer ein i-tes Monom M k2 e2.
+Wir bauen mit der List-Comprehension ein neues Polynom zusammen. 
+
+Für jedes i-te Monom in dem neuen Polynom gilt für den i-ten Koeffizienten: Koeffizient aus dem übergebenen Parameter-Monom multipliziert mit 
+dem i-ten Koeffizienten aus der Monomliste des Parameter-Polynoms.
+
+Für jedes i-te Monom in dem neuen Polynom gilt für den i-ten Exponenten: Exponent aus dem Parameter-Monom wird addiert mit dem i-ten Exponenten aus 
+der Monomliste des Parameter-Polynoms.
+
+Da hier nur ein einzelnes Monom mit einem bereits normalisierten
+Polynom multipliziert wird, muss nicht direkt in multMonom normalisiert
+werden.
+
+Die Normalisierung passiert später durch add oder am Ende beim
+Quotienten.
+
+Dadurch bleibt die Funktion einfacher und vermeidet unnötige
+normalize-Aufrufe.
+
+-}
+
+multMonom :: Monom -> Poly -> Poly
+multMonom (M k e) (P xs) =
+  P [M (k * k2) (e + e2) | M k2 e2 <- xs]
