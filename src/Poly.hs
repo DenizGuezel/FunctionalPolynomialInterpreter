@@ -5,6 +5,7 @@ import Data.Ratio
 import Data.List
 import qualified Control.Applicative as Liste
 import qualified Control.Applicative as Polynoms
+import qualified Control.Applicative as Polynom
 
 {-
 
@@ -605,3 +606,42 @@ normalize-Aufrufe.
 multMonom :: Monom -> Poly -> Poly
 multMonom (M k e) (P xs) =
   P [M (k * k2) (e + e2) | M k2 e2 <- xs]
+
+{-
+
+Diese Funktion soll ganze Polynome mit +, -, * und Zahlenliteralen funktionsfähig machen
+
+Mit instance Num Poly where sagen wir, dass Poly zur Typklasse Num gehören soll, die Wirkung davon ist, dass ein Poly
+als eine Zahl interpretiert wird und wir darauf die Standard-Zahlenoperationen verwenden können.
+
+fromInteger 0 = P [] sagt aus, was passieren soll wenn Haskell die Zahl 0 als Polynom braucht. Es entsteht ein leeres Polynom. 
+fromInteger x = P [M (fromInteger x % 1) 0] stellt die Schreibweise als Polynom dar, für beliebig andere Zahlen, z.B wenn für x die 5 eingesetzt wird,
+dann wird ein Polynom in dieser Schreibweise zurückgegeben: P [M (5 % 1) 0]
+
+Wenn wir (-p1= schreiben, intepretiert Haskell das unäre Minus als negate, und sobald wir negate p, also (-p) schreiben, wird unsere selsbtdefinierte
+negat Funktion aufgerufen.
+
+wenn wir ganze Polynome miteinander addieren wollen, also z.B (P [M 2 2, M 2 1]) + (P [M 4 2, M 4 1]) schreiben, wird durch die instance-Methode das + als unsere
+selbstdefinierte add Funktion interpretiert, sprich es wird add (P [M 2 2, M 2 1]) (P [M 4 2, M 4 1]) aufgerufen.
+
+Für die anderen Operationen ist dies der Gleiche Ablauf.
+
+
+
+-}
+
+instance Num Poly where
+  fromInteger 0 = P []
+  fromInteger x = P [M (fromInteger x % 1) 0]
+
+  negate p = negat p
+
+  p1 + p2 = add p1 p2
+
+  p1 - p2 = sub p1 p2 
+
+  p1 * p2 = mult p1 p2
+
+  abs _ = error "abs nicht implementiert für Polynome"
+
+  signum _ = error "signum nicht implementiert für Polynome"
