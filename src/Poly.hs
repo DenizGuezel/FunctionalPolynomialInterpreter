@@ -676,7 +676,8 @@ Mit denominator r holen wir den Nenner aus dem Bruch.
 
 Diese Werte speichern wir als z und n.
 
-Falls der Nenner n gleich 1 ist, wird nur der Zähler ausgegeben, weil z/1 einfach z ist.
+Falls der Nenner n gleich 1 ist, wird nur der Zähler ausgegeben,
+weil z/1 einfach z ist.
 
 Falls der Nenner nicht 1 ist, wird ein LaTeX-Bruch erzeugt.
 
@@ -700,6 +701,36 @@ instance (Integral a, Eq a, Num a, Show a) => ToLaTeX (Ratio a) where
 
 {-
 
+Diese Instanz beschreibt, wie ein Monom als LaTeX ausgegeben wird.
+
+Ein Monom hat die Form M k e, wobei k der Koeffizient ist und e der Exponent.
+
+Dies wird mit Pattern Matching gelöst, falls ein Monom mit einem 0-Exponenten als 
+Parameter eingegeben wird, bleibt nur der Koeffizient übrig, da x^0 = 1 ist.
+
+Wenn ein Monom als Parameter eingegeben wird, wo der Exponent 1 ist, dann unterscheiden wir in 3 Fälle:
+Falls der Koeffizient 1 ist wird nur x geschrieben und nicht x^1. z.B M 1 2 wird mathematisch als x^2 interpretiert.
+Falls der Koeffizie -1 ist, wird logischerweise dann -x geschrieben. z.B M (-1) 2 wird mathematisch als (-x)^2 interpretiert.
+In allen anderen Fällen wird der Koeffizient vor das x geschrieben. z.B 3 2 wird mathematisch als 3x^2 interpretiert.
+
+-}
+
+instance ToLaTeX Monom where
+
+  toLaTeX :: Monom -> String
+  toLaTeX (M k 0) = toLaTeX k
+  toLaTeX (M k 1)
+    | k == 1    = "x"
+    | k == (-1) = "-x"
+    | otherwise = toLaTeX k ++ "*x"
+  toLaTeX (M k e)
+    | k == 1    = "x^{" ++ show e ++ "}"
+    | k == (-1) = "-x^{" ++ show e ++ "}"
+    | otherwise = toLaTeX k ++ "*x^{" ++ show e ++ "}"
+
+
+{-
+
 Diese Instanz beschreibt, wie ein ganzes Polynom als LaTeX ausgegeben wird.
 
 Das Polynom wird zuerst normalisiert.
@@ -717,6 +748,7 @@ instance ToLaTeX Poly where
 
   toLaTeX :: Poly -> String
   toLaTeX p = polyToLaTeX (normalize p)
+
 
 {-
 
@@ -745,5 +777,30 @@ polyToLaTeX (P []) = "0"
 polyToLaTeX (P (m:ms)) = toLaTeX m ++ concatMap monomWithSign ms
 
 
+{-
 
+monomWithSign gibt ein Monom mit passendem Vorzeichen davor aus.
 
+Diese Funktion wird nur für Monome benutzt, die nicht an erster Stelle stehen.
+
+Wenn der Koeffizient positiv ist, wird ein "+" davor gesetzt.
+
+Wenn der Koeffizient negativ ist (andernfalls), wird kein extra Zeichen gesetzt,
+weil das Minus schon durch toLaTeX im Koeffizienten enthalten ist.
+
+Mit (M k e) wird das Monom direkt ausgepackt, k ist dabei der Koeffizient 
+und e ist dabei der Exponent.
+
+Falls der Koeffizient von dem eingegebenen Parameter-Monom positiv ist, dann wird 
+für dem Koeffizienten ein + angehangen, Bsp: monomWithSign (M 3 2) wobei k = 3 ist, also kommt raus: "+3*x^{2}"
+
+Andernfalls, also wenn der Koeffizient von dem eingegeben Parameter-Monom negativ ist, wird das Monom mit
+ohne ein Plus daregstellt, also ganz einfach dargestellt, was als k < 0 eingegeben wurde.
+Bsp: bei monomWithSign (M (-3) 2) passiert: toLaTeX (M (-3) 2) und das ergibt: "-3*x^{2}"
+
+-}
+
+monomWithSign :: Monom -> String
+monomWithSign (M k e)
+  | k >= 0    = "+" ++ toLaTeX (M k e)
+  | otherwise = toLaTeX (M k e)
