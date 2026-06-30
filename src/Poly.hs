@@ -697,34 +697,26 @@ instance (Integral a, Eq a, Num a, Show a) => ToLaTeX (Ratio a) where
       z = numerator r
       n = denominator r
 
+
 {-
 
-Diese Instanz beschreibt, wie ein Monom als LaTeX ausgegeben wird.
+Diese Instanz beschreibt, wie ein ganzes Polynom als LaTeX ausgegeben wird.
 
-Ein Monom hat die Form M k e, wobei k der Koeffizient ist und e der Exponent.
+Das Polynom wird zuerst normalisiert.
 
-Dies wird mit Pattern Matching gelöst, falls ein Monom mit einem 0-Exponenten als 
-Parameter eingegeben wird, bleibt nur der Koeffizient übrig, da x^0 = 1 ist.
+Danach wird polyToLaTeX aufgerufen, welches die eigentliche Ausgabe als String übernimmt.
 
-Wenn ein Monom als Parameter eingegeben wird, wo der Exponent 1 ist, dann unterscheiden wir in 3 Fälle:
-Falls der Koeffizient 1 ist wird nur x geschrieben und nicht x^1. z.B M 1 2 wird mathematisch als x^2 interpretiert.
-Falls der Koeffizie -1 ist, wird logischerweise dann -x geschrieben. z.B M (-1) 2 wird mathematisch als (-x)^2 interpretiert.
-In allen anderen Fällen wird der Koeffizient vor das x geschrieben. z.B 3 2 wird mathematisch als 3x^2 interpretiert.
+Bsp: toLaTeX (P [M 2 1, M 3 2, M 4 1]) toLaTeX (P [M 2 1, M 3 2, M 4 1]), 
+zuerst passiert: normalize (P [M 2 1, M 3 2, M 4 1])
+Das wird zu: P [M 3 2, M 6 1], weil mathmatisch  2x + 4x = 6x ergibt und nach Exponenten sortiert wird.
+Danach macht wird aufgerufen: polyToLaTeX (P [M 3 2, M 6 1]) und als Ergebnis kommt "3*x^{2}+6*x"
 
 -}
 
-instance ToLaTeX Monom where
+instance ToLaTeX Poly where
 
-  toLaTeX :: Monom -> String
-  toLaTeX (M k 0) = toLaTeX k
-  toLaTeX (M k 1)
-    | k == 1    = "x"
-    | k == (-1) = "-x"
-    | otherwise = toLaTeX k ++ "*x"
-  toLaTeX (M k e)
-    | k == 1    = "x^{" ++ show e ++ "}"
-    | k == (-1) = "-x^{" ++ show e ++ "}"
-    | otherwise = toLaTeX k ++ "*x^{" ++ show e ++ "}"
+  toLaTeX :: Poly -> String
+  toLaTeX p = polyToLaTeX (normalize p)
 
 
 
