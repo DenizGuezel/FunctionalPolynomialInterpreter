@@ -1,6 +1,7 @@
 
-module Poly where
+module Poly where {- Modulbennung, damit Sie importierbar ist im Nachhinein, z.B import Poly-}
 
+{- Imports -}
 import Data.Ratio
 import Data.List
 import qualified Control.Applicative as Liste
