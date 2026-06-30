@@ -718,5 +718,32 @@ instance ToLaTeX Poly where
   toLaTeX :: Poly -> String
   toLaTeX p = polyToLaTeX (normalize p)
 
+{-
+
+polyToLaTeX wandelt ein bereits normalisiertes Polynom in einen LaTeX-String um.
+
+Es wird mit Pattern-Matching gelöst. Falls der eingegebene Parameter-Polynom leer ist, also P [], wird "0" zurückgegeben.
+
+Falls das eingegebene Parameter-Polynom nicht leer ist, wird das erste Monom direkt mit
+toLaTeX ausgegeben.
+
+Für alle weiteren Monome wird monomWithSign benutzt, damit bei
+positiven Monomen ein Pluszeichen davor gesetzt wird.
+
+concatMap wendet monomWithSign auf jedes Monom der Restliste an und
+fügt alle Strings zusammen.
+
+Bsp: polyToLaTeX (P [M 3 2, M 2 1, M (-5) 0])
+1. Aufruf: toLaTeX (M 3 2) ++ concatMap monomWithSign [M 2 1, M (-5) 0]
+Der erste Monom ergibt "3*x^{2}" , danach wird die Restliste weiter bearbeitet: concatMap monomWithSign [M 2 1, M (-5) 0]
+ergibt: "+2*x-5" und aufgrund dem ++ wird dies zusammengefügt: "3*x^{2}" ++ "+2*x-5" ergibt "3*x^{2}+2*x-5". Mathematisch sieht es so aus: 3x² + 2x - 5
+
+-}
+
+polyToLaTeX :: Poly -> String
+polyToLaTeX (P []) = "0"
+polyToLaTeX (P (m:ms)) = toLaTeX m ++ concatMap monomWithSign ms
+
+
 
 
