@@ -626,22 +626,75 @@ selbstdefinierte add Funktion interpretiert, sprich es wird add (P [M 2 2, M 2 1
 
 Für die anderen Operationen ist dies der Gleiche Ablauf.
 
-
-
 -}
 
 instance Num Poly where
+
+  fromInteger :: Integer -> Poly
   fromInteger 0 = P []
   fromInteger x = P [M (fromInteger x % 1) 0]
 
+  negate :: Poly -> Poly
   negate p = negat p
 
+  (+) :: Poly -> Poly -> Poly
   p1 + p2 = add p1 p2
 
+  (-) :: Poly -> Poly -> Poly
   p1 - p2 = sub p1 p2 
 
+  (*) :: Poly -> Poly -> Poly
   p1 * p2 = mult p1 p2
 
+  abs :: Poly -> Poly
   abs _ = error "abs nicht implementiert für Polynome"
 
+  signum :: Poly -> Poly
   signum _ = error "signum nicht implementiert für Polynome"
+
+
+{-
+
+Diese Klasse, welche als Typklasse verwenden werden kann, sagt, dass ein Datentyp in einen LaTeX-String
+umgewandelt werden kann.
+
+Wie genau dieser Wert umgewandelt wird, wird später in den einzelnen
+Instanzen definiert.
+
+-}
+
+class ToLaTeX a where
+  toLaTeX :: a -> String
+
+
+{-
+
+Diese Instanz beschreibt, wie ein Bruch vom Typ Ratio a als LaTeX ausgegeben wird.
+
+Mit numerator r holen wir den Zähler aus dem Bruch.
+Mit denominator r holen wir den Nenner aus dem Bruch.
+
+Diese Werte speichern wir als z und n.
+
+Falls der Nenner n gleich 1 ist, wird nur der Zähler ausgegeben, weil z/1 einfach z ist.
+
+Falls der Nenner nicht 1 ist, wird ein LaTeX-Bruch erzeugt.
+
+Zum Beispiel wird aus 3 % 5 der String "\frac{3}{5}".
+
+Da der Backslash in Haskell eine besondere Bedeutung hat, schreiben
+wir "\\frac", damit im Ergebnis \frac steht.
+
+-}
+
+instance (Integral a, Eq a, Num a, Show a) => ToLaTeX (Ratio a) where
+
+  toLaTeX :: (Integral a, Eq a, Num a, Show a) => Ratio a -> String
+  toLaTeX r
+    | n == 1    = show z
+    | otherwise = "\\frac{" ++ show z ++ "}{" ++ show n ++ "}"
+    where
+      z = numerator r
+      n = denominator r
+
+
