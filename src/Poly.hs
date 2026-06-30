@@ -697,4 +697,34 @@ instance (Integral a, Eq a, Num a, Show a) => ToLaTeX (Ratio a) where
       z = numerator r
       n = denominator r
 
+{-
+
+Diese Instanz beschreibt, wie ein Monom als LaTeX ausgegeben wird.
+
+Ein Monom hat die Form M k e, wobei k der Koeffizient ist und e der Exponent.
+
+Dies wird mit Pattern Matching gelöst, falls ein Monom mit einem 0-Exponenten als 
+Parameter eingegeben wird, bleibt nur der Koeffizient übrig, da x^0 = 1 ist.
+
+Wenn ein Monom als Parameter eingegeben wird, wo der Exponent 1 ist, dann unterscheiden wir in 3 Fälle:
+Falls der Koeffizient 1 ist wird nur x geschrieben und nicht x^1. z.B M 1 2 wird mathematisch als x^2 interpretiert.
+Falls der Koeffizie -1 ist, wird logischerweise dann -x geschrieben. z.B M (-1) 2 wird mathematisch als (-x)^2 interpretiert.
+In allen anderen Fällen wird der Koeffizient vor das x geschrieben. z.B 3 2 wird mathematisch als 3x^2 interpretiert.
+
+-}
+
+instance ToLaTeX Monom where
+
+  toLaTeX :: Monom -> String
+  toLaTeX (M k 0) = toLaTeX k
+  toLaTeX (M k 1)
+    | k == 1    = "x"
+    | k == (-1) = "-x"
+    | otherwise = toLaTeX k ++ "*x"
+  toLaTeX (M k e)
+    | k == 1    = "x^{" ++ show e ++ "}"
+    | k == (-1) = "-x^{" ++ show e ++ "}"
+    | otherwise = toLaTeX k ++ "*x^{" ++ show e ++ "}"
+
+
 
