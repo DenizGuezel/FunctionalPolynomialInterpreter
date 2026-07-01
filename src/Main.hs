@@ -5,7 +5,7 @@ import qualified Control.Applicative as Strings
 
 {-
 
-Dies dient hier nicht zu echten automatischen Tests, sondern nur als kleine Konsolendemo.
+Dies dient hier nicht zu echten automatischen Tests, sondern ist unser Ziel hier nur eine kleine Konsolendemo zu visualisieren.
 
 Wir schreiben eine main-Funktion, die Etwas ausführt, sobald man "main" im ghci eintippt.
 In diesem Fall ist es sinnvoll, um bestimmte Polynomfunktionen aus Poly.hs auszuführen.
