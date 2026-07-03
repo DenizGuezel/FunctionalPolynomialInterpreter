@@ -51,4 +51,27 @@ parseMonomList (x:xs) = case parseMonomSimple x of
         Left err -> Left err
         Right (P monoms) -> Right (normalize (P (monom:monoms)))
 
+{- 
+
+Diese Funktion soll einen String, der ein einzelnes Monom beschreibt, in ein Monom parsen.
+Sie bekommt als Eingabe z.B "3 2" und gibt als Ausgabe Either String Monom zurück, das entweder ein Fehler-String oder ein Monom ist.
+
+Wir führen die Funktion words auf den Eingabe-String aus, um ihn in eine Liste von Strings zu zerlegen und prüfen welche der unteren Fälle zutreffen.
+words input zerlegt den übergebenen Parameter-String (z.B "3 2") in eine Liste von Strings (z.B ["3", "2"]).
+
+Wenn die zerlegte Liste leer ist, geben wir einen Fehler zurück.
+
+Wenn die zerlegte Liste genau zwei Elemente (den Koeffizienten und den Exponenten) enthält, führen wir die Funktion parseNumbers auf diese beiden Elemente aus, 
+um sie in ein Monom zu parsen und prüfen erneut, welche der restlichen zwei Fälle dann zutreffen. 
+Wenn bei dem Parsen der Zahlen ein Fehler auftritt, geben wir diesen Fehler zurück (Left err).
+Wenn kein Fehler auftritt, bekommen wir ein gültiges Monom (Right monom) und geben es als Ergebnis zurück.
+
+-}
+
+parseMonomSimple :: String -> Either String Monom
+parseMonomSimple input =  case words input of 
+    [] -> Left "Fehler: Zerlegte Liste ist leer, es wurden keine Zahlen gefunden."
+    [coeff, exp] -> case (parseNumbers coeff exp) of
+        Left err -> Left err
+        Right monom -> Right monom
 
