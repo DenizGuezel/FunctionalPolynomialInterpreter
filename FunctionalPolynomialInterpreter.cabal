@@ -64,8 +64,10 @@ library
     import:           warnings
 
     -- Modules exported by the library.
-    exposed-modules:  Poly
-                      ParserSimple                      
+    exposed-modules:
+        Poly
+        ParserSimple
+        GUI
 
     -- Modules included in this library but not exported.
     -- other-modules:
@@ -74,7 +76,9 @@ library
     -- other-extensions:
 
     -- Other library packages from which modules are imported.
-    build-depends:    base ^>=4.18.3.0
+    build-depends:
+        base ^>=4.18.3.0,
+        threepenny-gui
 
     -- Directories containing source files.
     hs-source-dirs:   src
@@ -87,7 +91,7 @@ executable FunctionalPolynomialInterpreter
     import:           warnings
 
     -- .hs or .lhs file containing the Main module.
-    main-is:          Main.hs
+    main-is:          AppMain.hs
 
     -- Modules included in this executable, other than Main.
     -- other-modules:
@@ -98,7 +102,8 @@ executable FunctionalPolynomialInterpreter
     -- Other library packages from which modules are imported.
     build-depends:
         base ^>=4.18.3.0,
-        FunctionalPolynomialInterpreter
+        FunctionalPolynomialInterpreter,
+        threepenny-gui
 
     -- Directories containing source files.
     hs-source-dirs:   src
@@ -134,3 +139,6 @@ test-suite FunctionalPolynomialInterpreter-test
         FunctionalPolynomialInterpreter,
         tasty,
         tasty-hunit
+
+    -- Base language which the package is written in.
+    default-language: GHC2021

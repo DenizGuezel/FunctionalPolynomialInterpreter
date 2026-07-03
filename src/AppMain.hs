@@ -1,13 +1,24 @@
 module Main where
 
 import Poly
+import GUI
+
 import qualified Control.Applicative as Strings
+
+{- 
+
+Funktion, um die GUI zu starten. 
+
+-}
+
+main :: IO()
+main = runGUI
 
 {-
 
 Dies dient hier nicht zu echten automatischen Tests, sondern ist unser Ziel hier nur eine kleine Konsolendemo zu visualisieren.
 
-Wir schreiben eine main-Funktion, die Etwas ausführt, sobald man "main" im ghci eintippt.
+Wir schreiben eine runConsoleDemo-Funktion, die Etwas ausführt, sobald man "runConsoleDemo" im ghci eintippt.
 In diesem Fall ist es sinnvoll, um bestimmte Polynomfunktionen aus Poly.hs auszuführen.
 
 putStrLn ist wie System.out.println("Hallo"), es geht nur für Strings.
@@ -15,9 +26,8 @@ print ist wie System.out.println("Hallo"), es geht für alles, was eine Show-Ins
 
 -}
 
-main :: IO()
-main = do
-
+runConsoleDemo :: IO ()
+runConsoleDemo = do 
     let p1 = 3 #^ 2 + 2 #^ 1 + 1 -- Darstellung mit #, nutzt Num-Instanz: p1 = 3x^2 + 2x + 1, interne auch so Darstellbar: P [M 3 2, M 2 1, M 1 0]
     let p2 = 1 #^ 1 + 1 -- Darstellung mit #, nutzt ebenfalls Num-Instanz: p2 = 1x + 1, intern auch so Darstellbar: P [M 1 1, M 1 0]
 
