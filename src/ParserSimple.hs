@@ -24,7 +24,7 @@ entweder einen Fehler oder einen gültigen Wert zurückzugeben.
 -}
 
 parsePolySimple :: String -> Either String Poly
-parsePolySimple s = 0
+parsePolySimple s = parseMonomList (splitBySemicolon s)
 
 {- 
 
@@ -67,6 +67,9 @@ um sie in ein Monom zu parsen und prüfen erneut, welche der restlichen zwei Fä
 Wenn bei dem Parsen der Zahlen ein Fehler auftritt, geben wir diesen Fehler zurück (Left err).
 Wenn kein Fehler auftritt, bekommen wir ein gültiges Monom (Right monom) und geben es als Ergebnis zurück.
 
+Wenn keiner der Fälle zutrifft (also die zerlegte Liste mehr als zwei Elemente enthält oder nur eine Zahl), geben wir einen Fehler zurück, der besagt, 
+dass genau zwei Zahlen erwartet wurden, aber mehr gefunden wurden.
+
 -}
 
 parseMonomSimple :: String -> Either String Monom
@@ -75,6 +78,7 @@ parseMonomSimple input =  case words input of
     [coeff, exp] -> case (parseNumbers coeff exp) of
         Left err -> Left err
         Right monom -> Right monom
+    other -> Left ("Fehler: Erwartet wurden genau zwei Zahlen, aber es wurden " ++ show (length other) ++ " gefunden: " ++ unwords other)    
 
 {- 
 
