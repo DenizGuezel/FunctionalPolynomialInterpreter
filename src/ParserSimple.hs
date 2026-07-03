@@ -10,6 +10,7 @@ das ist genau andersrum als die toLatex Funktion, die aus einem Polynom-Ausdruck
 import Poly
 import Data.Ratio
 import Text.Read(readMaybe)
+import qualified Control.Applicative as Fälle
 
 
 {- 
@@ -98,4 +99,31 @@ parseNumbers coeff exp = case (readMaybe coeff :: Maybe Rational, readMaybe exp 
     (_, Nothing) -> Left ("Fehler: Exponent '" ++ exp ++ "' ist keine gültige ganze Zahl.") 
 
 
+{- 
+
+Diese Funktion soll einen String, der mehrere Monome beschreibt, in eine Liste von Strings zerlegen, die jeweils ein Monom beschreiben.
+Sie bekommt als Eingabe z.B "3 2;5 1;7 0" und gibt als Ausgabe eine Liste von Strings zurück, die jeweils ein Monom beschreiben, z.B ["3 2", "5 1", "7 0"].
+
+Wenn der Eingabe-String (es ist ein [char], deswegen matchen wir mit []) leer iszt, geben wir eine leere Liste zurück.
+
+Wenn ein gültiger String übergeben wird, gehen wir wie folgt weiter:
+
+Es wird zerlegt, indem der String an jedem Semikolon (;) aufgeteilt wird. 
+before ist der Teil des Strings vor dem Semikolon und after ist der Teil des Strings nach dem Semikolon.
+
+z.B haben wir den String "3 2;5 1;7 0", dann ist before = "3 2" und after = ";5 1;7 0".
+
+Wir gucken uns jetzt den after-Teil an und prüfen diesen auf die zwei unteren Fälle.
+Fall 1: Wenn after leer ist, bedeutet das, dass es gar kein Semikolon im String gab, also geben wir eine Liste mit nur dem before-Teil zurück.
+Fall 2: Wenn after nicht leer ist, bedeutet das, dass es mindestens ein Semikolon im String gab, also geben wir eine Liste zurück, die den before-Teil 
+und die rekursive Ausführung der Funktion auf den Rest des after-Teils enthält.
+
+-}
+
+splitBySemicolon :: String -> [String]
+splitBySemicolon [] = [] 
+splitBySemicolon s = let (before, after) = break (== ';') s
+                     in case after of
+                          [] -> [before]
+                          (_:rest) -> before : splitBySemicolon rest
 
