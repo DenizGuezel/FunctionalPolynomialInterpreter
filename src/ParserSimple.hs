@@ -75,3 +75,27 @@ parseMonomSimple input =  case words input of
         Left err -> Left err
         Right monom -> Right monom
 
+{- 
+
+Diese Funktion soll zwei Strings, die den Koeffizienten und den Exponenten eines Monoms beschreiben, in ein Monom parsen.
+Sie bekommt als Eingabe z.B "3" und "2" und gibt als Ausgabe Either String Monom zurück, das entweder ein Fehler-String oder ein Monom ist.
+
+Es wird versucht, den Koeffizienten-String und den Exponenten-String in die entsprechenden Typen (Rational und Int) zu parsen.
+Der Einleseverusch kann durch den Datentyp Maybe entweder erfolgreich sein (Just c, Just e) oder fehlschlagen (Nothing).
+
+Dieser case wird ausgeführt und es wird nach den 3 unteren Mustern geprüft, welche zutreffen.
+
+Fall 1: Wenn beide Einleseversuche erfolgreich waren (Just c, Just e), wird ein Monom mit dem Koeffizienten c und dem Exponenten e erstellt und als Right-Wert zurückgegeben.
+Fall 2: Wenn der Einleseversuch für den Koeffizienten fehlschlägt (Nothing), für den Exponenten aber erfolgreich ist, wird eine Fehlermeldung zurückgegeben, die besagt, dass der Koeffizient keine gültige Zahl ist.
+Fall 3: Wenn der Einleseversuch für den Exponenten fehlschlägt (Nothing), für den Koeffizienten aber erfolgreich ist, wird eine Fehlermeldung zurückgegeben, die besagt, dass der Exponent keine gültige ganze Zahl ist.
+
+-}
+
+parseNumbers :: String -> String -> Either String Monom
+parseNumbers coeff exp = case (readMaybe coeff :: Maybe Rational, readMaybe exp :: Maybe Int) of
+    (Just c, Just e) -> Right (M c e)
+    (Nothing, _) -> Left ("Fehler: Koeffizient '" ++ coeff ++ "' ist keine gültige Zahl.")
+    (_, Nothing) -> Left ("Fehler: Exponent '" ++ exp ++ "' ist keine gültige ganze Zahl.") 
+
+
+
