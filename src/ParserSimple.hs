@@ -10,7 +10,7 @@ das ist genau andersrum als die toLatex Funktion, die aus einem Polynom-Ausdruck
 import Poly
 import Data.Ratio
 import Text.Read(readMaybe)
-import qualified Control.Applicative as Fälle
+import qualified Control.Applicative()
 
 
 {- 
@@ -75,10 +75,10 @@ dass genau zwei Zahlen erwartet wurden, aber mehr gefunden wurden.
 parseMonomSimple :: String -> Either String Monom
 parseMonomSimple input =  case words input of 
     [] -> Left "Fehler: Zerlegte Liste ist leer, es wurden keine Zahlen gefunden."
-    [coeff, exp] -> case (parseNumbers coeff exp) of
+    [coeff, exponent] -> case (parseNumbers coeff exponent) of
         Left err -> Left err
         Right monom -> Right monom
-    other -> Left ("Fehler: Erwartet wurden genau zwei Zahlen, aber es wurden " ++ show (length other) ++ " gefunden: " ++ unwords other)    
+    other -> Left ("Fehler: Ein Monom muss genau aus Koeffizient und Exponent bestehen. Gefunden wurde: " ++ show other)    
 
 {- 
 
@@ -97,10 +97,10 @@ Fall 3: Wenn der Einleseversuch für den Exponenten fehlschlägt (Nothing), für
 -}
 
 parseNumbers :: String -> String -> Either String Monom
-parseNumbers coeff exp = case (readMaybe coeff :: Maybe Rational, readMaybe exp :: Maybe Int) of
-    (Just c, Just e) -> Right (M c e)
+parseNumbers coeff exponent = case (readMaybe coeff :: Maybe Integer, readMaybe exponent :: Maybe Int) of
+    (Just c, Just e) -> Right (M (fromInteger c % 1) e)
     (Nothing, _) -> Left ("Fehler: Koeffizient '" ++ coeff ++ "' ist keine gültige Zahl.")
-    (_, Nothing) -> Left ("Fehler: Exponent '" ++ exp ++ "' ist keine gültige ganze Zahl.") 
+    (_, Nothing) -> Left ("Fehler: Exponent '" ++ exponent ++ "' ist keine gültige ganze Zahl.") 
 
 
 {- 

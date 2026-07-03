@@ -1,9 +1,12 @@
 module Main where 
 
-import Poly 
+import Poly
+import ParserSimple
+
 import Test.Tasty
 import Test.Tasty.HUnit
 import Data.Ratio 
+
 
 {- 
 
@@ -152,6 +155,43 @@ tests =
 
     , testCase "gibt ein Polynom mit Bruch als Koeffizienten als LaTeX aus" $
         toLaTeX (P [M (3 % 5) 1]) @?= "\\frac{3}{5}*x"
+
+    {- Tests für ParserSimple (kommen später wo anders hin): -}
+
+     , testCase "parst ein einzelnes Monom" $
+        parseMonomSimple "3 2" @?= Right (M 3 2)
+
+    , testCase "parst ein Polynom mit mehreren Monomen" $
+        parsePolySimple "3 2;5 1;7 0" @?=
+          Right (P [M 3 2, M 5 1, M 7 0])
+
+    , testCase "parst ein Polynom und normalisiert gleiche Exponenten" $
+        parsePolySimple "2 1;3 1" @?=
+          Right (P [M 5 1])
+
+    , testCase "parst ein Polynom und entfernt Nullmonome durch normalize" $
+        parsePolySimple "0 5;3 2" @?=
+          Right (P [M 3 2])
+
+    , testCase "parst negative Koeffizienten" $
+        parsePolySimple "-3 2;5 1" @?=
+          Right (P [M (-3) 2, M 5 1])
+
+    , testCase "gibt Fehler bei leerem Monom" $
+        parseMonomSimple "" @?=
+          Left "Fehler: Zerlegte Liste ist leer, es wurden keine Zahlen gefunden."
+
+    , testCase "gibt Fehler bei ungueltigem Koeffizienten" $
+        parseMonomSimple "abc 2" @?=
+          Left "Fehler: Koeffizient 'abc' ist keine gültige Zahl."
+
+    , testCase "gibt Fehler bei ungueltigem Exponenten" $
+        parseMonomSimple "3 abc" @?=
+          Left "Fehler: Exponent 'abc' ist keine gültige ganze Zahl."
+
+    , testCase "gibt Fehler bei zu vielen Eingabeteilen" $
+        parseMonomSimple "3 2 1" @?=
+          Left "Fehler: Ein Monom muss genau aus Koeffizient und Exponent bestehen. Gefunden wurde: [\"3\",\"2\",\"1\"]"
 
     ]
 
