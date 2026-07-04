@@ -76,7 +76,8 @@ setup window = do
    buttonnormalize <- UI.button # set UI.text "Normalisieren"
    buttonnegat <- UI.button # set UI.text "Negieren"
    buttonadd <- UI.button # set UI.text "Addieren"
-   
+   buttonaddpoly <- UI.button # set UI.text "Polynom hinzufügen"
+
    {- Speicher für gespeicherte Polynome: -}
    polyStore <- liftIO $ newIORef ([] :: [StoredPoly])
 
@@ -92,6 +93,8 @@ setup window = do
       element inputX, 
       element buttonnormalize, 
       element buttonnegat, 
+      element buttonaddpoly,
+      element polyListOutput,
       element output
       
       ] 
@@ -99,6 +102,8 @@ setup window = do
    {- ActionListener auf die Buttons: -}
    on UI.click buttonnormalize (\_ -> handlenormalizeclick input output) 
    on UI.click buttonnegat (\_ -> handlenegatclick input output)
+   on UI.click buttonaddpoly (\_ -> handleaddpolyclick input polyListOutput polyStore)
+   
 {- 
 
 Diese Funktion dient zur Veranschaulichung des normalisierten Polynoms in der GUI.
@@ -180,3 +185,20 @@ handleaddpolyclick input polyListOutput polyStore = do
          let newStoredPolys = storedPolys ++ [newPoly]
          liftIO $ writeIORef polyStore newStoredPolys
          void $ element polyListOutput # set UI.text (showStoredPolys newStoredPolys)
+
+{- 
+
+Diese Funktion wandelt die gespeicherten Polynome in einen String um,
+damit wir sie erstmal einfach in der GUI anzeigen können.
+
+Wenn die Liste leer ist, wird angezeigt, dass noch keine Polynome vorhanden sind.
+
+Wenn mindestens ein StoredPoly vorhanden ist, wird der Name und das Polynom angezeigt.
+Danach wird die Funktion rekursiv für den Rest der Liste aufgerufen.
+
+-}
+
+showStoredPolys :: [StoredPoly] -> String
+showStoredPolys [] = "Noch keine Polynome vorhanden."
+showStoredPolys (StoredPoly name poly : rest) =
+   name ++ " = " ++ toLaTeX poly ++ "\n" ++ showStoredPolys rest
