@@ -9,7 +9,19 @@ import ParserSimple
 import qualified Graphics.UI.Threepenny as Ui
 import qualified Control.Applicative as GUI
 
-{- Hier kommt die GUI-Logik rein, welche die Interaktion mit dem Benutzer steuert z.B mit Buttons, usw... -}
+-- Hier kommt die GUI-Logik rein, welche die Interaktion mit dem Benutzer steuert z.B mit Buttons, usw... --
+
+{- 
+
+Hier wird ein neuer Datentyp StoredPoly definiert, der dazu dient, ein Polynom zusammen mit einem Namen zu speichern, 
+quasi Map-Paar sozusagen, damit ein bestimmter Polynom anhand des Namens abgerufen werden kann.
+
+Wird verwendet, um die Auswahl von Polynomen in der GUI als Liste zu realisieren.
+
+-}
+
+data StoredPoly = StoredPoly String Poly
+   deriving (Show, Eq)
 
 
 {- 
