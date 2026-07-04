@@ -75,8 +75,9 @@ setup window = do
    {- Buttons: -}
    buttonnormalize <- UI.button # set UI.text "Normalisieren"
    buttonnegat <- UI.button # set UI.text "Negieren"
-   buttonadd <- UI.button # set UI.text "Addieren"
    buttonaddpoly <- UI.button # set UI.text "Polynom hinzufügen"
+   buttonadd <- UI.button # set UI.text "Addieren"
+
 
    {- Speicher für gespeicherte Polynome: -}
    polyStore <- liftIO $ newIORef ([] :: [StoredPoly])
@@ -94,6 +95,7 @@ setup window = do
       element buttonnormalize, 
       element buttonnegat, 
       element buttonaddpoly,
+      element buttonadd,
       element polyListOutput,
       element output
       
@@ -103,7 +105,7 @@ setup window = do
    on UI.click buttonnormalize (\_ -> handlenormalizeclick input output) 
    on UI.click buttonnegat (\_ -> handlenegatclick input output)
    on UI.click buttonaddpoly (\_ -> handleaddpolyclick input polyListOutput polyStore)
-   
+
 {- 
 
 Diese Funktion dient zur Veranschaulichung des normalisierten Polynoms in der GUI.
@@ -202,3 +204,26 @@ showStoredPolys :: [StoredPoly] -> String
 showStoredPolys [] = "Noch keine Polynome vorhanden."
 showStoredPolys (StoredPoly name poly : rest) =
    name ++ " = " ++ toLaTeX poly ++ "\n" ++ showStoredPolys rest
+
+{- 
+
+Diese Funktion dient zur Veranschaulichung der Addition von zwei Polynomen in der GUI. (Professionellere Version kommt später, 
+da wir die checkboxen und Listenaktualisierung noch brauchen)
+
+Wir lesen beide Eingabefelder aus, parsen die Polynome und prüfen, ob das Parsen erfolgreich war.
+Wenn das Parsen bei einem der Polynome fehlschlägt, wird der Fehler im Ausgabebereich angezeigt.
+Wenn das Parsen bei beiden Polynomen erfolgreich war, wird die Addition durchgeführt und das Ergebnis im Ausgabebereich angezeigt.
+
+-}
+
+handleaddclick :: Element -> Element -> Element -> UI ()
+handleaddclick input1 input2 output = do
+   polyStr1 <- get value input1
+   polyStr2 <- get value input2
+   let result1 = parsePolySimple polyStr1
+   let result2 = parsePolySimple polyStr2
+   case (result1, result2) of
+      (Left err, _) -> void $ element output # set UI.text ("Fehler: " ++ err)
+      (_, Left err) -> void $ element output # set UI.text ("Fehler: " ++ err)
+      (Right poly1, Right poly2) -> do
+         void $ element output # set UI.text ("Ergebnis: " ++ toLaTeX (add poly1 poly2))
