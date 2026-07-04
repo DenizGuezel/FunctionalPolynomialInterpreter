@@ -9,6 +9,9 @@ import qualified Control.Applicative as Strings
 
 Funktion, um die GUI zu starten. 
 
+GUI wird gestartet mit (nicht in /src starten):
+cabal run --builddir=D:\HochschuleRheinMain\4.Semester\FP\cabal-build-fpi
+
 -}
 
 main :: IO()
@@ -23,6 +26,11 @@ In diesem Fall ist es sinnvoll, um bestimmte Polynomfunktionen aus Poly.hs auszu
 
 putStrLn ist wie System.out.println("Hallo"), es geht nur für Strings.
 print ist wie System.out.println("Hallo"), es geht für alles, was eine Show-Instanz hat, also z.B deriving (Show, ...)
+
+Consolen-Demo wird gestartet mit:
+cabal repl exe:FunctionalPolynomialInterpreter --builddir=D:\HochschuleRheinMain\4.Semester\FP\cabal-build-fpi
+Dann im ghci:
+runConsolenDemo
 
 -}
 
