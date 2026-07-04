@@ -8,7 +8,7 @@ import Poly
 import ParserSimple
 import qualified Graphics.UI.Threepenny as Ui
 import qualified Control.Applicative as GUI
-
+import Data.IORef (IORef, newIORef, readIORef, writeIORef)
 -- Hier kommt die GUI-Logik rein, welche die Interaktion mit dem Benutzer steuert z.B mit Buttons, usw... --
 
 {- 
@@ -63,19 +63,27 @@ wenn der Button geklickt wird, vergleichbar mit einem ActionListener in Java.
 setup :: Window -> UI ()
 setup window = do
    void $ return window # set title "Polynom-Parser"   
-{- Hier können weitere GUI-Elemente hinzugefügt werden, z.B. Buttons, Textfelder, etc. -}
+   {- Hier können weitere GUI-Elemente hinzugefügt werden, z.B. Buttons, Textfelder, etc. -}
 
    headline <- UI.h1 # set UI.text "Functional Polynomial Parser"
 
-   input <- UI.input # set (attr "placeholder") "Polynom hinzufügen"
+   {- Eingabefelder: -}
 
+   input <- UI.input # set (attr "placeholder") "Polynom hinzufügen"
    inputX <- UI.input # set (attr "placeholder") "x-Wert"
 
+   {- Buttons: -}
    buttonnormalize <- UI.button # set UI.text "Normalisieren"
-
    buttonnegat <- UI.button # set UI.text "Negieren"
+   buttonadd <- UI.button # set UI.text "Addieren"
+   
+   {- Speicher für gespeicherte Polynome: -}
+   polyStore <- liftIO $ newIORef ([] :: [StoredPoly])
 
+   {- Ausgabebereiche: -}
    output <- UI.div # set UI.text ""
+   polyListOutput <- UI.div # set UI.text "Noch keine Polynome vorhanden."
+
 
    getBody window #+ [
 
@@ -88,6 +96,7 @@ setup window = do
       
       ] 
 
+   {- ActionListener auf die Buttons: -}
    on UI.click buttonnormalize (\_ -> handlenormalizeclick input output) 
    on UI.click buttonnegat (\_ -> handlenegatclick input output)
 {- 
@@ -132,6 +141,42 @@ handlenegatclick input output = do
       Left err ->  void $ element output # set UI.text ("Fehler: " ++ err)
       Right poly -> void $ element output # set UI.text ("Ergebnis: " ++ show (negat poly))
 
+{- 
 
-handleaddclick :: Element -> Element -> Element -> UI ()
-handleaddclick = --todo
+Diese Funktion wird aufgerufen, wenn der Button "Polynom hinzufügen" geklickt wird.
+
+Sie liest zuerst den Text aus dem Eingabefeld aus.
+
+Danach wird mit parsePolySimple versucht, aus diesem String ein echtes Polynom zu machen.
+
+Wenn das Parsen fehlschlägt, entsteht ein Left err und der Fehler wird in der Polynomliste angezeigt.
+
+Wenn das Parsen klappt, entsteht ein Right poly.
+Dann wird die bisher gespeicherte Polynomliste aus polyStore geholt.
+
+Anschließend erzeugen wir automatisch einen Namen, z.B. p1, p2, p3 usw.
+Dazu nehmen wir die Länge der bisherigen Liste und rechnen + 1.
+
+Dann wird aus dem Namen und dem Polynom ein StoredPoly gebaut.
+
+Dieses neue gespeicherte Polynom wird hinten an die bisherige Liste angehängt.
+Danach wird die neue Liste wieder in polyStore gespeichert.
+
+Am Ende wird die sichtbare Polynomliste in der GUI aktualisiert.
+
+-}
+
+handleaddpolyclick :: Element -> Element -> IORef [StoredPoly] -> UI ()
+handleaddpolyclick input polyListOutput polyStore = do
+   polyStr <- get value input
+   let result = parsePolySimple polyStr
+   case result of
+      Left err ->
+         void $ element polyListOutput # set UI.text ("Fehler: " ++ err)
+      Right poly -> do
+         storedPolys <- liftIO $ readIORef polyStore
+         let name = "p" ++ show (length storedPolys + 1)
+         let newPoly = StoredPoly name poly
+         let newStoredPolys = storedPolys ++ [newPoly]
+         liftIO $ writeIORef polyStore newStoredPolys
+         void $ element polyListOutput # set UI.text (showStoredPolys newStoredPolys)
