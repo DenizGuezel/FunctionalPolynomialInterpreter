@@ -7,6 +7,7 @@ import Control.Monad (void)
 import Poly
 import ParserSimple
 import qualified Graphics.UI.Threepenny as Ui
+import qualified Control.Applicative as GUI
 
 {- Hier kommt die GUI-Logik rein, welche die Interaktion mit dem Benutzer steuert z.B mit Buttons, usw... -}
 
@@ -42,7 +43,7 @@ danach mit # können wir Eigenschaften des Elements setzen, z.B. den Text, der a
 
 Mit getBody window bekommen wir den Body des Fensters, in dem wir die Elemente platzieren können.
 
-Mit on UI click button (\_ -> handleclick input output) definieren wir eine Funktion, die aufgerufen wird, 
+Mit on UI click ... definieren wir eine Funktion, die aufgerufen wird, 
 wenn der Button geklickt wird, vergleichbar mit einem ActionListener in Java.
 
 -}
@@ -54,37 +55,71 @@ setup window = do
 
    headline <- UI.h1 # set UI.text "Functional Polynomial Parser"
 
-   input <- UI.input # set (attr "placeholder") "Geben Sie ein Polynom ein"
+   input <- UI.input # set (attr "placeholder") "Polynom hinzufügen"
 
-   button <- UI.button # set UI.text "Parse"
+   inputX <- UI.input # set (attr "placeholder") "x-Wert"
+
+   buttonnormalize <- UI.button # set UI.text "Normalisieren"
+
+   buttonnegat <- UI.button # set UI.text "Negieren"
 
    output <- UI.div # set UI.text ""
 
-   getBody window #+ [element headline, element input, element button, element output] 
+   getBody window #+ [
 
-   on UI.click button (\_ -> handleclick input output) 
+      element headline, 
+      element input, 
+      element inputX, 
+      element buttonnormalize, 
+      element buttonnegat, 
+      element output
+      
+      ] 
 
-
+   on UI.click buttonnormalize (\_ -> handlenormalizeclick input output) 
+   on UI.click buttonnegat (\_ -> handlenegatclick input output)
 {- 
 
-Funktion, die aufgerufen wird, wenn der Button geklickt wird.
-Sie bekommt das Eingabefeld und den Ausgabebereich übergeben, um das Ergebnis des Parsens anzuzeigen.
+Diese Funktion dient zur Veranschaulichung des normalisierten Polynoms in der GUI.
+
+die Funktion wird aufgerufen, wenn der Button geklickt wird.
+Sie bekommt das Eingabefeld (String) und den Ausgabebereich (wenn Parsen fehlschlägt ein Fehler, 
+ansonsten das normalisierte Polynom) übergeben, um das Ergebnis des Parsens anzuzeigen.
 
 polyStr <- get value input liest den Wert aus dem Eingabefeld aus und speichert ihn in polyStr.
 
-Dann wird parsePolySimple auf polyStr ausgeführt, um das Polynom zu parsen.
-Wenn das Ergebnis ein Fehler ist (Left err), wird der Fehler im Ausgabebereich angezeigt.
-Wenn das Ergebnis ein gültiges Polynom ist (Right poly), wird das Polynom im Ausgabebereich angezeigt.
+Dann wird parsePolySimple auf polyStr ausgeführt, um das Polynom zu parsen und das Parsergebnis wird in "result" abgespeichert.
+Wenn das Parsergebnis ein Fehler ist (Left err), wird der Fehler im Ausgabebereich angezeigt.
+Wenn das Parsergebnis ein gültiges Polynom ist (Right poly), wird das Polynom im Ausgabebereich normalisiert angezeigt.
 
 Mit void $ sagen wir, dass wir den Rückgabewert der Funktion ignorieren. Das machen wir weil 
 set UI.text einen Ui.Element zurückgibt, den wir hier aber nicht benötigen.
 
 -}
 
-handleclick :: Element -> Element -> UI ()
-handleclick input output = do
+handlenormalizeclick :: Element -> Element -> UI ()
+handlenormalizeclick input output = do
+   polyStr <- get value input
+   let result = parsePolySimple polyStr 
+   case result of
+      Left err ->  void $ element output # set UI.text ("Fehler: " ++ err)
+      Right poly -> void $ element output # set UI.text ("Ergebnis: " ++ show (normalize poly))
+
+{- 
+
+Diese Funktion dient zur Veranschaulichung eines negierten Polynoms in der GUI.
+Gleiche Logik wie bei handlenormalizeclick, nur dass hier die Funktion negat aufgerufen wird, um das Polynom zu negieren.
+
+-}
+
+handlenegatclick :: Element -> Element -> UI ()
+handlenegatclick input output = do
    polyStr <- get value input
    let result = parsePolySimple polyStr
    case result of
       Left err ->  void $ element output # set UI.text ("Fehler: " ++ err)
-      Right poly -> void $ element output # set UI.text ("Ergebnis: " ++ show poly)
+      Right poly -> void $ element output # set UI.text ("Ergebnis: " ++ show (negat poly))
+
+
+handleaddclick :: Element -> Element -> Element -> UI ()
+handleaddclick = --todo
