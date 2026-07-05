@@ -197,6 +197,7 @@ setup window = do
 
    on UI.click buttonnormalize (\_ -> handlenormalizeclick input resultStore output) 
    on UI.click buttonnegat (\_ -> handlenegatclick input resultStore output)
+   on UI.click buttonaddpoly (\_ -> handleaddpolyclick input polyListOutput polyStore)
    on UI.click buttonadd (\_ -> handleaddclick polyStore resultStore output)
    on UI.click buttonsub (\_ -> handlesubclick polyStore resultStore output)
    on UI.click buttonmult (\_ -> handlemultclick polyStore resultStore output)
