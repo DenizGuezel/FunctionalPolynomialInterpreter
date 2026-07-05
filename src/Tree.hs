@@ -42,3 +42,31 @@ monomToExprTree (M 0 e) = TConst 0
 monomToExprTree (M k e) = TMul (TConst k) (TVar e)
 
 
+{-
+
+Diese Funktion soll ein Polynom in einen Ausdrucksbaum umwandeln.
+Sie bekommt als Eingabe ein Polynom, z.B. P [M 3 2, M 2 1, M 1 0] und gibt als Ausgabe einen Ausdrucksbaum zurück, 
+z.B. TAdd (TAdd (TMul (TConst (3 % 1)) (TVar 2)) (TMul (TConst (2 % 1)) (TVar 1))) (TConst (1 % 1)).
+
+Ebenfalls mithilfe von Pattern matching wird das Polynom in seine Bestandteile zerlegt, nämlich die Liste der Monome.
+
+-}
+
+polyToExprTree :: Poly -> ExprTree
+polyToExprTree (P []) = TConst 0
+polyToExprTree (P [m]) = monomToExprTree m
+polyToExprTree (P (m:ms)) = TAdd (monomToExprTree m) (polyToExprTree (P ms))
+
+
+{- 
+
+Hauptfunktion, die einen Ausdrucksbaum in einen String umwandelt, 
+der den Ausdruck in einer lesbaren Form darstellt.
+
+-}
+
+prettyPrintExprTree :: ExprTree -> String 
+prettyPrintExprTree tree = prettyPrintExprTreeRec tree 0
+
+
+
