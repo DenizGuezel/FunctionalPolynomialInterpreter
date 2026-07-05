@@ -77,14 +77,14 @@ setup window = do
    buttonnegat <- UI.button # set UI.text "Negieren"
    buttonaddpoly <- UI.button # set UI.text "Polynom hinzufügen"
    buttonadd <- UI.button # set UI.text "Addieren"
-
+   buttonsub <- UI.button # set UI.text "Subtrahieren"
 
    {- Speicher für gespeicherte Polynome: -}
    polyStore <- liftIO $ newIORef ([] :: [StoredPoly])
 
    {- Ausgabebereiche: -}
    output <- UI.div # set UI.text ""
-   polyListOutput <- UI.div # set UI.text "Noch keine Polynome vorhanden."
+   polyListOutput <- UI.pre # set UI.text "Noch keine Polynome vorhanden."
 
 
    getBody window #+ [
@@ -96,6 +96,7 @@ setup window = do
       element buttonnegat, 
       element buttonaddpoly,
       element buttonadd,
+      element buttonsub,
       element polyListOutput,
       element output
       
@@ -105,7 +106,8 @@ setup window = do
    on UI.click buttonnormalize (\_ -> handlenormalizeclick input output) 
    on UI.click buttonnegat (\_ -> handlenegatclick input output)
    on UI.click buttonaddpoly (\_ -> handleaddpolyclick input polyListOutput polyStore)
-
+   on UI.click buttonadd (\_ -> handleaddclick polyStore output)
+   on UI.click buttonsub (\_ -> handlesubclick polyStore output)
 {- 
 
 Diese Funktion dient zur Veranschaulichung des normalisierten Polynoms in der GUI.
@@ -171,6 +173,9 @@ Danach wird die neue Liste wieder in polyStore gespeichert.
 
 Am Ende wird die sichtbare Polynomliste in der GUI aktualisiert.
 
+Es wird ein Polynom im folgenden Format zum hinzufügen eingegeben: "3 2; 2 1; 1 0" (Koeffizient Exponent; Koeffizient Exponent; Koeffizient Exponent)
+Es wird ein Name automatisch generiert, z.B. p1, p2, p3 usw. und das Polynom wird in der GUI angezeigt (z.B. p1 = 3x^2 + 2x + 1).
+
 -}
 
 handleaddpolyclick :: Element -> Element -> IORef [StoredPoly] -> UI ()
@@ -195,35 +200,72 @@ damit wir sie erstmal einfach in der GUI anzeigen können.
 
 Wenn die Liste leer ist, wird angezeigt, dass noch keine Polynome vorhanden sind.
 
-Wenn mindestens ein StoredPoly vorhanden ist, wird der Name und das Polynom angezeigt.
-Danach wird die Funktion rekursiv für den Rest der Liste aufgerufen.
+Wenn mindestens ein StoredPoly vorhanden ist (mindestens ein Element in der Liste, z.b. [StoredPoly "p1" poly1]),
+wird die Hilfsfunktion showStoredPolysRec aufgerufen.
+
 
 -}
 
 showStoredPolys :: [StoredPoly] -> String
 showStoredPolys [] = "Noch keine Polynome vorhanden."
-showStoredPolys (StoredPoly name poly : rest) =
-   name ++ " = " ++ toLaTeX poly ++ "\n" ++ showStoredPolys rest
+showStoredPolys xs = showStoredPolysRec xs
+
+{- 
+
+Die Hilfsfunktion showStoredPolysRec wird rekursiv aufgerufen, um die gespeicherten Polynome in einen String umzuwandeln.
+
+Falls die übergebene Liste leer ist, wird ein leerer String zurückgegeben.
+Ansonsten wird das erste StoredPoly aus der Liste genommen und in einen String umgewandelt, 
+den wir dann mit dem Ergebnis der rekursiven Aufrufe auf den Rest der Liste verketten.
+
+-}
+
+showStoredPolysRec :: [StoredPoly] -> String
+showStoredPolysRec [] = ""
+showStoredPolysRec (StoredPoly name poly : rest) = name ++ " = " ++ toLaTeX poly ++ "\n" ++ showStoredPolysRec rest
 
 {- 
 
 Diese Funktion dient zur Veranschaulichung der Addition von zwei Polynomen in der GUI. (Professionellere Version kommt später, 
 da wir die checkboxen und Listenaktualisierung noch brauchen)
 
-Wir lesen beide Eingabefelder aus, parsen die Polynome und prüfen, ob das Parsen erfolgreich war.
-Wenn das Parsen bei einem der Polynome fehlschlägt, wird der Fehler im Ausgabebereich angezeigt.
-Wenn das Parsen bei beiden Polynomen erfolgreich war, wird die Addition durchgeführt und das Ergebnis im Ausgabebereich angezeigt.
+Wir erstellen storedPolys, um die gespeicherten Polynome aus polyStore zu lesen.
+
+Es entstehen drei Fälle, beim Lesen der gespeicherten Polynome:
+Fall 1: Es sind mindestens zwei Polynome gespeichert, dann können wir die Addition durchführen.
+Fall 2: Es sind keine Polynome gespeichert, dann wird eine Fehlermeldung angezeigt.
+Fall 3: Es ist nur ein Polynom gespeichert, dann wird ebenfalls eine Fehlermeldung angezeigt.
 
 -}
 
-handleaddclick :: Element -> Element -> Element -> UI ()
-handleaddclick input1 input2 output = do
-   polyStr1 <- get value input1
-   polyStr2 <- get value input2
-   let result1 = parsePolySimple polyStr1
-   let result2 = parsePolySimple polyStr2
-   case (result1, result2) of
-      (Left err, _) -> void $ element output # set UI.text ("Fehler: " ++ err)
-      (_, Left err) -> void $ element output # set UI.text ("Fehler: " ++ err)
-      (Right poly1, Right poly2) -> do
+handleaddclick :: IORef [StoredPoly] -> Element -> UI ()
+handleaddclick polyStore output = do
+   storedPolys <- liftIO $ readIORef polyStore
+   case storedPolys of
+      (StoredPoly name1 poly1 : StoredPoly name2 poly2 : rest) -> do
          void $ element output # set UI.text ("Ergebnis: " ++ toLaTeX (add poly1 poly2))
+
+      [] -> void $ element output # set UI.text "Fehler: Addieren benötigt zwei Polynome. Es wurde noch kein Polynom gespeichert." 
+
+      [StoredPoly name1 poly1] -> void $ element output # set UI.text "Fehler: Addieren benötigt zwei Polynome. Es wurde nur ein Polynom gespeichert."
+
+{- 
+
+Diese Funktion dient zur Veranschaulichung der Subtraktion von zwei Polynomen in der GUI.
+
+Funktionier genau wie handleaddclick, nur dass hier die Funktion sub aufgerufen wird, um die Subtraktion durchzuführen.
+
+-}
+
+handlesubclick :: IORef [StoredPoly] -> Element -> UI ()
+handlesubclick polyStore output = do
+   storedPolys <- liftIO $ readIORef polyStore
+   case storedPolys of
+      (StoredPoly name1 poly1 : StoredPoly name2 poly2 : rest) -> do
+         void $ element output # set UI.text ("Ergebnis: " ++ toLaTeX (sub poly1 poly2))
+
+      [] -> void $ element output # set UI.text "Fehler: Subtrahieren benötigt zwei Polynome. Es wurde noch kein Polynom gespeichert."
+
+      [StoredPoly name1 poly1] -> void $ element output # set UI.text "Fehler: Subtrahieren benötigt zwei Polynome. Es wurde nur ein Polynom gespeichert."
+
+
