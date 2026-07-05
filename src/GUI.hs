@@ -82,6 +82,7 @@ setup window = do
    buttonmult <- UI.button # set UI.text "Multiplizieren"
    buttonderivation <- UI.button # set UI.text "Ableiten"
    buttonevaluate <- UI.button # set UI.text "Auswerten"
+   buttondiv <- UI.button # set UI.text "Dividieren"
 
    {- Speicher für gespeicherte Polynome: -}
    polyStore <- liftIO $ newIORef ([] :: [StoredPoly])
@@ -104,6 +105,7 @@ setup window = do
       element buttonmult,
       element buttonderivation,
       element buttonevaluate,
+      element buttondiv,
       element polyListOutput,
       element output
       
@@ -118,6 +120,7 @@ setup window = do
    on UI.click buttonmult (\_ -> handlemultclick polyStore output)
    on UI.click buttonderivation (\_ -> handlederivationclick polyStore output)
    on UI.click buttonevaluate (\_ -> handleevaluateclick polyStore inputX output)
+   on UI.click buttondiv (\_ -> handledivclick polyStore output)
    
 {- 
 
@@ -370,3 +373,28 @@ handleevaluateclick polyStore input output = do
             [StoredPoly name1 poly1] -> void $ element output # set UI.text ("Ergebnis: " ++ show (evaluate poly1 x))
             [] -> void $ element output # set UI.text "Fehler: Auswerten benötigt ein Polynom. Es wurde noch kein Polynom gespeichert."
             other -> void $ element output # set UI.text ("Fehler: Auswerten benötigt ein Polynom. Es wurde/n aber " ++ show (length other) ++ " Polynom/e gespeichert.")
+
+{- 
+
+Diese Funktion dient zur Veranschaulichung der Division von zwei Polynomen in der GUI.
+
+Wird im Grunde genau so wie die Addition, Subtraktion und Multiplikation gehandhabt, 
+nur dass wir hier die toLaTeX Funktion nicht auf ein (Poly,Poly) anwenden können und 
+wir daher die Division in zwei Teile aufteilen müssen, nämlich den Quotienten und den Rest.
+Somit können wir die Division von zwei Polynomen in der GUI sauber darstellen, indem wir den Quotienten und den Rest getrennt anzeigen.
+
+-}
+
+handledivclick :: IORef [StoredPoly] -> Element -> UI ()
+handledivclick polyStore output = do
+   storedPolys <- liftIO $ readIORef polyStore
+   case storedPolys of 
+      
+      [StoredPoly name1 poly1, StoredPoly name2 poly2] -> 
+         
+         let (quotient, rest) = (/%) poly1 poly2 in
+         void $ element output # set UI.text ("Ergebnis: " ++ name1 ++ " / " ++ name2 ++ " = " ++ toLaTeX quotient ++ ", Rest: " ++ toLaTeX rest)
+
+      [] -> void $ element output # set UI.text "Fehler: Dividieren benötigt zwei Polynome. Es wurde noch kein Polynom gespeichert."
+
+      other -> void $ element output # set UI.text ("Fehler: Dividieren benötigt zwei Polynome. Es wurde/n aber " ++ show (length other) ++ " Polynom/e gespeichert.")
