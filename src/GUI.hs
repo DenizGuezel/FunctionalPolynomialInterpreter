@@ -13,7 +13,7 @@ import Poly
 import ParserSimple
 import Tree
 
--- Hier kommt die GUI-Logik rein, welche die Interaktion mit dem Benutzer steuert z.B mit Buttons, usw... --
+{- Hier kommt die GUI-Logik rein, welche die Interaktion mit dem Benutzer steuert z.B mit Buttons, usw... -}
 
 {- 
 
