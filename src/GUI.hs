@@ -73,7 +73,22 @@ setup window = do
    void $ return window # set title "Polynom-Parser"   
    {- Hier können weitere GUI-Elemente hinzugefügt werden, z.B. Buttons, Textfelder, etc. -}
 
-   headline <- UI.h1 # set UI.text "Functional Polynomial Parser" # set UI.class_ "app-title"
+   void $ getHead window #+ [ 
+      UI.link # set UI.rel "stylesheet"
+              # set UI.href "static/style.css"
+      ]
+
+   lambdaLogo <- UI.div
+      # set UI.text "λ"
+      # set UI.class_ "lambda-logo"
+
+   headline <- UI.h1
+      # set UI.text "Functional Polynomial Interpreter"
+      # set UI.class_ "app-title"
+
+   header <- UI.div
+      # set UI.class_ "header"
+      #+ [element lambdaLogo, element headline]
 
    {- Eingabefelder: -}
 
@@ -81,31 +96,59 @@ setup window = do
    inputX <- UI.input # set (attr "placeholder") "x-Wert"
 
    {- Buttons: -}
-   buttonnormalize <- UI.button # set UI.text "Normalisieren" # set UI.class_ "operation-button"
-   buttonnegat <- UI.button # set UI.text "Negieren" # set UI.class_ "operation-button"
-   buttonaddpoly <- UI.button # set UI.text "Polynom hinzufügen" # set UI.class_ "operation-button"
-   buttonadd <- UI.button # set UI.text "Addieren" # set UI.class_ "operation-button"
-   buttonsub <- UI.button # set UI.text "Subtrahieren" # set UI.class_ "operation-button"
-   buttonmult <- UI.button # set UI.text "Multiplizieren" # set UI.class_ "operation-button"
-   buttonderivation <- UI.button # set UI.text "Ableiten" # set UI.class_ "operation-button"
-   buttonevaluate <- UI.button # set UI.text "Auswerten" # set UI.class_ "operation-button"
-   buttondiv <- UI.button # set UI.text "Dividieren" # set UI.class_ "operation-button"
+
+   buttonnormalize <- UI.button
+      # set UI.html "<span class='button-symbol'>N</span><span>Normalisieren</span>"
+      # set UI.class_ "operation-button"
+
+   buttonnegat <- UI.button
+      # set UI.html "<span class='button-symbol'>−p</span><span>Negieren</span>"
+      # set UI.class_ "operation-button"
+
+   buttonaddpoly <- UI.button
+      # set UI.html "<span class='button-symbol'>+</span><span>Polynom hinzufügen</span>"
+      # set UI.class_ "operation-button"
+
+   buttonadd <- UI.button
+      # set UI.html "<span class='button-symbol'>+</span><span>Addieren</span>"
+      # set UI.class_ "operation-button"
+
+   buttonsub <- UI.button
+      # set UI.html "<span class='button-symbol'>−</span><span>Subtrahieren</span>"
+      # set UI.class_ "operation-button"
+
+   buttonmult <- UI.button
+      # set UI.html "<span class='button-symbol'>×</span><span>Multiplizieren</span>"
+      # set UI.class_ "operation-button"
+
+   buttonderivation <- UI.button
+      # set UI.html "<span class='button-symbol'>d/dx</span><span>Ableiten</span>"
+      # set UI.class_ "operation-button"
+
+   buttonevaluate <- UI.button
+      # set UI.html "<span class='button-symbol'>f(x)</span><span>Auswerten</span>"
+      # set UI.class_ "operation-button"
+
+   buttondiv <- UI.button
+      # set UI.html "<span class='button-symbol'>÷</span><span>Dividieren</span>"
+      # set UI.class_ "operation-button"
 
    {- Speicher für gespeicherte Polynome: -}
+
    polyStore <- liftIO $ newIORef ([] :: [StoredPoly])
 
    {- Ausgabebereiche: -}
+
    output <- UI.div # set UI.text ""
    polyListOutput <- UI.pre # set UI.text "Noch keine Polynome vorhanden."
 
-
    getBody window #+ [
 
-      element headline, 
-      element input, 
-      element inputX, 
-      element buttonnormalize, 
-      element buttonnegat, 
+      element header,
+      element input,
+      element inputX,
+      element buttonnormalize,
+      element buttonnegat,
       element buttonaddpoly,
       element buttonadd,
       element buttonsub,
@@ -118,15 +161,8 @@ setup window = do
       
       ] 
 
-
-   void $ getHead window #+ [ 
-
-      UI.link # set UI.rel "stylesheet"
-       # set UI.href "static/style.css"
-
-    ]
-
    {- ActionListener auf die Buttons: -}
+
    on UI.click buttonnormalize (\_ -> handlenormalizeclick input output) 
    on UI.click buttonnegat (\_ -> handlenegatclick input output)
    on UI.click buttonaddpoly (\_ -> handleaddpolyclick input polyListOutput polyStore)
@@ -136,7 +172,7 @@ setup window = do
    on UI.click buttonderivation (\_ -> handlederivationclick polyStore output)
    on UI.click buttonevaluate (\_ -> handleevaluateclick polyStore inputX output)
    on UI.click buttondiv (\_ -> handledivclick polyStore output)
-
+   
 {- 
 
 Diese Funktion dient zur Veranschaulichung des normalisierten Polynoms in der GUI.
