@@ -1,0 +1,33 @@
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #f7f9fb;
+  color: #0f172a;
+}
+
+.app-title {
+  font-size: 32px;
+  font-weight: 700;
+}
+
+.panel {
+  background: white;
+  border: 1px solid #d7dee8;
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.operation-button {
+  width: 110px;
+  height: 76px;
+  border: 1px solid #cfd8e3;
+  border-radius: 6px;
+  background: white;
+  color: #073f4a;
+  font-weight: 600;
+}
+
+.operation-button:hover {
+  background: #eefafa;
+  border-color: #0b7784;
+}

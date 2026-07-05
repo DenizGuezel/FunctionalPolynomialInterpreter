@@ -32,7 +32,7 @@ Diese Funktion startet Threepenny mit Standardkonfiguration und benutzt dabei se
 -}
 
 runGUI :: IO () 
-runGUI = do startGUI defaultConfig setup
+runGUI = startGUI defaultConfig { jsStatic = Just "static" } setup
 
 {-
 
@@ -41,8 +41,6 @@ Sie bekommt ein Window übergeben, in dem sie die GUI-Elemente platzieren kann.
 
 Threepenny nutzt im Hintergrund HTML und CSS, z.B. um Buttons, Textfelder, etc. darzustellen.
 z.B ist UI.button ein Button gleich zu <button> </button> in HTML.
-
-Externe CSS können wir erstellen und anbinden, um das Aussehen der GUI zu verändern.
 
 Mit void $ return window # set title "Polynom-Parser" setzen wir den Fenstertitel.
 
@@ -59,6 +57,15 @@ Mit getBody window bekommen wir den Body des Fensters, in dem wir die Elemente p
 Mit on UI click ... definieren wir eine Funktion, die aufgerufen wird, 
 wenn der Button geklickt wird, vergleichbar mit einem ActionListener in Java.
 
+Externe CSS können wir erstellen und anbinden, um das Aussehen der GUI zu verändern.
+Das Anbinden tuhen wir in void $ getHead window #+ [ UI.link # set UI.rel "stylesheet" # set UI.href "static/style.css" ]
+getHead ist der Head des Fensters, in dem wir die CSS-Datei einbinden können, vergleichbar mit <head> </head> in HTMl.
+Ui.link ist dann ein <link> Tag, der innerhalb des <head> Tags platziert wird, um die CSS-Datei einzubinden.
+UI.link # set UI.rel "stylesheet" ist gleich zu <link rel="stylesheet" href="static/style.css"> in HTML.
+
+Da wir eine externe CSS-Datei einbinden, und dort .<Klassenname> definieren, können wir sie hier hinter den Elementen 
+mit # set UI.class_ "<Klassenname>" ansprechen, um das Aussehen der Elemente zu verändern.
+
 -}
 
 setup :: Window -> UI ()
@@ -66,7 +73,7 @@ setup window = do
    void $ return window # set title "Polynom-Parser"   
    {- Hier können weitere GUI-Elemente hinzugefügt werden, z.B. Buttons, Textfelder, etc. -}
 
-   headline <- UI.h1 # set UI.text "Functional Polynomial Parser"
+   headline <- UI.h1 # set UI.text "Functional Polynomial Parser" # set UI.class_ "app-title"
 
    {- Eingabefelder: -}
 
@@ -74,15 +81,15 @@ setup window = do
    inputX <- UI.input # set (attr "placeholder") "x-Wert"
 
    {- Buttons: -}
-   buttonnormalize <- UI.button # set UI.text "Normalisieren"
-   buttonnegat <- UI.button # set UI.text "Negieren"
-   buttonaddpoly <- UI.button # set UI.text "Polynom hinzufügen"
-   buttonadd <- UI.button # set UI.text "Addieren"
-   buttonsub <- UI.button # set UI.text "Subtrahieren"
-   buttonmult <- UI.button # set UI.text "Multiplizieren"
-   buttonderivation <- UI.button # set UI.text "Ableiten"
-   buttonevaluate <- UI.button # set UI.text "Auswerten"
-   buttondiv <- UI.button # set UI.text "Dividieren"
+   buttonnormalize <- UI.button # set UI.text "Normalisieren" # set UI.class_ "operation-button"
+   buttonnegat <- UI.button # set UI.text "Negieren" # set UI.class_ "operation-button"
+   buttonaddpoly <- UI.button # set UI.text "Polynom hinzufügen" # set UI.class_ "operation-button"
+   buttonadd <- UI.button # set UI.text "Addieren" # set UI.class_ "operation-button"
+   buttonsub <- UI.button # set UI.text "Subtrahieren" # set UI.class_ "operation-button"
+   buttonmult <- UI.button # set UI.text "Multiplizieren" # set UI.class_ "operation-button"
+   buttonderivation <- UI.button # set UI.text "Ableiten" # set UI.class_ "operation-button"
+   buttonevaluate <- UI.button # set UI.text "Auswerten" # set UI.class_ "operation-button"
+   buttondiv <- UI.button # set UI.text "Dividieren" # set UI.class_ "operation-button"
 
    {- Speicher für gespeicherte Polynome: -}
    polyStore <- liftIO $ newIORef ([] :: [StoredPoly])
@@ -111,6 +118,14 @@ setup window = do
       
       ] 
 
+
+   void $ getHead window #+ [ 
+
+      UI.link # set UI.rel "stylesheet"
+       # set UI.href "static/style.css"
+
+    ]
+
    {- ActionListener auf die Buttons: -}
    on UI.click buttonnormalize (\_ -> handlenormalizeclick input output) 
    on UI.click buttonnegat (\_ -> handlenegatclick input output)
@@ -121,7 +136,7 @@ setup window = do
    on UI.click buttonderivation (\_ -> handlederivationclick polyStore output)
    on UI.click buttonevaluate (\_ -> handleevaluateclick polyStore inputX output)
    on UI.click buttondiv (\_ -> handledivclick polyStore output)
-   
+
 {- 
 
 Diese Funktion dient zur Veranschaulichung des normalisierten Polynoms in der GUI.
