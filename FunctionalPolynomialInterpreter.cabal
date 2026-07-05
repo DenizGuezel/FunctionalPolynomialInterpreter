@@ -67,6 +67,7 @@ library
     exposed-modules:
         Poly
         ParserSimple
+        Tree
         GUI
 
     -- Modules included in this library but not exported.

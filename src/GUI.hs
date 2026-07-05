@@ -3,14 +3,16 @@ module GUI where
 import Graphics.UI.Threepenny.Core
 import qualified Graphics.UI.Threepenny as UI
 import Control.Monad (void)
-
-import Poly
-import ParserSimple
 import qualified Graphics.UI.Threepenny as Ui
 import qualified Control.Applicative as GUI
 import Data.IORef (IORef, newIORef, readIORef, writeIORef)
 import Text.Read (readMaybe)
 import Data.Ratio (numerator, denominator)
+
+import Poly
+import ParserSimple
+import Tree
+
 -- Hier kommt die GUI-Logik rein, welche die Interaktion mit dem Benutzer steuert z.B mit Buttons, usw... --
 
 {- 
@@ -162,6 +164,10 @@ setup window = do
       # set UI.html "<span class='button-symbol'>TeX</span><span>LaTeX</span>"
       # set UI.class_ "view-button"
 
+   buttontree <- UI.button
+      # set UI.html "<span class='button-symbol'>🌳</span><span>Baum</span>"
+      # set UI.class_ "view-button"
+
    {- Speicher: -}
 
    polyStore <- liftIO $ newIORef ([] :: [StoredPoly]) --Für die Speicherung der Polynome
@@ -169,7 +175,7 @@ setup window = do
 
    {- Ausgabebereiche: -}
 
-   output <- UI.div # set UI.text ""
+   output <- UI.pre # set UI.text ""
    polyListOutput <- UI.pre # set UI.text "Noch keine Polynome vorhanden."
 
    getBody window #+ [
@@ -188,6 +194,7 @@ setup window = do
       element buttondiv,
       element buttonshowresult,
       element buttonshowlatex,
+      element buttontree,
       element polyListOutput,
       element output
       
@@ -209,7 +216,7 @@ setup window = do
 
    on UI.click buttonshowresult (\_ -> handleshowresultclick resultStore output)
    on UI.click buttonshowlatex (\_ -> handlelatexclick resultStore output)
-   
+   on UI.click buttontree (\_ -> handletreeclick resultStore output)
 
 {- 
 
@@ -528,7 +535,7 @@ handleevaluateclick polyStore input resultStore output = do
             [StoredPoly name1 poly1] -> do
                let resultValue = evaluate poly1 x
                liftIO $ writeIORef resultStore (ValueResult (name1 ++ "(" ++ show x ++ ")") resultValue)
-               void $ element output # set UI.text ("Ergebnis: " ++ toPrettyMathRational resultValue)
+               void $ element output # set UI.text ("Ergebnis: " ++ prettyRational resultValue)
 
             [] -> void $ element output # set UI.text "Fehler: Auswerten benötigt ein Polynom. Es wurde noch kein Polynom gespeichert."
 
@@ -622,7 +629,7 @@ handleshowresultclick resultStore output = do
 
       ValueResult name value ->
          void $ element output # set UI.text
-            ("Ergebnis von " ++ name ++ ": " ++ toPrettyMathRational value)
+            ("Ergebnis von " ++ name ++ ": " ++ prettyRational value)
 
       DivResult name quotient rest ->
          void $ element output # set UI.text
@@ -647,16 +654,17 @@ Genau so geht es weiter, bis die kleinste Einheit, nämlich die Koeffizienten un
 toPrettyMathPoly :: Poly -> String
 toPrettyMathPoly p = prettyPoly (normalize p)
 
+{- Wandelt ein Polynom in eine saubere mathematische Form um-}
 prettyPoly :: Poly -> String
 prettyPoly (P []) = "0"
-
 prettyPoly (P (m:ms)) = prettyMonomFirst m ++ prettyMonomRest ms
 
+{- Wandelt eine Monomliste in eine saubere mathematische Form um -}
 prettyMonomRest :: [Monom] -> String
 prettyMonomRest [] = ""
-
 prettyMonomRest (m:ms) = prettyMonomWithSign m ++ prettyMonomRest ms
 
+{- - Wandelt ein Monom in eine saubere mathematische Form um inklusive der Vorzeichen-}
 prettyMonomWithSign :: Monom -> String
 prettyMonomWithSign (M k e)
    | k >= 0 =
@@ -664,6 +672,7 @@ prettyMonomWithSign (M k e)
    | otherwise =
       " - " ++ prettyMonom (M (-k) e)
 
+{- Wandelt das erste Monom in eine saubere mathematische Form um, ohne Vorzeichen davor -}
 prettyMonomFirst :: Monom -> String
 prettyMonomFirst (M k e)
    | k < 0 =
@@ -671,31 +680,47 @@ prettyMonomFirst (M k e)
    | otherwise =
       prettyMonom (M k e)
 
+{- Wandelt ein komplettes Monom in eine saubere mathematische Form um -}
 prettyMonom :: Monom -> String
-prettyMonom (M k 0) = toPrettyMathRational k
-
+prettyMonom (M k 0) = prettyRational k
 prettyMonom (M k 1)
    | k == 1 =
       "x"
    | otherwise =
-      toPrettyMathRational k ++ "x"
-
+      prettyRational k ++ "x"
 prettyMonom (M k e)
    | k == 1 =
       "x" ++ prettyExponent e
    | otherwise =
-      toPrettyMathRational k ++ "x" ++ prettyExponent e
+      prettyRational k ++ "x" ++ prettyExponent e
 
-toPrettyMathRational :: Rational -> String
-toPrettyMathRational r
-   | denominator r == 1 =
-      show (numerator r)
-   | otherwise =
-      show (numerator r) ++ "/" ++ show (denominator r)
+{- 
 
-prettyExponent :: Int -> String
-prettyExponent 0 = ""
-prettyExponent 1 = ""
-prettyExponent 2 = "²"
-prettyExponent 3 = "³"
-prettyExponent e = "^" ++ show e
+Diese Funktion wird aufgerufen, wenn der Button "Baum" geklickt wird.
+Sie dient dazu, das Ergebnis einer Berechnung in Form eines Baumes anzuzeigen.
+
+Die Funktion bekommt die aktuellen Ergebnisse aus resultStore und den Ausgabebereich output übergeben.
+Danach wird geprüft, ob es ein Ergebnis gibt oder nicht, indem das Ergebnis auf vier Fälle überprüft wird.
+
+Fall 1: Es gibt kein Ergebnis, dann wird eine Fehlermeldung angezeigt.
+Fall 2: Das Ergebnis ist ein Polynom, dann wird das Polynom in einen Baum umgewandelt und angezeigt.
+Fall 3: Das Ergebnis ist ein Wert, dann wird der Wert in einen Baum umgewandelt und angezeigt.
+Fall 4: Das Ergebnis ist eine Division von zwei Polynomen, dann wird der Quotient und der Rest in einen Baum umgewandelt und angezeigt.
+
+-}
+
+handletreeclick :: IORef GuiResult -> Element -> UI ()
+handletreeclick resultStore output = do
+   result <- liftIO $ readIORef resultStore
+   case result of
+      NoResult -> void $ element output # set UI.text "Fehler: Es wurde noch kein Ergebnis berechnet."
+      PolyResult name poly -> do
+         let tree = polyToExprTree poly
+         void $ element output # set UI.text ("Baum von " ++ name ++ ":\n" ++ prettyTree tree)
+      ValueResult name value -> do
+         let tree = TConst value
+         void $ element output # set UI.text ("Baum von " ++ name ++ ":\n" ++ prettyTree tree)
+      DivResult name quotient rest -> do
+         let treequotient = polyToExprTree quotient
+         let treerest = polyToExprTree rest
+         void $ element output # set UI.text ("Baum von " ++ name ++ ":\nQuotient:\n" ++ prettyTree treequotient ++ "\nRest:\n" ++ prettyTree treerest)

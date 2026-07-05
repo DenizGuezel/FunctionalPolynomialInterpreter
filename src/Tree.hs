@@ -1,8 +1,8 @@
 module Tree where
 
 import Poly
-import GUI
 import ParserSimple
+import Data.Ratio (numerator, denominator)
 
 {- Hier kommt die Logik für den Ausdrucksbaum rein: -}
 
