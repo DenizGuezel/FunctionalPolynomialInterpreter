@@ -269,3 +269,22 @@ handlesubclick polyStore output = do
       [StoredPoly name1 poly1] -> void $ element output # set UI.text "Fehler: Subtrahieren benötigt zwei Polynome. Es wurde nur ein Polynom gespeichert."
 
 
+{- 
+
+Diese Funktion dient zur Veranschaulichung der Multiplikation von zwei Polynomen in der GUI.
+
+Funktionier genau wie handleaddclick, nur dass hier die Funktion mult aufgerufen wird, um die Multiplikation durchzuführen.
+
+-}
+
+handlemultclick :: IORef [StoredPoly] -> Element -> UI ()
+handlemultclick polyStore output = do
+   storedPolys <- liftIO $ readIORef polyStore
+   case storedPolys of
+      (StoredPoly name1 poly1 : StoredPoly name2 poly2 : rest) -> do
+         void $ element output # set UI.text ("Ergebnis: " ++ toLaTeX (mult poly1 poly2))
+
+      [] -> void $ element output # set UI.text "Fehler: Multiplizieren benötigt zwei Polynome. Es wurde noch kein Polynom gespeichert."
+
+      [StoredPoly name1 poly1] -> void $ element output # set UI.text "Fehler: Multiplizieren benötigt zwei Polynome. Es wurde nur ein Polynom gespeichert."
+
