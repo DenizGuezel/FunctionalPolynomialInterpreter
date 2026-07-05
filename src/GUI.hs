@@ -78,6 +78,8 @@ setup window = do
    buttonaddpoly <- UI.button # set UI.text "Polynom hinzufügen"
    buttonadd <- UI.button # set UI.text "Addieren"
    buttonsub <- UI.button # set UI.text "Subtrahieren"
+   buttonmult <- UI.button # set UI.text "Multiplizieren"
+   buttonderivation <- UI.button # set UI.text "Ableiten"
 
    {- Speicher für gespeicherte Polynome: -}
    polyStore <- liftIO $ newIORef ([] :: [StoredPoly])
@@ -97,6 +99,8 @@ setup window = do
       element buttonaddpoly,
       element buttonadd,
       element buttonsub,
+      element buttonmult,
+      element buttonderivation,
       element polyListOutput,
       element output
       
@@ -108,6 +112,8 @@ setup window = do
    on UI.click buttonaddpoly (\_ -> handleaddpolyclick input polyListOutput polyStore)
    on UI.click buttonadd (\_ -> handleaddclick polyStore output)
    on UI.click buttonsub (\_ -> handlesubclick polyStore output)
+   on UI.click buttonmult (\_ -> handlemultclick polyStore output)
+   on UI.click buttonderivation (\_ -> handlederivationclick polyStore output)
 {- 
 
 Diese Funktion dient zur Veranschaulichung des normalisierten Polynoms in der GUI.
@@ -231,10 +237,14 @@ da wir die checkboxen und Listenaktualisierung noch brauchen)
 
 Wir erstellen storedPolys, um die gespeicherten Polynome aus polyStore zu lesen.
 
+Wir dürfen nicht (StoredPoly name1 poly1 : StoredPoly name2 poly2 : rest) schreiben, da wir sonst die anderen Fallprüfungen
+garnicht erreichen, da wir damit checken würden, dass MINDESTENS zwei Polynome gespeichert sind, aber wir wollen ja auch die Fälle abfangen, 
+dass gar keins gespeichert ist (oder nur eins oder mehrere -> Andernfalls).
+
 Es entstehen drei Fälle, beim Lesen der gespeicherten Polynome:
 Fall 1: Es sind mindestens zwei Polynome gespeichert, dann können wir die Addition durchführen.
 Fall 2: Es sind keine Polynome gespeichert, dann wird eine Fehlermeldung angezeigt.
-Fall 3: Es ist nur ein Polynom gespeichert, dann wird ebenfalls eine Fehlermeldung angezeigt.
+Fall 3 (Andernfalls): Es ist nur ein Polynom gespeichert oder mehrere, dann wird ebenfalls eine Fehlermeldung angezeigt.
 
 -}
 
@@ -242,12 +252,12 @@ handleaddclick :: IORef [StoredPoly] -> Element -> UI ()
 handleaddclick polyStore output = do
    storedPolys <- liftIO $ readIORef polyStore
    case storedPolys of
-      (StoredPoly name1 poly1 : StoredPoly name2 poly2 : rest) -> do
-         void $ element output # set UI.text ("Ergebnis: " ++ toLaTeX (add poly1 poly2))
+      
+      [StoredPoly name1 poly1, StoredPoly name2 poly2] ->void $ element output # set UI.text ("Ergebnis: " ++ toLaTeX (add poly1 poly2))
 
       [] -> void $ element output # set UI.text "Fehler: Addieren benötigt zwei Polynome. Es wurde noch kein Polynom gespeichert." 
 
-      [StoredPoly name1 poly1] -> void $ element output # set UI.text "Fehler: Addieren benötigt zwei Polynome. Es wurde nur ein Polynom gespeichert."
+      other -> void $ element output # set UI.text ("Fehler: Addieren benötigt zwei Polynome. Es wurde/n aber " ++ show (length storedPolys) ++ " Polynom/e gespeichert.")
 
 {- 
 
@@ -261,12 +271,12 @@ handlesubclick :: IORef [StoredPoly] -> Element -> UI ()
 handlesubclick polyStore output = do
    storedPolys <- liftIO $ readIORef polyStore
    case storedPolys of
-      (StoredPoly name1 poly1 : StoredPoly name2 poly2 : rest) -> do
-         void $ element output # set UI.text ("Ergebnis: " ++ toLaTeX (sub poly1 poly2))
+      
+      [StoredPoly name1 poly1, StoredPoly name2 poly2] -> void $ element output # set UI.text ("Ergebnis: " ++ toLaTeX (sub poly1 poly2))
 
       [] -> void $ element output # set UI.text "Fehler: Subtrahieren benötigt zwei Polynome. Es wurde noch kein Polynom gespeichert."
 
-      [StoredPoly name1 poly1] -> void $ element output # set UI.text "Fehler: Subtrahieren benötigt zwei Polynome. Es wurde nur ein Polynom gespeichert."
+      other -> void $ element output # set UI.text ("Fehler: Subtrahieren benötigt zwei Polynome. Es wurde/n aber " ++ show (length storedPolys) ++ " Polynom/e gespeichert.")
 
 
 {- 
@@ -281,10 +291,38 @@ handlemultclick :: IORef [StoredPoly] -> Element -> UI ()
 handlemultclick polyStore output = do
    storedPolys <- liftIO $ readIORef polyStore
    case storedPolys of
-      (StoredPoly name1 poly1 : StoredPoly name2 poly2 : rest) -> do
-         void $ element output # set UI.text ("Ergebnis: " ++ toLaTeX (mult poly1 poly2))
+      
+      [StoredPoly name1 poly1, StoredPoly name2 poly2] -> void $ element output # set UI.text ("Ergebnis: " ++ toLaTeX (mult poly1 poly2))
 
       [] -> void $ element output # set UI.text "Fehler: Multiplizieren benötigt zwei Polynome. Es wurde noch kein Polynom gespeichert."
 
-      [StoredPoly name1 poly1] -> void $ element output # set UI.text "Fehler: Multiplizieren benötigt zwei Polynome. Es wurde nur ein Polynom gespeichert."
+      other -> void $ element output # set UI.text ("Fehler: Multiplizieren benötigt zwei Polynome. Es wurde/n aber " ++ show (length storedPolys) ++ " Polynom/e gespeichert.")
 
+
+{- 
+
+Diese Funktion dient zur Veranschaulichung der Ableitung eines Polynoms in der GUI.
+
+Wir übergeben als Parameter polyStore, um die gespeicherten Polynome zu lesen und output, um das Ergebnis der Ableitung anzuzeigen.
+
+Anders als bei der Addition, Subtraktion und Multiplikation, benötigen wir hier nur ein Polynom, um die Ableitung durchzuführen.
+
+Wir lesen die gespeicherten Polynome aus polyStore und speichern sie in storedPolys.
+
+Danach prüfen wir 3 Fälle:
+Fall 1: Es ist ein Polynom gespeichert, dann können wir die Ableitung durchführen
+Fall 2: Es ist kein Polynom gespeichert, dann wird eine Fehlermeldung angezeigt.
+Fall 3 (Andernfalls): Es sind zwei Polynome gespeichert, oder mehr, dann wird ebenfalls eine Fehlermeldung angezeigt.
+
+-}
+
+handlederivationclick :: IORef [StoredPoly] -> Element -> UI ()
+handlederivationclick polyStore output = do
+   storedPolys <- liftIO $ readIORef polyStore
+   case storedPolys of
+
+      [StoredPoly name1 poly1] -> void $ element output # set UI.text ("Ergebnis: " ++ toLaTeX (derivation poly1))
+
+      [] -> void $ element output # set UI.text "Fehler: Ableiten benötigt ein Polynom. Es wurde noch kein Polynom gespeichert."
+
+      other -> void $ element output # set UI.text ("Fehler: Ableiten benötigt ein Polynom. Es wurde/n aber " ++ show (length storedPolys) ++ " Polynom/e gespeichert.")
