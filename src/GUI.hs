@@ -9,6 +9,7 @@ import ParserSimple
 import qualified Graphics.UI.Threepenny as Ui
 import qualified Control.Applicative as GUI
 import Data.IORef (IORef, newIORef, readIORef, writeIORef)
+import Text.Read (readMaybe)
 -- Hier kommt die GUI-Logik rein, welche die Interaktion mit dem Benutzer steuert z.B mit Buttons, usw... --
 
 {- 
@@ -80,6 +81,7 @@ setup window = do
    buttonsub <- UI.button # set UI.text "Subtrahieren"
    buttonmult <- UI.button # set UI.text "Multiplizieren"
    buttonderivation <- UI.button # set UI.text "Ableiten"
+   buttonevaluate <- UI.button # set UI.text "Auswerten"
 
    {- Speicher für gespeicherte Polynome: -}
    polyStore <- liftIO $ newIORef ([] :: [StoredPoly])
@@ -101,6 +103,7 @@ setup window = do
       element buttonsub,
       element buttonmult,
       element buttonderivation,
+      element buttonevaluate,
       element polyListOutput,
       element output
       
@@ -114,6 +117,8 @@ setup window = do
    on UI.click buttonsub (\_ -> handlesubclick polyStore output)
    on UI.click buttonmult (\_ -> handlemultclick polyStore output)
    on UI.click buttonderivation (\_ -> handlederivationclick polyStore output)
+   on UI.click buttonevaluate (\_ -> handleevaluateclick polyStore inputX output)
+   
 {- 
 
 Diese Funktion dient zur Veranschaulichung des normalisierten Polynoms in der GUI.
@@ -257,7 +262,7 @@ handleaddclick polyStore output = do
 
       [] -> void $ element output # set UI.text "Fehler: Addieren benötigt zwei Polynome. Es wurde noch kein Polynom gespeichert." 
 
-      other -> void $ element output # set UI.text ("Fehler: Addieren benötigt zwei Polynome. Es wurde/n aber " ++ show (length storedPolys) ++ " Polynom/e gespeichert.")
+      other -> void $ element output # set UI.text ("Fehler: Addieren benötigt zwei Polynome. Es wurde/n aber " ++ show (length other) ++ " Polynom/e gespeichert.")
 
 {- 
 
@@ -276,7 +281,7 @@ handlesubclick polyStore output = do
 
       [] -> void $ element output # set UI.text "Fehler: Subtrahieren benötigt zwei Polynome. Es wurde noch kein Polynom gespeichert."
 
-      other -> void $ element output # set UI.text ("Fehler: Subtrahieren benötigt zwei Polynome. Es wurde/n aber " ++ show (length storedPolys) ++ " Polynom/e gespeichert.")
+      other -> void $ element output # set UI.text ("Fehler: Subtrahieren benötigt zwei Polynome. Es wurde/n aber " ++ show (length other) ++ " Polynom/e gespeichert.")
 
 
 {- 
@@ -296,7 +301,7 @@ handlemultclick polyStore output = do
 
       [] -> void $ element output # set UI.text "Fehler: Multiplizieren benötigt zwei Polynome. Es wurde noch kein Polynom gespeichert."
 
-      other -> void $ element output # set UI.text ("Fehler: Multiplizieren benötigt zwei Polynome. Es wurde/n aber " ++ show (length storedPolys) ++ " Polynom/e gespeichert.")
+      other -> void $ element output # set UI.text ("Fehler: Multiplizieren benötigt zwei Polynome. Es wurde/n aber " ++ show (length other) ++ " Polynom/e gespeichert.")
 
 
 {- 
@@ -325,4 +330,43 @@ handlederivationclick polyStore output = do
 
       [] -> void $ element output # set UI.text "Fehler: Ableiten benötigt ein Polynom. Es wurde noch kein Polynom gespeichert."
 
-      other -> void $ element output # set UI.text ("Fehler: Ableiten benötigt ein Polynom. Es wurde/n aber " ++ show (length storedPolys) ++ " Polynom/e gespeichert.")
+      other -> void $ element output # set UI.text ("Fehler: Ableiten benötigt ein Polynom. Es wurde/n aber " ++ show (length other) ++ " Polynom/e gespeichert.")
+
+
+{- 
+
+Diese Funktion dient zur Veranschaulichung der Auswertung eines Polynoms an einer bestimmten Stelle in der GUI.
+
+Es wird das polyStore übergeben, um die gespeicherten Polynome zu lesen, das input Element, 
+um den Wert für x auszulesen und das output Element, um das Ergebnis der Auswertung anzuzeigen.
+
+Wir lesen die gespeicherten Polynome aus polyStore und speichern sie in storedPolys.
+Wir lesen den Wert für x aus dem input Element aus und speichern ihn in xStr.
+
+Danach prüfen wir für xStr 3 Fälle:
+Fall 1: xStr ist leer, dann wird eine Fehlermeldung angezeigt.
+Fall 2: Das Eingabefeld für xStr ist nicht leer, 
+somit gehen wir über in die Prüfung ob es sich um eine gültige Zahl handelt, mithilfe von readMaybe, 
+das besagt, dass eine Rational Zahl eingelesen werden kann (Just x) oder nicht (Nothing):
+
+Fall 2.1: Es handelt sich nicht um eine gültige Zahl, dann wird eine Fehlermeldung angezeigt.
+Fall 2.2: Es handelt sich um eine gültige Zahl, dann prüfen wir die gespeicherten Polynome:
+
+Fall 2.2.1: Es ist ein Polynom gespeichert, dann wird die Auswertung durchgeführt und das Ergebnis angezeigt.
+Fall 2.2.2: Es ist kein Polynom gespeichert, dann wird eine Fehlermeldung angezeigt.
+Fall 2.2.3 (Andernfalls): Es sind zwei Polynome gespeichert, oder mehr, dann wird ebenfalls eine Fehlermeldung angezeigt.
+
+-}
+
+handleevaluateclick :: IORef [StoredPoly] -> Element -> Element -> UI ()
+handleevaluateclick polyStore input output = do
+   storedPolys <- liftIO $ readIORef polyStore
+   xStr <- get value input
+   case xStr of
+      "" -> void $ element output # set UI.text "Fehler: Bitte geben Sie einen Wert für x ein."
+      other -> case readMaybe xStr :: Maybe Rational of
+         Nothing -> void $ element output # set UI.text "Fehler: Bitte geben Sie eine gültige Zahl für x ein."
+         Just x -> case storedPolys of
+            [StoredPoly name1 poly1] -> void $ element output # set UI.text ("Ergebnis: " ++ show (evaluate poly1 x))
+            [] -> void $ element output # set UI.text "Fehler: Auswerten benötigt ein Polynom. Es wurde noch kein Polynom gespeichert."
+            other -> void $ element output # set UI.text ("Fehler: Auswerten benötigt ein Polynom. Es wurde/n aber " ++ show (length other) ++ " Polynom/e gespeichert.")
