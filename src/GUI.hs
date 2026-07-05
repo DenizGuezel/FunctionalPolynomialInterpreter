@@ -521,5 +521,35 @@ handlelatexclick resultStore output = do
              ++ toLaTeX quotient ++ ", Rest = " ++ toLaTeX rest)
 
 
+{- 
+
+Diese Funktion wird aufgerufen, wenn der Button "Ergebnis" geklickt wird.
+Sie dient dazu, das Ergebnis einer Berechnung mathematisch anzuzeigen.
+
+GLeiches Vorgehen wie bei handlelatexclick, nur dass hier die mathematische Darstellung (toPrettyMathPoly und toPrettyMathRational) verwendet wird,
+um das Ergebnis in einer mathematischen Form anzuzeigen, die für den Benutzer leichter verständlich ist.
+
+-}
+
+handleshowresultclick :: IORef GuiResult -> Element -> UI ()
+handleshowresultclick resultStore output = do
+   result <- liftIO $ readIORef resultStore
+
+   case result of
+      NoResult ->
+         void $ element output # set UI.text "Fehler: Es wurde noch kein Ergebnis berechnet."
+
+      PolyResult name poly ->
+         void $ element output # set UI.text
+            ("Ergebnis von " ++ name ++ ": " ++ toPrettyMathPoly poly)
+
+      ValueResult name value ->
+         void $ element output # set UI.text
+            ("Ergebnis von " ++ name ++ ": " ++ toPrettyMathRational value)
+
+      DivResult name quotient rest ->
+         void $ element output # set UI.text
+            ("Ergebnis von " ++ name ++ ": Quotient = "
+             ++ toPrettyMathPoly quotient ++ ", Rest = " ++ toPrettyMathPoly rest)
 
 
