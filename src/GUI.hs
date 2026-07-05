@@ -215,42 +215,63 @@ setup window = do
 Diese Funktion dient zur Veranschaulichung des normalisierten Polynoms in der GUI.
 
 die Funktion wird aufgerufen, wenn der Button geklickt wird.
-Sie bekommt das Eingabefeld (String) und den Ausgabebereich (wenn Parsen fehlschlägt ein Fehler, 
-ansonsten das normalisierte Polynom) übergeben, um das Ergebnis des Parsens anzuzeigen.
+Sie bekommt das Eingabefeld (String), resultStore und den Ausgabebereich übergeben.
+
+Das Eingabefeld brauchen wir, um den eingegebenen String auszulesen.
+resultStore brauchen wir, um das Ergebnis der Operation abzuspeichern, damit die Darstellungsbuttons wie Ergebnis und LaTeX später darauf zugreifen können.
+output brauchen wir, um das Ergebnis direkt in der GUI anzuzeigen.
 
 polyStr <- get value input liest den Wert aus dem Eingabefeld aus und speichert ihn in polyStr.
 
 Dann wird parsePolySimple auf polyStr ausgeführt, um das Polynom zu parsen und das Parsergebnis wird in "result" abgespeichert.
 Wenn das Parsergebnis ein Fehler ist (Left err), wird der Fehler im Ausgabebereich angezeigt.
-Wenn das Parsergebnis ein gültiges Polynom ist (Right poly), wird das Polynom im Ausgabebereich normalisiert angezeigt.
+
+Wenn das Parsergebnis ein gültiges Polynom ist (Right poly), wird normalize auf das Polynom angewendet.
+Das normalisierte Polynom speichern wir in resultPoly.
+
+Danach wird resultPoly mit writeIORef in resultStore gespeichert.
+Dabei verwenden wir PolyResult, weil normalize wieder ein Polynom zurückgibt.
+
+Am Ende wird das Ergebnis mit toPrettyMathPoly schön mathematisch in der GUI angezeigt.
 
 Mit void $ sagen wir, dass wir den Rückgabewert der Funktion ignorieren. Das machen wir weil 
 set UI.text einen Ui.Element zurückgibt, den wir hier aber nicht benötigen.
 
 -}
 
-handlenormalizeclick :: Element -> Element -> UI ()
-handlenormalizeclick input output = do
+handlenormalizeclick :: Element -> IORef GuiResult -> Element -> UI ()
+handlenormalizeclick input resultStore output = do
    polyStr <- get value input
    let result = parsePolySimple polyStr 
    case result of
       Left err ->  void $ element output # set UI.text ("Fehler: " ++ err)
-      Right poly -> void $ element output # set UI.text ("Ergebnis: " ++ show (normalize poly))
-
+      Right poly -> do
+         let resultPoly = normalize poly
+         liftIO $ writeIORef resultStore (PolyResult "Normalisieren" resultPoly)
+         void $ element output # set UI.text ("Ergebnis: " ++ toPrettyMathPoly resultPoly)
 {- 
 
 Diese Funktion dient zur Veranschaulichung eines negierten Polynoms in der GUI.
+
 Gleiche Logik wie bei handlenormalizeclick, nur dass hier die Funktion negat aufgerufen wird, um das Polynom zu negieren.
+
+Auch hier wird das Ergebnis zusätzlich in resultStore gespeichert.
+Das ist wichtig, damit man danach z.B. auf den LaTeX-Button klicken kann, ohne dass nochmal neu gerechnet werden muss.
+
+Da negat wieder ein Polynom zurückgibt, speichern wir das Ergebnis als PolyResult.
 
 -}
 
-handlenegatclick :: Element -> Element -> UI ()
-handlenegatclick input output = do
+handlenegatclick :: Element -> IORef GuiResult -> Element -> UI ()
+handlenegatclick input resultStore output = do
    polyStr <- get value input
    let result = parsePolySimple polyStr
    case result of
       Left err ->  void $ element output # set UI.text ("Fehler: " ++ err)
-      Right poly -> void $ element output # set UI.text ("Ergebnis: " ++ show (negat poly))
+      Right poly -> do
+         let resultPoly = negat poly
+         liftIO $ writeIORef resultStore (PolyResult "Negieren" resultPoly)
+         void $ element output # set UI.text ("Ergebnis: " ++ toPrettyMathPoly resultPoly)
 
 {- 
 
@@ -331,6 +352,12 @@ showStoredPolysRec (StoredPoly name poly : rest) = name ++ " = " ++ toLaTeX poly
 Diese Funktion dient zur Veranschaulichung der Addition von zwei Polynomen in der GUI. (Professionellere Version kommt später, 
 da wir die checkboxen und Listenaktualisierung noch brauchen)
 
+Wir übergeben polyStore, resultStore und output.
+
+polyStore brauchen wir, um die gespeicherten Polynome auszulesen.
+resultStore brauchen wir, um das Ergebnis der Addition zu speichern.
+output brauchen wir, um das Ergebnis direkt in der GUI anzuzeigen.
+
 Wir erstellen storedPolys, um die gespeicherten Polynome aus polyStore zu lesen.
 
 Wir dürfen nicht (StoredPoly name1 poly1 : StoredPoly name2 poly2 : rest) schreiben, da wir sonst die anderen Fallprüfungen
@@ -338,18 +365,27 @@ garnicht erreichen, da wir damit checken würden, dass MINDESTENS zwei Polynome 
 dass gar keins gespeichert ist (oder nur eins oder mehrere -> Andernfalls).
 
 Es entstehen drei Fälle, beim Lesen der gespeicherten Polynome:
-Fall 1: Es sind mindestens zwei Polynome gespeichert, dann können wir die Addition durchführen.
+Fall 1: Es sind genau zwei Polynome gespeichert, dann können wir die Addition durchführen.
 Fall 2: Es sind keine Polynome gespeichert, dann wird eine Fehlermeldung angezeigt.
 Fall 3 (Andernfalls): Es ist nur ein Polynom gespeichert oder mehrere, dann wird ebenfalls eine Fehlermeldung angezeigt.
 
+Wenn genau zwei Polynome vorhanden sind, wird add poly1 poly2 ausgeführt.
+Das Ergebnis speichern wir in resultPoly.
+
+Danach speichern wir resultPoly mit writeIORef in resultStore.
+Da add wieder ein Polynom zurückgibt, speichern wir das Ergebnis als PolyResult.
+
 -}
 
-handleaddclick :: IORef [StoredPoly] -> Element -> UI ()
-handleaddclick polyStore output = do
+handleaddclick :: IORef [StoredPoly] -> IORef GuiResult -> Element -> UI ()
+handleaddclick polyStore resultStore output = do
    storedPolys <- liftIO $ readIORef polyStore
    case storedPolys of
       
-      [StoredPoly name1 poly1, StoredPoly name2 poly2] ->void $ element output # set UI.text ("Ergebnis: " ++ toLaTeX (add poly1 poly2))
+      [StoredPoly name1 poly1, StoredPoly name2 poly2] -> do
+         let resultPoly = add poly1 poly2
+         liftIO $ writeIORef resultStore (PolyResult (name1 ++ " + " ++ name2) resultPoly)
+         void $ element output # set UI.text ("Ergebnis: " ++ toPrettyMathPoly resultPoly)
 
       [] -> void $ element output # set UI.text "Fehler: Addieren benötigt zwei Polynome. Es wurde noch kein Polynom gespeichert." 
 
@@ -359,16 +395,22 @@ handleaddclick polyStore output = do
 
 Diese Funktion dient zur Veranschaulichung der Subtraktion von zwei Polynomen in der GUI.
 
-Funktionier genau wie handleaddclick, nur dass hier die Funktion sub aufgerufen wird, um die Subtraktion durchzuführen.
+Funktioniert genau wie handleaddclick, nur dass hier die Funktion sub aufgerufen wird, um die Subtraktion durchzuführen.
+
+Auch hier wird das Ergebnis in resultStore gespeichert.
+Da sub wieder ein Polynom zurückgibt, benutzen wir PolyResult.
 
 -}
 
-handlesubclick :: IORef [StoredPoly] -> Element -> UI ()
-handlesubclick polyStore output = do
+handlesubclick :: IORef [StoredPoly] -> IORef GuiResult -> Element -> UI ()
+handlesubclick polyStore resultStore output = do
    storedPolys <- liftIO $ readIORef polyStore
    case storedPolys of
       
-      [StoredPoly name1 poly1, StoredPoly name2 poly2] -> void $ element output # set UI.text ("Ergebnis: " ++ toLaTeX (sub poly1 poly2))
+      [StoredPoly name1 poly1, StoredPoly name2 poly2] -> do
+         let resultPoly = sub poly1 poly2
+         liftIO $ writeIORef resultStore (PolyResult (name1 ++ " - " ++ name2) resultPoly)
+         void $ element output # set UI.text ("Ergebnis: " ++ toPrettyMathPoly resultPoly)
 
       [] -> void $ element output # set UI.text "Fehler: Subtrahieren benötigt zwei Polynome. Es wurde noch kein Polynom gespeichert."
 
@@ -379,16 +421,22 @@ handlesubclick polyStore output = do
 
 Diese Funktion dient zur Veranschaulichung der Multiplikation von zwei Polynomen in der GUI.
 
-Funktionier genau wie handleaddclick, nur dass hier die Funktion mult aufgerufen wird, um die Multiplikation durchzuführen.
+Funktioniert genau wie handleaddclick, nur dass hier die Funktion mult aufgerufen wird, um die Multiplikation durchzuführen.
+
+Auch hier wird das Ergebnis in resultStore gespeichert.
+Da mult wieder ein Polynom zurückgibt, benutzen wir PolyResult.
 
 -}
 
-handlemultclick :: IORef [StoredPoly] -> Element -> UI ()
-handlemultclick polyStore output = do
+handlemultclick :: IORef [StoredPoly] -> IORef GuiResult -> Element -> UI ()
+handlemultclick polyStore resultStore output = do
    storedPolys <- liftIO $ readIORef polyStore
    case storedPolys of
       
-      [StoredPoly name1 poly1, StoredPoly name2 poly2] -> void $ element output # set UI.text ("Ergebnis: " ++ toLaTeX (mult poly1 poly2))
+      [StoredPoly name1 poly1, StoredPoly name2 poly2] -> do
+         let resultPoly = mult poly1 poly2
+         liftIO $ writeIORef resultStore (PolyResult (name1 ++ " * " ++ name2) resultPoly)
+         void $ element output # set UI.text ("Ergebnis: " ++ toPrettyMathPoly resultPoly)
 
       [] -> void $ element output # set UI.text "Fehler: Multiplizieren benötigt zwei Polynome. Es wurde noch kein Polynom gespeichert."
 
@@ -399,25 +447,38 @@ handlemultclick polyStore output = do
 
 Diese Funktion dient zur Veranschaulichung der Ableitung eines Polynoms in der GUI.
 
-Wir übergeben als Parameter polyStore, um die gespeicherten Polynome zu lesen und output, um das Ergebnis der Ableitung anzuzeigen.
+Wir übergeben als Parameter polyStore, resultStore und output.
+
+polyStore brauchen wir, um die gespeicherten Polynome zu lesen.
+resultStore brauchen wir, um das Ergebnis der Ableitung zu speichern.
+output brauchen wir, um das Ergebnis direkt anzuzeigen.
 
 Anders als bei der Addition, Subtraktion und Multiplikation, benötigen wir hier nur ein Polynom, um die Ableitung durchzuführen.
 
 Wir lesen die gespeicherten Polynome aus polyStore und speichern sie in storedPolys.
 
 Danach prüfen wir 3 Fälle:
-Fall 1: Es ist ein Polynom gespeichert, dann können wir die Ableitung durchführen
+Fall 1: Es ist ein Polynom gespeichert, dann können wir die Ableitung durchführen.
 Fall 2: Es ist kein Polynom gespeichert, dann wird eine Fehlermeldung angezeigt.
 Fall 3 (Andernfalls): Es sind zwei Polynome gespeichert, oder mehr, dann wird ebenfalls eine Fehlermeldung angezeigt.
 
+Wenn genau ein Polynom vorhanden ist, wird derivation poly1 ausgeführt.
+Das Ergebnis speichern wir in resultPoly.
+
+Danach speichern wir resultPoly mit writeIORef in resultStore.
+Da derivation wieder ein Polynom zurückgibt, benutzen wir PolyResult.
+
 -}
 
-handlederivationclick :: IORef [StoredPoly] -> Element -> UI ()
-handlederivationclick polyStore output = do
+handlederivationclick :: IORef [StoredPoly] -> IORef GuiResult -> Element -> UI ()
+handlederivationclick polyStore resultStore output = do
    storedPolys <- liftIO $ readIORef polyStore
    case storedPolys of
 
-      [StoredPoly name1 poly1] -> void $ element output # set UI.text ("Ergebnis: " ++ toLaTeX (derivation poly1))
+      [StoredPoly name1 poly1] -> do
+         let resultPoly = derivation poly1
+         liftIO $ writeIORef resultStore (PolyResult (name1 ++ "'") resultPoly)
+         void $ element output # set UI.text ("Ergebnis: " ++ toPrettyMathPoly resultPoly)
 
       [] -> void $ element output # set UI.text "Fehler: Ableiten benötigt ein Polynom. Es wurde noch kein Polynom gespeichert."
 
@@ -429,7 +490,7 @@ handlederivationclick polyStore output = do
 Diese Funktion dient zur Veranschaulichung der Auswertung eines Polynoms an einer bestimmten Stelle in der GUI.
 
 Es wird das polyStore übergeben, um die gespeicherten Polynome zu lesen, das input Element, 
-um den Wert für x auszulesen und das output Element, um das Ergebnis der Auswertung anzuzeigen.
+um den Wert für x auszulesen, resultStore, um das Ergebnis zu speichern und das output Element, um das Ergebnis der Auswertung anzuzeigen.
 
 Wir lesen die gespeicherten Polynome aus polyStore und speichern sie in storedPolys.
 Wir lesen den Wert für x aus dem input Element aus und speichern ihn in xStr.
@@ -447,10 +508,15 @@ Fall 2.2.1: Es ist ein Polynom gespeichert, dann wird die Auswertung durchgefüh
 Fall 2.2.2: Es ist kein Polynom gespeichert, dann wird eine Fehlermeldung angezeigt.
 Fall 2.2.3 (Andernfalls): Es sind zwei Polynome gespeichert, oder mehr, dann wird ebenfalls eine Fehlermeldung angezeigt.
 
+Wenn genau ein Polynom und ein gültiger x-Wert vorhanden sind, wird evaluate poly1 x ausgeführt.
+Das Ergebnis ist dann kein Polynom, sondern ein Rational-Wert.
+
+Deshalb speichern wir das Ergebnis in resultStore als ValueResult.
+
 -}
 
-handleevaluateclick :: IORef [StoredPoly] -> Element -> Element -> UI ()
-handleevaluateclick polyStore input output = do
+handleevaluateclick :: IORef [StoredPoly] -> Element -> IORef GuiResult -> Element -> UI ()
+handleevaluateclick polyStore input resultStore output = do
    storedPolys <- liftIO $ readIORef polyStore
    xStr <- get value input
    case xStr of
@@ -458,8 +524,13 @@ handleevaluateclick polyStore input output = do
       other -> case readMaybe xStr :: Maybe Rational of
          Nothing -> void $ element output # set UI.text "Fehler: Bitte geben Sie eine gültige Zahl für x ein."
          Just x -> case storedPolys of
-            [StoredPoly name1 poly1] -> void $ element output # set UI.text ("Ergebnis: " ++ show (evaluate poly1 x))
+            [StoredPoly name1 poly1] -> do
+               let resultValue = evaluate poly1 x
+               liftIO $ writeIORef resultStore (ValueResult (name1 ++ "(" ++ show x ++ ")") resultValue)
+               void $ element output # set UI.text ("Ergebnis: " ++ toPrettyMathRational resultValue)
+
             [] -> void $ element output # set UI.text "Fehler: Auswerten benötigt ein Polynom. Es wurde noch kein Polynom gespeichert."
+
             other -> void $ element output # set UI.text ("Fehler: Auswerten benötigt ein Polynom. Es wurde/n aber " ++ show (length other) ++ " Polynom/e gespeichert.")
 
 {- 
@@ -469,19 +540,24 @@ Diese Funktion dient zur Veranschaulichung der Division von zwei Polynomen in de
 Wird im Grunde genau so wie die Addition, Subtraktion und Multiplikation gehandhabt, 
 nur dass wir hier die toLaTeX Funktion nicht auf ein (Poly,Poly) anwenden können und 
 wir daher die Division in zwei Teile aufteilen müssen, nämlich den Quotienten und den Rest.
+
 Somit können wir die Division von zwei Polynomen in der GUI sauber darstellen, indem wir den Quotienten und den Rest getrennt anzeigen.
+
+Das Ergebnis wird außerdem in resultStore gespeichert.
+Da Division nicht nur ein einzelnes Polynom zurückgibt, benutzen wir hier DivResult.
+DivResult speichert den Namen der Operation, den Quotienten und den Rest.
 
 -}
 
-handledivclick :: IORef [StoredPoly] -> Element -> UI ()
-handledivclick polyStore output = do
+handledivclick :: IORef [StoredPoly] -> IORef GuiResult -> Element -> UI ()
+handledivclick polyStore resultStore output = do
    storedPolys <- liftIO $ readIORef polyStore
    case storedPolys of 
       
-      [StoredPoly name1 poly1, StoredPoly name2 poly2] -> 
-         
-         let (quotient, rest) = (/%) poly1 poly2 in
-         void $ element output # set UI.text ("Ergebnis: " ++ name1 ++ " / " ++ name2 ++ " = " ++ toLaTeX quotient ++ ", Rest: " ++ toLaTeX rest)
+      [StoredPoly name1 poly1, StoredPoly name2 poly2] -> do
+         let (quotient, rest) = (/%) poly1 poly2
+         liftIO $ writeIORef resultStore (DivResult (name1 ++ " / " ++ name2) quotient rest)
+         void $ element output # set UI.text ("Ergebnis: " ++ name1 ++ " / " ++ name2 ++ " = " ++ toPrettyMathPoly quotient ++ ", Rest: " ++ toPrettyMathPoly rest)
 
       [] -> void $ element output # set UI.text "Fehler: Dividieren benötigt zwei Polynome. Es wurde noch kein Polynom gespeichert."
 
@@ -552,4 +628,73 @@ handleshowresultclick resultStore output = do
             ("Ergebnis von " ++ name ++ ": Quotient = "
              ++ toPrettyMathPoly quotient ++ ", Rest = " ++ toPrettyMathPoly rest)
 
+{- 
 
+Diese Funktionen dienen dazu, Polynome und rationale Zahlen in einer mathematischen Form darzustellen, 
+die für den Benutzer leichter verständlich ist.
+
+Die Hauptfunktion toPrettyMathPoly (welche auch eine Hilfsfunktion eigentlich für handleShowResultClick ist) ruft die Hilfsfunktion prettyPoly auf, 
+um das Polynom in eine mathematische Form zu bringen.
+
+prettyPoly ruft wiederum die Hilfsfunktionen prettyMonomFirst und prettyMonomRest auf, 
+um die einzelnen Monome des Polynoms in eine mathematische Form zu bringen.
+
+Genau so geht es weiter, bis die kleinste Einheit, nämlich die Koeffizienten und Exponenten, in eine mathematische Form gebracht werden.
+
+-}
+
+toPrettyMathPoly :: Poly -> String
+toPrettyMathPoly p = prettyPoly (normalize p)
+
+prettyPoly :: Poly -> String
+prettyPoly (P []) = "0"
+
+prettyPoly (P (m:ms)) = prettyMonomFirst m ++ prettyMonomRest ms
+
+prettyMonomRest :: [Monom] -> String
+prettyMonomRest [] = ""
+
+prettyMonomRest (m:ms) = prettyMonomWithSign m ++ prettyMonomRest ms
+
+prettyMonomWithSign :: Monom -> String
+prettyMonomWithSign (M k e)
+   | k >= 0 =
+      " + " ++ prettyMonom (M k e)
+   | otherwise =
+      " - " ++ prettyMonom (M (-k) e)
+
+prettyMonomFirst :: Monom -> String
+prettyMonomFirst (M k e)
+   | k < 0 =
+      "-" ++ prettyMonom (M (-k) e)
+   | otherwise =
+      prettyMonom (M k e)
+
+prettyMonom :: Monom -> String
+prettyMonom (M k 0) = toPrettyMathRational k
+
+prettyMonom (M k 1)
+   | k == 1 =
+      "x"
+   | otherwise =
+      toPrettyMathRational k ++ "x"
+
+prettyMonom (M k e)
+   | k == 1 =
+      "x" ++ prettyExponent e
+   | otherwise =
+      toPrettyMathRational k ++ "x" ++ prettyExponent e
+
+toPrettyMathRational :: Rational -> String
+toPrettyMathRational r
+   | denominator r == 1 =
+      show (numerator r)
+   | otherwise =
+      show (numerator r) ++ "/" ++ show (denominator r)
+
+prettyExponent :: Int -> String
+prettyExponent 0 = ""
+prettyExponent 1 = ""
+prettyExponent 2 = "²"
+prettyExponent 3 = "³"
+prettyExponent e = "^" ++ show e
