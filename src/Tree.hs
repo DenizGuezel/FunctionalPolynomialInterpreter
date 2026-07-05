@@ -64,39 +64,85 @@ der den Ausdruck in einer lesbaren Form darstellt.
 
 -}
 
-prettyPrintExprTree :: ExprTree -> String 
-prettyPrintExprTree tree = prettyPrintExprTreeRec tree 0
+prettyTree :: ExprTree -> String
+prettyTree tree = treeLabel tree ++ "\n" ++ prettyChildren "" (treeChildren tree)
 
 {- 
 
-Diese Hilfsfunktion wird rekursiv aufgerufen, um den Ausdrucksbaum in einen String umzuwandeln.
-Sie bekommt als Eingabe einen Ausdrucksbaum und eine Ebene (level), die angibt, wie tief wir uns im Baum befinden.
+Diese Hilfsfunktion soll die Kindknoten eines Ausdrucksbaums in einer lesbaren Form darstellen.
 
-replicate 4 ' ' erzeugt einen String, der aus 4 Leerzeichen besteht, also "    ". 
-
-Wenn als Parameter ein Baum übergeben wird, der eine Konstante besitzt, sprich nur einen Knoten, welcher der Root ist, 
-der aus einer Konstante besteht (z.B 4), dann würde replicate (0 * 2) ' ' ++ show 4 ++ "\n" ausgeführt werden, was "4\n" zurückgibt.
-Das Level ist hier 0, da wir uns auf der obersten Ebene befinden (Root).
-
-Wenn als Parameter ein Baum übergeben wird, der eine Variable besitzt, sprich nur einen Knoten, welcher der Root ist,
-der aus einer Variable besteht (z.B x^2), dann würde replicate (0 * 2) ' ' ++ "x^" ++ show 2 ++ "\n" ausgeführt werden, was "x^2\n" zurückgibt.
-
-Wenn als Parameter ein Baum übergeben wird, der eine Addition besitzt, sprich nur einen Knoten, welcher der Root ist,
-der aus einer Addition besteht (z.B x^2 + 3), dann würde replicate (0 * 2) ' ' ++ "+\n" ++ prettyPrintExprTreeRec left (0 + 1) ++ prettyPrintExprTreeRec right (0 + 1) 
-ausgeführt werden, was "+\n  x^2\n  3\n" zurückgibt.
-
-Wenn als Parameter ein Baum übergeben wird, der eine Multiplikation besitzt, sprich nur einen Knoten, welcher der Root ist,
-der aus einer Multiplikation besteht (z.B x^2 * 3), dann würde replicate (0 * 2) ' ' ++ "*\n" ++ prettyPrintExprTreeRec left (0 + 1) ++ prettyPrintExprTreeRec right (0 + 1)
-ausgeführt werden, was "*\n  x^2\n  3\n" zurückgibt.
+Wenn die Liste der Kindknoten leer ist, wird ein leerer String zurückgegeben.
+Wenn die Liste der Kindknoten genau ein Element enthält, wird dieses Element mit einem "`-- " Präfix dargestellt.
+Wenn die Liste der Kindknoten mehr als ein Element enthält, wird das erste Element mit einem "|-- " Präfix dargestellt und 
+die restlichen Elemente werden rekursiv mit einem "|   " Präfix dargestellt. 
 
 -}
 
-prettyPrintExprTreeRec :: ExprTree -> Int -> String
-prettyPrintExprTreeRec (TConst k) level = replicate (level * 2) ' ' ++ show k ++ "\n"
-prettyPrintExprTreeRec (TVar e) level = replicate (level * 2) ' ' ++ "x^" ++ show e ++ "\n"
-prettyPrintExprTreeRec (TAdd left right) level = 
-    replicate (level * 2) ' ' ++ "+\n" ++ prettyPrintExprTreeRec left (level + 1) ++ prettyPrintExprTreeRec right (level + 1)
-prettyPrintExprTreeRec (TMul left right) level = 
-    replicate (level * 2) ' ' ++ "*\n" ++ prettyPrintExprTreeRec left (level + 1) ++ prettyPrintExprTreeRec right (level + 1)
+prettyChildren :: String -> [ExprTree] -> String
+prettyChildren prefix [] = ""
+prettyChildren prefix [child] =
+   prefix ++ "`-- " ++ treeLabel child ++ "\n"
+   ++ prettyChildren (prefix ++ "    ") (treeChildren child)
+prettyChildren prefix (child:rest) =
+   prefix ++ "|-- " ++ treeLabel child ++ "\n"
+   ++ prettyChildren (prefix ++ "|   ") (treeChildren child)
+   ++ prettyChildren prefix rest
+
+{- Diese Hilfsfunktion holt je nach Knotentyp die Kindknoten eines Ausdrucksbaums. -}
+
+treeChildren :: ExprTree -> [ExprTree]
+treeChildren (TConst k) = []
+treeChildren (TVar e) = []
+treeChildren (TAdd left right) = [left, right]
+treeChildren (TMul left right) = [left, right]
+
+{- Diese Hilfsfunktion gibt je nach Knotentyp die Beschriftung eines Ausdrucksbaums zurück. -}
+
+treeLabel :: ExprTree -> String
+treeLabel (TConst k) = prettyRational k
+treeLabel (TVar e) = prettyVariable e
+treeLabel (TAdd left right) = "+"
+treeLabel (TMul left right) = "*"
+
+{- 
+
+Diese Hilfsfunktion wandelt eine rationale Zahl in eine lesbare Form um.
+demoniator ist der Nenner der rationalen Zahl, numerator ist der Zähler.
+
+Wenn der Nenner 1 ist, wird nur der Zähler als String zurückgegeben (z.B 3 % 1 wird als "3" dargestellt, da 3 % 1 = 3/1 = 3 ist), 
+ansonsten wird der Zähler und der Nenner durch einen Bruchstrich getrennt zurückgegeben (z.B 3 % 2 wird als "3/2" dargestellt, da 3 % 2 = 3/2 ist).
+
+-}
+
+prettyRational :: Rational -> String
+prettyRational r
+   | denominator r == 1 = show (numerator r)
+   | otherwise = show (numerator r) ++ "/" ++ show (denominator r)
+
+{- 
+
+Diese Hilfsfunktion stellt eine Varibale (z.B x^2) mithilfe von prettyExponent in einer lesbaren Form dar.
+z.B wird die Eingabe 2 als "x²" dargestellt.
+
+-}
+
+prettyVariable :: Int -> String
+prettyVariable 1 = "x"
+prettyVariable e = "x" ++ prettyExponent e
+
+{- 
+
+Diese Hilfsfunktion soll einen Exponenten in eine lesbare Form umwandeln.
+Je nach Exponent wird eine andere Darstellung gewählt, z.B. 2 wird als "²" dargestellt.
+
+-}
+
+prettyExponent :: Int -> String
+prettyExponent 0 = ""
+prettyExponent 1 = ""
+prettyExponent 2 = "²"
+prettyExponent 3 = "³"
+prettyExponent e = "^" ++ show e
+
     
 
