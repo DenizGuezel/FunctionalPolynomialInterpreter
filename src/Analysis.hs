@@ -21,5 +21,22 @@ gilt die Tiefe = 3, da der längste Pfad von der Wurzel (a) zu einem Blattknoten
 
 -}
 
-countDepth :: Tree a -> Int
-countDepth 
+countDepth :: ExprTree a -> Int
+countDepth tree = countDepthRec tree 0
+
+{- 
+
+Rekursive Hilfsfunktion, die die Tiefe eines Baums zählt mithilfe von Pattern Matching. 
+Sie nimmt als Eingabe einen Baum und die aktuelle Tiefe.
+
+Wenn der aktuelle Knoten ein Blattknoten ist (TConst oder TVar), gibt sie die aktuelle Tiefe zurück.
+Wenn der aktuelle Knoten ein innerer Knoten ist (TAdd oder TMul), ruft sie sich selbst rekursiv auf die linken und rechten Teilbäume auf, 
+wobei die aktuelle Tiefe um 1 erhöht wird, und gibt das Maximum der beiden Ergebnisse zurück.
+
+-}
+
+countDepthRec :: ExprTree a -> Int -> Int
+countDepthRec (TConst _) depth = depth
+countDepthRec (TVar _) depth = depth
+countDepthRec (TAdd left right) depth = max (countDepthRec left (depth + 1)) (countDepthRec right (depth + 1))
+countDepthRec (TMul left right) depth = max (countDepthRec left (depth + 1)) (countDepthRec right (depth + 1))
