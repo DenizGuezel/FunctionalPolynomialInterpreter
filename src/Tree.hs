@@ -9,8 +9,8 @@ import Data.Ratio (numerator, denominator)
 {-
 
 Datentyp für den Ausdrucksbaum
-TConst: Konstante, z.B. ist TConst (3 % 1) ein Ausdrucksbaum, der die Konstante 3 repräsentiert. 
-TVar: Variable, z.B ist TVar 2 ein Ausdrucksbaum, der die Variable x^2 repräsentiert.
+TConst: Konstante (Koeffizient), z.B. ist TConst (3 % 1) ein Ausdrucksbaum, der die Konstante 3 repräsentiert. 
+TVar: Variable (Variable x + Exponent), z.B ist TVar 2 ein Ausdrucksbaum, der die Variable x^2 repräsentiert.
 TAdd: Addition, z.B. ist TAdd (TVar 2) (TConst (3 % 1)) ein Ausdrucksbaum, der die Addition von x^2 und 3 repräsentiert.
 TMul: Multiplikation, z.B. ist TMul (TVar 2) (TConst (3 % 1)) ein Ausdrucksbaum, der die Multiplikation von x^2 und 3 repräsentiert.
 

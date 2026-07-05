@@ -69,6 +69,7 @@ library
         ParserSimple
         Tree
         GUI
+        Analysis
 
     -- Modules included in this library but not exported.
     -- other-modules:
