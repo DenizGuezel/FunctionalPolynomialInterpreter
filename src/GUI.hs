@@ -24,6 +24,25 @@ Wird verwendet, um die Auswahl von Polynomen in der GUI als Liste zu realisieren
 data StoredPoly = StoredPoly String Poly
    deriving (Show, Eq)
 
+{- 
+
+Dieser Datentyp GuiResult wird verwendet, um das Ergebnis einer GUI-Operation zu repräsentieren.
+Wir verwenden den Hier für den Darstellungsbereich, StoredPoly hingegen wurde für das Berechnen, bzw. das realisieren der
+Operationen in der GUI verwendet.
+
+NoResult: Es gibt kein Ergebnis, z.B. wenn der Benutzer noch keine Operation ausgeführt hat.
+PolyResult String Poly: Das Ergebnis ist ein Polynom, zusammen mit einem Namen (String), z.B. bei der Addition von zwei Polynomen (PolyResult "p1 + p2" resultPoly).
+ValueResult String Rational: Das Ergebnis ist ein Wert (Rational), zusammen mit einem Namen (String), z.B. bei der Auswertung eines Polynoms an einer bestimmten Stelle (ValueResult "p1(2)" resultValue).
+DivResult String Poly Poly: Das Ergebnis ist eine Division von zwei Polynomen, zusammen mit einem Namen (String), z.B. bei der Division von zwei Polynomen (DivResult "p1 / p2" quotientPoly restPoly).
+
+-}
+
+data GuiResult
+   = NoResult
+   | PolyResult String Poly
+   | ValueResult String Rational
+   | DivResult String Poly Poly
+   deriving (Show, Eq)
 
 {- 
 
@@ -133,9 +152,10 @@ setup window = do
       # set UI.html "<span class='button-symbol'>÷</span><span>Dividieren</span>"
       # set UI.class_ "operation-button"
 
-   {- Speicher für gespeicherte Polynome: -}
+   {- Speicher: -}
 
-   polyStore <- liftIO $ newIORef ([] :: [StoredPoly])
+   polyStore <- liftIO $ newIORef ([] :: [StoredPoly]) --Für die Speicherung der Polynome
+   resultStore <- liftIO $ newIORef NoResult --Für die Speicherung der Ergebnisse der Operationen
 
    {- Ausgabebereiche: -}
 
@@ -172,7 +192,7 @@ setup window = do
    on UI.click buttonderivation (\_ -> handlederivationclick polyStore output)
    on UI.click buttonevaluate (\_ -> handleevaluateclick polyStore inputX output)
    on UI.click buttondiv (\_ -> handledivclick polyStore output)
-   
+
 {- 
 
 Diese Funktion dient zur Veranschaulichung des normalisierten Polynoms in der GUI.
