@@ -65,3 +65,23 @@ body {
   color: #006070;
   font-weight: 700;
 }
+
+.view-button {
+  height: 48px;
+  min-width: 110px;
+  border: 1px solid #cfd8e3;
+  border-radius: 8px;
+  background: white;
+  color: #083f4d;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 4px;
+}
+
+.view-button:hover {
+  background: #eefafa;
+  border-color: #0b7784;
+}

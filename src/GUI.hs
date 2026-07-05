@@ -10,6 +10,7 @@ import qualified Graphics.UI.Threepenny as Ui
 import qualified Control.Applicative as GUI
 import Data.IORef (IORef, newIORef, readIORef, writeIORef)
 import Text.Read (readMaybe)
+import Data.Ratio (numerator, denominator)
 -- Hier kommt die GUI-Logik rein, welche die Interaktion mit dem Benutzer steuert z.B mit Buttons, usw... --
 
 {- 
@@ -114,7 +115,7 @@ setup window = do
    input <- UI.input # set (attr "placeholder") "Polynom hinzufügen"
    inputX <- UI.input # set (attr "placeholder") "x-Wert"
 
-   {- Buttons: -}
+   {- Operation-Buttons: -}
 
    buttonnormalize <- UI.button
       # set UI.html "<span class='button-symbol'>N</span><span>Normalisieren</span>"
@@ -152,6 +153,15 @@ setup window = do
       # set UI.html "<span class='button-symbol'>÷</span><span>Dividieren</span>"
       # set UI.class_ "operation-button"
 
+   {- Darstellung-Buttons: -}
+   buttonshowresult <- UI.button
+      # set UI.html "<span class='button-symbol'>i</span><span>Ergebnis</span>"
+      # set UI.class_ "view-button"
+
+   buttonshowlatex <- UI.button
+      # set UI.html "<span class='button-symbol'>TeX</span><span>LaTeX</span>"
+      # set UI.class_ "view-button"
+
    {- Speicher: -}
 
    polyStore <- liftIO $ newIORef ([] :: [StoredPoly]) --Für die Speicherung der Polynome
@@ -176,22 +186,29 @@ setup window = do
       element buttonderivation,
       element buttonevaluate,
       element buttondiv,
+      element buttonshowresult,
+      element buttonshowlatex,
       element polyListOutput,
       element output
       
       ] 
 
-   {- ActionListener auf die Buttons: -}
+   {- ActionListener auf die Operation-Buttons: -}
 
-   on UI.click buttonnormalize (\_ -> handlenormalizeclick input output) 
-   on UI.click buttonnegat (\_ -> handlenegatclick input output)
-   on UI.click buttonaddpoly (\_ -> handleaddpolyclick input polyListOutput polyStore)
-   on UI.click buttonadd (\_ -> handleaddclick polyStore output)
-   on UI.click buttonsub (\_ -> handlesubclick polyStore output)
-   on UI.click buttonmult (\_ -> handlemultclick polyStore output)
-   on UI.click buttonderivation (\_ -> handlederivationclick polyStore output)
-   on UI.click buttonevaluate (\_ -> handleevaluateclick polyStore inputX output)
-   on UI.click buttondiv (\_ -> handledivclick polyStore output)
+   on UI.click buttonnormalize (\_ -> handlenormalizeclick input resultStore output) 
+   on UI.click buttonnegat (\_ -> handlenegatclick input resultStore output)
+   on UI.click buttonadd (\_ -> handleaddclick polyStore resultStore output)
+   on UI.click buttonsub (\_ -> handlesubclick polyStore resultStore output)
+   on UI.click buttonmult (\_ -> handlemultclick polyStore resultStore output)
+   on UI.click buttonderivation (\_ -> handlederivationclick polyStore resultStore output)
+   on UI.click buttonevaluate (\_ -> handleevaluateclick polyStore inputX resultStore output)
+   on UI.click buttondiv (\_ -> handledivclick polyStore resultStore output)
+
+   {- ActionListener auf die Darstellung-Bbuttons: -}
+
+   on UI.click buttonshowresult (\_ -> handleshowresultclick resultStore output)
+   on UI.click buttonshowlatex (\_ -> handlelatexclick resultStore output)
+   
 
 {- 
 
@@ -469,3 +486,40 @@ handledivclick polyStore output = do
       [] -> void $ element output # set UI.text "Fehler: Dividieren benötigt zwei Polynome. Es wurde noch kein Polynom gespeichert."
 
       other -> void $ element output # set UI.text ("Fehler: Dividieren benötigt zwei Polynome. Es wurde/n aber " ++ show (length other) ++ " Polynom/e gespeichert.")
+
+{- 
+
+Diese Funktion errechnet nichts neu, sondern zeigt das Ergebnis als LaTeX in der GUI an, wenn der Button "LaTeX" geklickt wird.
+Wir lesen das Ergebnis einer Berechnung aus resultStore aus und prüfen vier Fälle:
+
+Fall 1: Es gibt kein Ergebnis, dann wird eine Fehlermeldung angezeigt.
+Fall 2: Das Ergebnis ist ein Polynom, dann wird das Polynom in LaTeX angezeigt.
+Fall 3: Das Ergebnis ist ein Wert, dann wird der Wert in LaTeX angezeigt
+Fall 4: Das Ergebnis ist eine Division von zwei Polynomen, dann wird der Quotient und der Rest in LaTeX angezeigt.
+
+-}
+
+handlelatexclick :: IORef GuiResult -> Element -> UI ()
+handlelatexclick resultStore output = do
+   result <- liftIO $ readIORef resultStore
+
+   case result of
+      NoResult ->
+         void $ element output # set UI.text "Fehler: Es wurde noch kein Ergebnis berechnet."
+
+      PolyResult name poly ->
+         void $ element output # set UI.text
+            ("LaTeX von " ++ name ++ ": " ++ toLaTeX poly)
+
+      ValueResult name value ->
+         void $ element output # set UI.text
+            ("LaTeX von " ++ name ++ ": " ++ toLaTeX value)
+
+      DivResult name quotient rest ->
+         void $ element output # set UI.text
+            ("LaTeX von " ++ name ++ ": Quotient = "
+             ++ toLaTeX quotient ++ ", Rest = " ++ toLaTeX rest)
+
+
+
+
