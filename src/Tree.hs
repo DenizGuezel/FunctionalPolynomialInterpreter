@@ -154,9 +154,48 @@ Sie bekommt als Eingabe die aktuelle Schrittnummer und den Ausdrucksbaum und gib
 prettyTreeMarked :: Int -> ExprTree -> String
 prettyTreeMarked stepNumber tree = prettyTreeMarkedRec stepNumber tree 1
 
+{- 
+
+
+-}
+
 prettyTreeMarkedRec :: Int -> ExprTree -> Int -> String
 prettyTreeMarkedRec stepNumber (TConst k) currentStep = prettyTreeFromNumberedLines currentNumber (numberTreePreOrder tree nodeNumber)
 
+{- 
 
+Diese Funktion nummeriert den Baum in Preorder-Reihenfolge.
 
+Sie gibt eine Liste zurück, in der jeder Eintrag aus drei Teilen besteht:
+1. Die Knotennummer
+2. Die Einrückung als String
+3. Der Text des Knotens
+
+-}
+
+numberTreePreOrder :: ExprTree -> Int -> [(Int, String, String)]
+numberTreePreOrder tree startNumber = numberTreePreOrderRec tree startNumber ""
+
+{- 
+
+Rekursive Hilfsfunktion für numberTreePreOrder.
+
+Sie geht den Baum in Preorder-Reihenfolge durch.
+Also zuerst aktueller Knoten, dann linker Teilbaum, dann rechter Teilbaum.
+
+-}
+
+numberTreePreOrderRec :: ExprTree -> Int -> String -> [(Int, String, String)]
+numberTreePreOrderRec tree number prefix =
+   let currentLine = [(number, prefix, treeLabel tree)]
+       children = treeChildren tree
+   in case children of
+      [] -> currentLine
+      [left] -> currentLine ++ numberTreePreOrderRec left (number + 1) (prefix ++ "  ")
+      [left, right] ->
+         let leftLines = numberTreePreOrderRec left (number + 1) (prefix ++ "  ")
+             nextNumber = number + length leftLines + 1
+             rightLines = numberTreePreOrderRec right nextNumber (prefix ++ "  ")
+         in currentLine ++ leftLines ++ rightLines
+      other -> currentLine
 
