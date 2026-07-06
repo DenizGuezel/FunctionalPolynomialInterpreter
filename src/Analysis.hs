@@ -237,6 +237,29 @@ preOrder (TAdd left right) = ["+"] ++ preOrder left ++ preOrder right
 preOrder (TMul left right) = ["*"] ++ preOrder left ++ preOrder right
 
 
+{- 
+
+Diese Funktion gibt die Knoten eines Baums in In-Order Traversal zurück. 
+In-Order Traversal bedeutet, dass wir zuerst den linken Teilbaum besuchen, dann den aktuellen Knoten und schließlich den rechten Teilbaum.
+
+Bsp bei einem Baum der Form:
+
+        a
+       / \
+      b   c
+     / \
+    d   e
+
+gilt die In-Order Traversal = [d, b, e, a, c], da wir zuerst d besuchen, dann b, dann e, dann a und schließlich c.
+
+-}
+
+inOrder :: ExprTree -> [String]
+inOrder (TConst n) = [prettyRational n]
+inOrder (TVar v) = [prettyVariable v]
+inOrder (TAdd left right ) = inOrder left ++ ["+"] ++ inOrder right
+inOrder (TMul left right) = inOrder left ++ ["*"] ++ inOrder right
+
 {- Diese Funktion dient zur Darstellung der Baumanalyse in der GUI -}
 
 analyseTree :: ExprTree -> String
