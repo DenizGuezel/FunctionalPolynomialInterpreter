@@ -144,5 +144,19 @@ prettyExponent 2 = "²"
 prettyExponent 3 = "³"
 prettyExponent e = "^" ++ show e
 
-    
+{- 
+
+Diese Funktion soll einen Ausdrucksbaum als einen String zurückgeben, der den aktuellen Knoten markiert, der gerade besucht wird.
+Sie bekommt als Eingabe die aktuelle Schrittnummer und den Ausdrucksbaum und gibt als Ausgabe einen String zurück, der den Ausdrucksbaum in einer lesbaren Form darstellt.
+
+-}
+
+prettyTreeMarked :: Int -> ExprTree -> String
+prettyTreeMarked stepNumber tree = prettyTreeMarkedRec stepNumber tree 1
+
+prettyTreeMarkedRec :: Int -> ExprTree -> Int -> String
+prettyTreeMarkedRec stepNumber (TConst k) currentStep = prettyTreeFromNumberedLines currentNumber (numberTreePreOrder tree nodeNumber)
+
+
+
 

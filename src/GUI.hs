@@ -775,21 +775,22 @@ handleanalysisclick resultStore output = do
 
 Diese Funktion startet die Animation der Traversierung eines Baumes in der GUI.
 
-Sie bekommt die Traversierungsschritte und den Ausgabebereich output übergeben.
-Zuerst wird ein IORef stepStore erstellt, der als Speicher für den aktuellen Index der Traversierungsschritte dient.
+Sie bekommt den Baum, die Traversierungsschritte und den Ausgabebereich output übergeben.
+Es wird ein IORef stepStore erstellt, um den aktuellen Schritt der Traversierung zu speichern.
 
-Dann wird ein Timer erstellt, der alle 700 Millisekunden tickt.
+Wir erstellen einen Timer, der alle 700 Millisekunden tickt.
 
-Mit on UI.tick timer wird eine Funktion registriert, die bei jedem Tick des Timers aufgerufen wird.
-Innerhalb dieser Funktion wird der aktuelle Index aus stepStore gelesen.
-Wenn der aktuelle Index größer oder gleich der Länge der Traversierungsschritte ist, wird der Timer gestoppt und eine Meldung angezeigt, dass die Traversierung abgeschlossen ist.
-Ansonsten wird mit currentStep der aktuelle Traversierungsschritt aus der Liste der Schritte geholt und im Ausgabebereich angezeigt.
-Zuletzt wird der aktuelle Index um 1 erhöht und in stepStore gespeichert.
+Mit on UI.tick timer $ \_ -> do sagen wir, was passieren soll, wenn der Timer (also jedes mal, wenn er tickt) tickt.
+Innerhalb des Timers wird der aktuelle Schritt aus stepStore gelesen.
+Wenn der aktuelle Schritt größer oder gleich der Länge der Traversierungsschritte ist, wird der Timer gestoppt und eine Nachricht angezeigt, dass die Traversierung abgeschlossen ist.
+Ansonsten wird mit currentStep der aktuelle Traversierungsschritt aus der Liste der Traversierungsschritte geholt und im Ausgabebereich angezeigt.
+Der Baum wird dabei ebenfalls im schönen Format angezeigt, damit der Benutzer den aktuellen Zustand des Baumes sehen kann.
+zuletzt wird der aktuelle Schritt um 1 erhöht, damit beim nächsten Tick der nächste Schritt angezeigt wird.
 
 -}
 
-startTraversalAnimation :: [TraversalStep] -> Element -> UI ()
-startTraversalAnimation steps output = do
+startTraversalAnimation :: ExprTree -> [TraversalStep] -> Element -> UI ()
+startTraversalAnimation tree steps output = do
    stepStore <- liftIO $ newIORef 0
 
    timer <- UI.timer # set UI.interval 700
@@ -799,12 +800,11 @@ startTraversalAnimation steps output = do
       if currentIndex >= length steps
          then do
             UI.stop timer
-            void $ element output # set UI.text "Traversierung abgeschlossen."
+            void $ element output # set UI.text ("Baum:\n" ++ prettyTree tree ++ "\nTraversierung abgeschlossen.")
          else do
             let currentStep = steps !! currentIndex
-            void $ element output # set UI.text (showTraversalStep currentStep)
+            void $ element output # set UI.text ("Baum:\n" ++ prettyTree tree ++ "\n" ++ showTraversalStep currentStep)
             liftIO $ writeIORef stepStore (currentIndex + 1)
-
    UI.start timer
 
 {- 
@@ -832,13 +832,14 @@ handlestepsclick resultStore output = do
          let tree = polyToExprTree poly
          let traversal = preOrder tree
          let steps = makeTraversalSteps traversal
-         startTraversalAnimation steps output
+         startTraversalAnimation tree steps output
       ValueResult name value -> do
-         let traversal = preOrder (TConst value)
+         let tree = TConst value
+         let traversal = preOrder tree
          let steps = makeTraversalSteps traversal
-         startTraversalAnimation steps output
+         startTraversalAnimation tree steps output
       DivResult name quotient rest -> do
          let tree = polyToExprTree quotient
          let traversal = preOrder tree
          let steps = makeTraversalSteps traversal
-         startTraversalAnimation steps output
+         startTraversalAnimation tree steps output
