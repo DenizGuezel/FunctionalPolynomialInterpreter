@@ -218,6 +218,10 @@ countVariablesRec (TMul left right) count = countVariablesRec left (countVariabl
 Diese Funktion gibt die Knoten eines Baums in Pre-Order Traversal zurück. 
 Pre-Order Traversal bedeutet, dass wir zuerst den aktuellen Knoten besuchen, dann den linken Teilbaum und schließlich den rechten Teilbaum.
 
+Wenn als Parameter ein Baum eingegeben wird, der nur aus einem TConst oder TVar Knoten besteht, wird die Zahl als String verschönert zurückgegeben.
+Wenn als Parameter ein Baum eingegeben wird, der aus einem TAdd oder TMul Knoten besteht, wird der Operator
+ als String zurückgegeben und es wird rekursiv der linke und rechte Teilbaum besucht.
+
 Bsp bei einem Baum der Form:
 
         a
@@ -242,6 +246,10 @@ preOrder (TMul left right) = ["*"] ++ preOrder left ++ preOrder right
 Diese Funktion gibt die Knoten eines Baums in In-Order Traversal zurück. 
 In-Order Traversal bedeutet, dass wir zuerst den linken Teilbaum besuchen, dann den aktuellen Knoten und schließlich den rechten Teilbaum.
 
+Wenn als Parameter ein Baum eingegeben wird, der nur aus einem TConst oder TVar Knoten besteht, wird die Zahl als String verschönert zurückgegeben.
+Wenn als Parameter ein Baum eingegeben wird, der aus einem TAdd oder TMul Knoten besteht, wird zuerst linke Teilbaum besucht, 
+dann der Operator als String zurückgegeben und schließlich der rechte Teilbaum besucht.
+
 Bsp bei einem Baum der Form:
 
         a
@@ -259,6 +267,35 @@ inOrder (TConst n) = [prettyRational n]
 inOrder (TVar v) = [prettyVariable v]
 inOrder (TAdd left right ) = inOrder left ++ ["+"] ++ inOrder right
 inOrder (TMul left right) = inOrder left ++ ["*"] ++ inOrder right
+
+{- 
+
+Diese Funktion gibt die Knoten eines Baums in Post-Order Traversal zurück. 
+Post-Order Traversal bedeutet, dass wir zuerst den linken Teilbaum besuchen, dann den rechten Teilbaum und schließlich den aktuellen Knoten.
+
+Wenn als Parameter ein Baum eingegeben wird, der nur aus einem TConst oder TVar Knoten besteht, wird die Zahl als String verschönert zurückgegeben.
+Wenn als Parameter ein Baum eingegeben wird, der aus einem TAdd oder TMul Knoten besteht, wird zuerst linke Teilbaum besucht, 
+dann der rechte Teilbaum besucht und schließlich der Operator als String zurückgegeben.
+
+Bsp bei einem Baum der Form:
+
+        a
+       / \
+      b   c
+     / \
+    d   e
+
+gilt die Post-Order Traversal = [d, e, b, c, a], da wir zuerst d besuchen, dann e, dann b, dann c und schließlich a.
+
+-}
+
+postOrder :: ExprTree -> [String]
+postOrder (TConst n) = [prettyRational n]
+postOrder (TVar v) = [prettyVariable v]
+postOrder (TAdd left right) = postOrder left ++ postOrder right ++ ["+"]
+postOrder (TMul left right) = postOrder left ++ postOrder right ++ ["*"]
+
+
 
 {- Diese Funktion dient zur Darstellung der Baumanalyse in der GUI -}
 
