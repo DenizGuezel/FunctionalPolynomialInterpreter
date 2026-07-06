@@ -336,8 +336,8 @@ showTraversal xs = unwords xs
 
 {- Diese Funktion dient zur Darstellung der Baumanalyse in der GUI -}
 
-analyseTree :: ExprTree -> String
-analyseTree tree =
+analyzeTree :: ExprTree -> String
+analyzeTree tree =
    "Tiefe: " ++ show (countDepth tree) ++ "\n"
    ++ "Knoten: " ++ show (countNodes tree) ++ "\n"
    ++ "Blätter: " ++ show (countLeaves tree) ++ "\n"

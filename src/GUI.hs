@@ -169,6 +169,10 @@ setup window = do
       # set UI.html "<span class='button-symbol'>🌳</span><span>Baum</span>"
       # set UI.class_ "view-button"
 
+   buttonanalysis <- UI.button
+      # set UI.html "<span class='button-symbol'>📊</span><span>Analyse</span>"
+      # set UI.class_ "view-button"
+
    {- Speicher: -}
 
    polyStore <- liftIO $ newIORef ([] :: [StoredPoly]) --Für die Speicherung der Polynome
@@ -196,6 +200,7 @@ setup window = do
       element buttonshowresult,
       element buttonshowlatex,
       element buttontree,
+      element buttonanalysis,
       element polyListOutput,
       element output
       
@@ -218,6 +223,7 @@ setup window = do
    on UI.click buttonshowresult (\_ -> handleshowresultclick resultStore output)
    on UI.click buttonshowlatex (\_ -> handlelatexclick resultStore output)
    on UI.click buttontree (\_ -> handletreeclick resultStore output)
+   on UI.click buttonanalysis (\_ -> handleanalysisclick resultStore output)
 
 {- 
 
@@ -725,3 +731,34 @@ handletreeclick resultStore output = do
          let treequotient = polyToExprTree quotient
          let treerest = polyToExprTree rest
          void $ element output # set UI.text ("Baum von " ++ name ++ ":\nQuotient:\n" ++ prettyTree treequotient ++ "\nRest:\n" ++ prettyTree treerest)
+
+{- 
+
+Diese Funktion wird aufgerufen, wenn der Button "Analyse" geklickt wird.
+Sie dient dazu, die Analyse eines Baumes anzuzeigen.
+
+Die Funktion bekommt die aktuellen Ergebnisse aus resultStore und den Ausgabebereich output übergeben.
+Danach wird geprüft, ob es ein Ergebnis gibt oder nicht, indem das Ergebnis auf vier Fälle überprüft wird.
+
+Fall 1: Es gibt kein Ergebnis, dann wird eine Fehlermeldung angezeigt.
+Fall 2: Das Ergebnis ist ein Polynom, dann wird das Polynom in einen Baum umgewandelt und analysiert.
+Fall 3: Das Ergebnis ist ein Wert, dann wird der Wert in einen Baum umgewandelt und analysiert.
+Fall 4: Das Ergebnis ist eine Division von zwei Polynomen, dann wird der Quotient und der Rest in einen Baum umgewandelt und analysiert.
+
+-}
+
+handleanalysisclick :: IORef GuiResult -> Element -> UI ()
+handleanalysisclick resultStore output = do
+   result <- liftIO $ readIORef resultStore
+   case result of
+      NoResult -> void $ element output # set UI.text "Fehler: Es wurde noch kein Ergebnis berechnet."
+      PolyResult name poly -> do
+         let analysis = analyzeTree (polyToExprTree poly)
+         void $ element output # set UI.text ("Analyse von " ++ name ++ ":\n" ++ analysis)
+      ValueResult name value -> do
+         let analysis = analyzeTree (TConst value)
+         void $ element output # set UI.text ("Analyse von " ++ name ++ ":\n" ++ analysis)
+      DivResult name quotient rest -> do
+         let analysisQuotient = analyzeTree (polyToExprTree quotient)
+         let analysisRest = analyzeTree (polyToExprTree rest)
+         void $ element output # set UI.text ("Analyse von " ++ name ++ ":\nQuotient:\n" ++ analysisQuotient ++ "\nRest:\n" ++ analysisRest)
