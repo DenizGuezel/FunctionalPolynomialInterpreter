@@ -1,6 +1,7 @@
 module Analysis where
 
 import Tree
+import Format (prettyRational, prettyVariable, showTraversal)
 
 {- Hier kommt die Logik zur Analyse eines Baums hin, z.B. zur Bestimmung der Tiefe oder der Anzahl der Knoten -}
 
@@ -328,11 +329,6 @@ bis alle Bäume besucht wurden.
 levelOrderRec :: [ExprTree] -> [String]
 levelOrderRec [] = []
 levelOrderRec (tree:rest) = treeLabel tree : levelOrderRec (rest ++ treeChildren tree)
-
-{- Diese Funktion gibt die Knoten (in Form einer String-Liste durch Order-Verwendung) eines Baums in einer kommagetrennten Liste zurück -}
-
-showTraversal :: [String] -> String
-showTraversal xs = unwords xs
 
 {- Diese Funktion dient zur Darstellung der Baumanalyse in der GUI -}
 

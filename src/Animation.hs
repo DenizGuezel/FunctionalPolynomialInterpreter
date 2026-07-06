@@ -1,5 +1,7 @@
 module Animation where
 
+import Format
+
 {- 
 
 Hier kommt nicht die echte GUI-Animation rein, sondern die Logik fÃ¼r die Animationsschritte.
@@ -56,29 +58,3 @@ showTraversalStep :: TraversalStep -> String
 showTraversalStep (TraversalStep stepnumber current visited) = 
    "Traversierung: " ++ formatVisitedSteps visited ++ "\n" ++
    "Aktueller Knoten: " ++ current 
-
-{- 
-
-Diese Funktion dient dazu, eine Liste von Animationsschritten in einen String umzuwandeln, 
-der die einzelnen Schritte in einer lesbaren Form darstellt.
-
-Sie bekommt die Liste der besuchten Knoten übergeben und ruft die rekursive Hilfsfunktion formatVisitedStepsRec auf, 
-die die Liste der besuchten Knoten durchgeht und einen String baut, beginnend bei Schritt 1.
-
-Es erzeugt eine Bsp-Ausgabe: formatVisitedSteps ["A", "B", "C"] -> "Schritt: 1, Knoten: A\nSchritt: 2, Knoten: B\nSchritt: 3, Knoten: C\n"
-
--}
-
-formatVisitedSteps :: [String] -> String
-formatVisitedSteps xs = formatVisitedStepsRec xs 1
-
-{- 
-
-Diese rekursive Hilfsfunktion geht die Liste der besuchten Knoten durch und baut einen String, der die einzelnen Schritte in einer lesbaren Form darstellt.
-Sie bekommt die Liste der besuchten Knoten und die aktuelle Schrittnummer übergeben.
-
--}
-
-formatVisitedStepsRec :: [String] -> Int -> String
-formatVisitedStepsRec [] _ = ""
-formatVisitedStepsRec (x:xs) stepnumber = "Schritt: " ++ show stepnumber ++ ", Knoten: " ++ x ++ "\n" ++ formatVisitedStepsRec xs (stepnumber + 1)

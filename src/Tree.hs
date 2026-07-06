@@ -1,10 +1,7 @@
 module Tree where
 
 import Poly
-import ParserSimple
-import Animation
-
-import Data.Ratio (numerator, denominator)
+import Format
 
 {- Hier kommt die Logik für den Ausdrucksbaum rein: -}
 
@@ -67,7 +64,7 @@ der den Ausdruck in einer lesbaren Form darstellt.
 -}
 
 prettyTree :: ExprTree -> String
-prettyTree tree = treeLabel tree ++ "\n" ++ prettyChildren "" (treeChildren tree)
+prettyTree = prettyTreeWith treeLabel treeChildren
 
 {- 
 
@@ -79,16 +76,6 @@ Wenn die Liste der Kindknoten mehr als ein Element enthält, wird das erste Elem
 die restlichen Elemente werden rekursiv mit einem "|   " Präfix dargestellt. 
 
 -}
-
-prettyChildren :: String -> [ExprTree] -> String
-prettyChildren prefix [] = ""
-prettyChildren prefix [child] =
-   prefix ++ "`-- " ++ treeLabel child ++ "\n"
-   ++ prettyChildren (prefix ++ "    ") (treeChildren child)
-prettyChildren prefix (child:rest) =
-   prefix ++ "|-- " ++ treeLabel child ++ "\n"
-   ++ prettyChildren (prefix ++ "|   ") (treeChildren child)
-   ++ prettyChildren prefix rest
 
 {- Diese Hilfsfunktion holt je nach Knotentyp die Kindknoten eines Ausdrucksbaums. -}
 
@@ -105,46 +92,6 @@ treeLabel (TConst k) = prettyRational k
 treeLabel (TVar e) = prettyVariable e
 treeLabel (TAdd left right) = "+"
 treeLabel (TMul left right) = "*"
-
-{- 
-
-Diese Hilfsfunktion wandelt eine rationale Zahl in eine lesbare Form um.
-demoniator ist der Nenner der rationalen Zahl, numerator ist der Zähler.
-
-Wenn der Nenner 1 ist, wird nur der Zähler als String zurückgegeben (z.B 3 % 1 wird als "3" dargestellt, da 3 % 1 = 3/1 = 3 ist), 
-ansonsten wird der Zähler und der Nenner durch einen Bruchstrich getrennt zurückgegeben (z.B 3 % 2 wird als "3/2" dargestellt, da 3 % 2 = 3/2 ist).
-
--}
-
-prettyRational :: Rational -> String
-prettyRational r
-   | denominator r == 1 = show (numerator r)
-   | otherwise = show (numerator r) ++ "/" ++ show (denominator r)
-
-{- 
-
-Diese Hilfsfunktion stellt eine Varibale (z.B x^2) mithilfe von prettyExponent in einer lesbaren Form dar.
-z.B wird die Eingabe 2 als "x²" dargestellt.
-
--}
-
-prettyVariable :: Int -> String
-prettyVariable 1 = "x"
-prettyVariable e = "x" ++ prettyExponent e
-
-{- 
-
-Diese Hilfsfunktion soll einen Exponenten in eine lesbare Form umwandeln.
-Je nach Exponent wird eine andere Darstellung gewählt, z.B. 2 wird als "²" dargestellt.
-
--}
-
-prettyExponent :: Int -> String
-prettyExponent 0 = ""
-prettyExponent 1 = ""
-prettyExponent 2 = "²"
-prettyExponent 3 = "³"
-prettyExponent e = "^" ++ show e
 
 {- 
 
@@ -170,103 +117,4 @@ Wenn die aktuelle Schrittnummer z.B. 3 ist, wird der dritte Knoten im Baum mit >
 -}
 
 prettyTreeMarked :: Int -> ExprTree -> String
-prettyTreeMarked stepNumber tree =
-   let (treeText, nextNumber) = prettyTreeMarkedRec stepNumber tree 1
-   in treeText
-
-{- 
-
-Rekursive Hilfsfunktion für prettyTreeMarked.
-
-Sie bekommt die Schrittnummer, die markiert werden soll, den aktuellen Baum und die aktuelle Knotennummer.
-
-Die Funktion gibt ein Paar zurück:
-Der erste Wert ist der fertige Baum als String.
-Der zweite Wert ist die nächste freie Knotennummer.
-
-Das brauchen wir, weil nach dem linken Teilbaum der rechte Teilbaum mit der richtigen Nummer weitergezählt werden muss.
-
--}
-
-prettyTreeMarkedRec :: Int -> ExprTree -> Int -> (String, Int)
-prettyTreeMarkedRec stepNumber tree currentNumber =
-   let label = markedTreeLabel stepNumber currentNumber (treeLabel tree)
-       children = treeChildren tree
-       (childrenText, nextNumber) = prettyChildrenMarked stepNumber (currentNumber + 1) "" children
-   in (label ++ "\n" ++ childrenText, nextNumber)
-
-
-{- 
-
-Diese Hilfsfunktion markiert die Beschriftung eines Knotens, falls die aktuelle Knotennummer gleich der gesuchten Schrittnummer ist.
-
-Wenn die Nummern gleich sind, wird der Knoten mit >> << markiert.
-Wenn die Nummern nicht gleich sind, wird die normale Beschriftung zurückgegeben.
-
--}
-
-markedTreeLabel :: Int -> Int -> String -> String
-markedTreeLabel stepNumber currentNumber label
-   | stepNumber == currentNumber = ">> " ++ label ++ " <<"
-   | otherwise = label
-
-{- 
-
-Diese Hilfsfunktion stellt die Kindknoten eines Ausdrucksbaums dar und zählt dabei die Knotennummern weiter.
-
-Sie funktioniert ähnlich wie prettyChildren, nur dass hier zusätzlich die aktuelle Knotennummer mitgeführt wird.
-
-Wenn es keine Kinder gibt, wird ein leerer String zurückgegeben und die aktuelle Nummer bleibt gleich.
-
-Wenn es genau ein Kind gibt, wird dieses Kind mit "`-- " dargestellt.
-
-Wenn es mehrere Kinder gibt, wird das erste Kind mit "|-- " dargestellt und die restlichen Kinder werden rekursiv weiter verarbeitet.
-
--}
-
-prettyChildrenMarked :: Int -> Int -> String -> [ExprTree] -> (String, Int)
-prettyChildrenMarked stepNumber currentNumber prefix [] = ("", currentNumber)
-prettyChildrenMarked stepNumber currentNumber prefix [child] =
-   let (childText, nextNumber) = prettyTreeMarkedRec stepNumber child currentNumber
-       formattedChild = formatMarkedChild prefix "`-- " "    " childText
-   in (formattedChild, nextNumber)
-prettyChildrenMarked stepNumber currentNumber prefix (child:rest) =
-   let (childText, nextNumberAfterChild) = prettyTreeMarkedRec stepNumber child currentNumber
-       formattedChild = formatMarkedChild prefix "|-- " "|   " childText
-       (restText, nextNumberAfterRest) = prettyChildrenMarked stepNumber nextNumberAfterChild prefix rest
-   in (formattedChild ++ restText, nextNumberAfterRest)
-
-
-{- 
-
-Diese Hilfsfunktion sorgt dafür, dass ein Kindknoten mit dem richtigen Baum-Präfix angezeigt wird.
-
-Die erste Zeile bekommt z.B. "|-- " oder "`-- " davor.
-Die restlichen Zeilen bekommen danach die passende Einrückung, damit die Baumstruktur erhalten bleibt.
-
-Dadurch sieht man in der GUI weiterhin einen richtigen Baum und nicht nur eine einfache Liste.
-
--}
-
-formatMarkedChild :: String -> String -> String -> String -> String
-formatMarkedChild prefix firstPrefix restPrefix childText =
-   case lines childText of
-      [] -> ""
-      (firstLine:restLines) ->
-         prefix ++ firstPrefix ++ firstLine ++ "\n"
-         ++ formatMarkedChildRest prefix restPrefix restLines
-
-
-{- 
-
-Diese Hilfsfunktion formatiert die restlichen Zeilen eines Kindbaums.
-
-Diese Zeilen gehören nicht mehr zur ersten Zeile des Kindes, sondern zu dessen Unterknoten.
-Deshalb bekommen sie nur noch die passende Einrückung davor.
-
--}
-
-formatMarkedChildRest :: String -> String -> [String] -> String
-formatMarkedChildRest prefix restPrefix [] = ""
-formatMarkedChildRest prefix restPrefix (line:linesRest) = 
-   prefix ++ restPrefix ++ line ++ "\n" ++ formatMarkedChildRest prefix restPrefix linesRest
+prettyTreeMarked = prettyTreeMarkedWith treeLabel treeChildren

@@ -67,6 +67,8 @@ library
     exposed-modules:
         Poly
         ParserSimple
+        Format
+        Display
         Tree
         GUI
         Analysis
