@@ -78,12 +78,33 @@ showStepsText tree steps currentIndex
 
 {- Detail-Darstellung -}
 
+{-
+
+Diese Funktion stellt die verschiedenen Darstellungen eines Polynoms dar. 
+Sie dient als Wiederverwendbare Funktion, um die Details eines Polynoms in der GUI für das richtige GuiResult anzuzeigen.
+
+-}
+
+showPolyRepresentations :: String -> Poly -> String
+showPolyRepresentations name poly =
+   let normalizedPoly = normalize poly
+       tree = polyToExprTree normalizedPoly
+   in name ++ ":\n"
+      ++ "Mathematisch: " ++ prettyPoly normalizedPoly ++ "\n"
+      ++ "Monomliste: " ++ showMonomListNormalized normalizedPoly ++ "\n"
+      ++ "Interne Haskell-Darstellung: " ++ show normalizedPoly ++ "\n"
+      ++ "LaTeX: " ++ polyToLaTeX normalizedPoly ++ "\n"
+      ++ "AST: " ++ show tree ++ "\n"
+      ++ "Baum:\n" ++ prettyTree tree
+
+
 {- Diese Funktion stellt die Detailansicht für einen einzelnen Wert dar. -}
 
 showValueDetailsText :: String -> Rational -> String
 showValueDetailsText name value =
-   "Details von " ++ name ++ ":\n"
+   "Darstellungen von " ++ name ++ ":\n"
    ++ "Wert: " ++ prettyRational value ++ "\n"
+   ++ "Haskell-Darstellung: " ++ show value ++ "\n"
    ++ "LaTeX: " ++ toLaTeX value ++ "\n"
    ++ "Baum:\n" ++ prettyTree (TConst value)
 
@@ -91,13 +112,10 @@ showValueDetailsText name value =
 
 showDivDetailsText :: String -> Poly -> Poly -> String
 showDivDetailsText name quotient rest =
-   "Details von " ++ name ++ ":\n"
-   ++ "Quotient: " ++ toPrettyMathPoly quotient ++ "\n"
-   ++ "Rest: " ++ toPrettyMathPoly rest ++ "\n"
-   ++ "LaTeX Quotient: " ++ toLaTeX quotient ++ "\n"
-   ++ "LaTeX Rest: " ++ toLaTeX rest ++ "\n"
-   ++ "Baum Quotient:\n" ++ prettyTree (polyToExprTree quotient) ++ "\n"
-   ++ "Baum Rest:\n" ++ prettyTree (polyToExprTree rest)
+   "Darstellungen von " ++ name ++ ":\n\n"
+   ++ showPolyRepresentations "Quotient" quotient
+   ++ "\n"
+   ++ showPolyRepresentations "Rest" rest
 
 {-
 
@@ -109,15 +127,8 @@ wird mithilfe des handlers diese Funktion aufgerufen.
 
 showDetailsText :: String -> Poly -> String
 showDetailsText name poly =
-   let normalizedPoly = normalize poly
-       tree = polyToExprTree normalizedPoly
-   in "Darstellungen von " ++ name ++ ":\n"
-      ++ "Mathematisch: " ++ prettyPoly normalizedPoly ++ "\n"
-      ++ "Monomliste: " ++ showMonomListNormalized normalizedPoly ++ "\n"
-      ++ "Interne Haskell-Darstellung: " ++ show normalizedPoly ++ "\n"
-      ++ "LaTeX: " ++ polyToLaTeX normalizedPoly ++ "\n"
-      ++ "AST: " ++ show tree ++ "\n"
-      ++ "Baum:\n" ++ prettyTree tree
+   "Darstellungen von " ++ name ++ ":\n"
+   ++ showPolyRepresentations "Polynom" poly
 
 {- 
 

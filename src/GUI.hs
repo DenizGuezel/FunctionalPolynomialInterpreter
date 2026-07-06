@@ -237,6 +237,7 @@ setup window = do
    on UI.click buttontree (\_ -> handletreeclick resultStore output)
    on UI.click buttonanalysis (\_ -> handleanalysisclick resultStore output)
    on UI.click buttonsteps (\_ -> handlestepsclick resultStore output)
+   on UI.click buttondetails (\_ -> handledetailsclick resultStore output)
 
 {- 
 
@@ -766,7 +767,15 @@ handlestepsclick resultStore output = do
 {-
 
 Diese Funktion wird aufgerufen, wenn der Button "Details" geklickt wird.
+Sie dient dazu, die Details eines Ergebnisses anzuzeigen.
 
+Wir übergeben resultStore, um das Ergebnis der Berechnung zu lesen, und output, um die Details anzuzeigen.
+Danach wird geprüft, ob es ein Ergebnis gibt oder nicht, indem das Ergebnis auf vier Fälle überprüft wird.
+
+Fall 1: Es gibt kein Ergebnis, dann wird eine Fehlermeldung angezeigt.
+Fall 2: Das Ergebnis ist ein Polynom, dann werden die Details des Polynoms angezeigt.
+Fall 3: Das Ergebnis ist ein Wert, dann werden die Details des Wertes angezeigt.
+Fall 4: Das Ergebnis ist eine Division von zwei Polynomen, dann werden die Details des
 
 -}
 
