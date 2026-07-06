@@ -199,3 +199,16 @@ numberTreePreOrderRec tree number prefix =
          in currentLine ++ leftLines ++ rightLines
       other -> currentLine
 
+{- 
+
+Diese Funktion baut aus den nummerierten Baumzeilen wieder einen String.
+Wenn der Tree leer ist, wird ein leerer String zurückgegeben.
+Wenn die Knotennummer gleich currentNumber ist, wird der Knoten markiert.
+
+-}
+
+prettyTreeFromNumberedLines :: Int -> [(Int, String, String)] -> String
+prettyTreeFromNumberedLines currentNumber [] = ""
+prettyTreeFromNumberedLines currentNumber ((number, prefix, label):rest)
+   | number == currentNumber = prefix ++ ">> " ++ label ++ " <<\n" ++ prettyTreeFromNumberedLines currentNumber rest
+   | otherwise = prefix ++ label ++ "\n" ++ prettyTreeFromNumberedLines currentNumber rest
