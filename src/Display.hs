@@ -108,7 +108,6 @@ showDivDetailsText name quotient rest =
    ++ "Baum Quotient:\n" ++ prettyTree (polyToExprTree quotient) ++ "\n"
    ++ "Baum Rest:\n" ++ prettyTree (polyToExprTree rest)
 
-
 {- 
 
 Diese Funktion soll die Darstellung einer MonomListe als String ermöglichen, 
