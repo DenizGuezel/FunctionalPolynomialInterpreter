@@ -754,11 +754,11 @@ handleanalysisclick resultStore output = do
       NoResult -> void $ element output # set UI.text "Fehler: Es wurde noch kein Ergebnis berechnet."
       PolyResult name poly -> do
          let analysis = analyzeTree (polyToExprTree poly)
-         void $ element output # set UI.text ("Analyse von " ++ name ++ ":\n" ++ analysis)
+         void $ element output # set UI.text ("Analyse von Baum" ++ name ++ ":\n" ++ analysis)
       ValueResult name value -> do
          let analysis = analyzeTree (TConst value)
-         void $ element output # set UI.text ("Analyse von " ++ name ++ ":\n" ++ analysis)
+         void $ element output # set UI.text ("Analyse von Baum " ++ name ++ ":\n" ++ analysis)
       DivResult name quotient rest -> do
          let analysisQuotient = analyzeTree (polyToExprTree quotient)
          let analysisRest = analyzeTree (polyToExprTree rest)
-         void $ element output # set UI.text ("Analyse von " ++ name ++ ":\nQuotient:\n" ++ analysisQuotient ++ "\nRest:\n" ++ analysisRest)
+         void $ element output # set UI.text ("Analyse von Baum " ++ name ++ ":\nQuotient:\n" ++ analysisQuotient ++ "\nRest:\n" ++ analysisRest)
