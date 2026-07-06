@@ -797,14 +797,25 @@ startTraversalAnimation tree steps output = do
 
    on UI.tick timer $ \_ -> do
       currentIndex <- liftIO $ readIORef stepStore
+
       if currentIndex >= length steps
          then do
             UI.stop timer
-            void $ element output # set UI.text ("Baum:\n" ++ prettyTree tree ++ "\nTraversierung abgeschlossen.")
+            void $ element output # set UI.text
+               ("Baum:\n" ++ prettyTree tree ++ "\nTraversierung abgeschlossen.")
+
          else do
             let currentStep = steps !! currentIndex
-            void $ element output # set UI.text ("Baum:\n" ++ prettyTree tree ++ "\n" ++ showTraversalStep currentStep)
+            let TraversalStep stepnumber current visited = currentStep
+
+            void $ element output # set UI.text
+               ("Baum:\n"
+                ++ prettyTreeMarked stepnumber tree
+                ++ "\n"
+                ++ showTraversalStep currentStep)
+
             liftIO $ writeIORef stepStore (currentIndex + 1)
+
    UI.start timer
 
 {- 
