@@ -74,7 +74,7 @@ wobei die aktuelle Anzahl der Knoten um das Ergebnis des rechten Teilbaums erhö
 Es wird so tief wie möglich nach rechts gegangen, bevor nach links gegangen wird, um die Anzahl der Knoten zu zählen.
 Quasi sobald ein Blatt erreicht wird, wird zurückgegangen und der linke von jedem durchgegangen rechten Teilbaum wird gezählt.
 
-Sobald ,vom Root aus gesehen, der rechte Teilbaum vollständig gezählt wurde, wird der linke Teilbaum gezählt und die Ergebnisse werden zusammengezählt.
+Sobald , vom Root aus gesehen, der rechte Teilbaum vollständig gezählt wurde, wird der linke Teilbaum gezählt und die Ergebnisse werden zusammengezählt.
 
 -}
 
@@ -83,3 +83,83 @@ countNodesRec (TConst _) count = count + 1
 countNodesRec (TVar _) count = count + 1
 countNodesRec (TAdd left right) count = countNodesRec left (countNodesRec right (count + 1))
 countNodesRec (TMul left right) count = countNodesRec left (countNodesRec right (count + 1))
+
+
+{- 
+
+Diese Funktion zählt die Anzahl der Blätter in einem Baum mithilfe der rekursiven Hilfsfunktion countLeavesRec.
+
+z.B für einen Baum der Form:
+
+        a
+       / \
+      b   c
+     / \
+    d   e
+
+gilt die Anzahl der Blätter = 3, da es insgesamt drei Blätter (d, e, c) gibt.
+
+-}
+
+countLeaves :: ExprTree -> Int
+countLeaves tree = countLeavesRec tree 0
+
+
+{- 
+
+Rekursive Hilfsfunktion, die die Anzahl der Blätter in einem Baum zählt mithilfe von Pattern Matching.
+Sie nimmt als Eingabe einen Baum und die aktuelle Anzahl der Blätter.
+
+Wenn der aktuelle Knoten ein Blattknoten ist (TConst oder TVar), erhöht sie die aktuelle Anzahl der Blätter um 1 und gibt sie zurück.
+Wenn der aktuelle Knoten ein innerer Knoten ist (TAdd oder TMul), wird die Funktion zuerst rekursiv auf den rechten Teilbaum aufgerufen,
+
+Es wird so tief wie möglich nach rechts gegangen, bevor nach links gegangen wird, um die Anzahl der Blätter zu zählen.
+Quasi sobald ein Blatt erreicht wird, wird zurückgegangen und der linke von jedem durchgegangen rechten Teilbaum wird gezählt.
+
+Es können nur maximal zwei Blätter pro innerem Knoten gezählt werden, da jeder innere Knoten genau zwei Kinder hat.
+
+Die Anzahl wird erst erhöht, wenn ein Blattknoten (TConst oder TVar) erreicht wird, und nicht bei inneren Knoten (TAdd oder TMul).
+
+-}
+
+countLeavesRec :: ExprTree -> Int -> Int
+countLeavesRec (TConst _) count = count + 1
+countLeavesRec (TVar _) count = count + 1
+countLeavesRec (TAdd left right) count = countLeavesRec left (countLeavesRec right count)
+countLeavesRec (TMul left right) count = countLeavesRec left (countLeavesRec right count)
+
+{- 
+
+Diese Funktion zählt die Anzahl der Operatoren in einem Baum mithilfe der rekursiven Hilfsfunktion countOperatorsRec.
+
+z.B für einen Baum der Form:
+
+        a
+       / \
+      b   c
+     / \
+    d   e
+
+gilt die Anzahl der Operatoren = 2, da es insgesamt zwei Operatoren (a, b) gibt.
+genauer gesagt: (TAdd a (TVar b) (TVar c)) und (TAdd b (TVar d) (TVar e)) sind die beiden Operatoren.
+
+-}
+
+countOperators :: ExprTree -> Int
+countOperators tree = countOperatorsRec tree 0
+
+{- 
+
+Rekursive Hilfsfunktion, die die Anzahl der Operatoren in einem Baum zählt mithilfe von Pattern Matching.
+
+Gleiches Vorgehen wie bei countNodesRec, nur dass hier nicht automatisch die Anzahl um 1 erhöht wird, 
+wenn wir einen TAdd oder TMul Knoten erreichen, sondern erst, wenn wir die beiden Kinder gezählt haben.
+
+-}
+
+countOperatorsRec :: ExprTree -> Int -> Int
+countOperatorsRec (TConst _) count = count
+countOperatorsRec (TVar _) count = count
+countOperatorsRec (TAdd left right) count = countOperatorsRec left (countOperatorsRec right (count + 1))
+countOperatorsRec (TMul left right) count = countOperatorsRec left (countOperatorsRec right (count + 1))
+
