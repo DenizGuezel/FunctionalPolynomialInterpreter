@@ -49,3 +49,11 @@ Danach wird die Funktion rekursiv auf die Restliste aufgerufen, wobei der aktuel
 makeTraversalStepsRec :: [String] -> [String] -> Int -> [TraversalStep]
 makeTraversalStepsRec [] _ _ = []
 makeTraversalStepsRec (x:xs) visited stepnumber = TraversalStep stepnumber x visited : makeTraversalStepsRec xs (visited ++ [x]) (stepnumber + 1) 
+
+{- Diese Funktion dient zu der Anzeige der Animationsschritte in der GUI -}
+
+showTraversalSteps :: TraversalStep -> String
+showTraversalSteps (TraversalStep stepnumber current visited) = 
+   "Schritt: " ++ show stepnumber ++ "\n" ++
+   "Aktueller Knoten: " ++ current ++ "\n" ++
+   "Besuchte Knoten: " ++ show visited ++ "\n"
