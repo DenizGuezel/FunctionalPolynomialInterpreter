@@ -150,6 +150,28 @@ prettyMonom (M k e)
 {- 
 
 Diese Hilfsfunktion soll die Kindknoten eines Ausdrucksbaums in einer lesbaren Form darstellen.
+Sie bekommt als Eingabe label, children und tree.
+
+label ist eine Funktion, die den aktuellen Knoten in einen String umwandelt.
+children ist eine Funktion, die die Kindknoten des aktuellen Knotens zurückgibt.
+tree ist der aktuelle Knoten, der angezeigt werden soll.
+
+-}
+
+prettyTreeWith :: (a -> String) -> (a -> [a]) -> a -> String
+prettyTreeWith label children tree = label tree ++ "\n" ++ prettyChildrenWith label children "" (children tree)
+
+{- 
+
+Diese Hilfsfunktion soll die Kindknoten eines Ausdrucksbaums in einer lesbaren Form darstellen, 
+wobei der aktuelle Knoten markiert wird, der gerade besucht wird.
+
+Sie bekommt als Eingabe label, children, prefix und eine Liste von Kindknoten.
+
+label ist eine Funktion, die den aktuellen Knoten in einen String umwandelt.
+children ist eine Funktion, die die Kindknoten des aktuellen Knotens zurückgibt.
+prefix ist ein String, der vor jedem Kindknoten angezeigt wird, um die Hierarchie darzustellen.
+Die Liste von Kindknoten ist die Liste der Kindknoten, die angezeigt werden sollen
 
 Wenn die Liste der Kindknoten leer ist, wird ein leerer String zurückgegeben.
 Wenn die Liste der Kindknoten genau ein Element enthält, wird dieses Element mit einem "`-- " Präfix dargestellt.
@@ -158,8 +180,6 @@ die restlichen Elemente werden rekursiv mit einem "|   " Präfix dargestellt.
 
 -}
 
-prettyTreeWith :: (a -> String) -> (a -> [a]) -> a -> String
-prettyTreeWith label children tree = label tree ++ "\n" ++ prettyChildrenWith label children "" (children tree)
 prettyChildrenWith :: (a -> String) -> (a -> [a]) -> String -> [a] -> String
 prettyChildrenWith _ _ _ [] = ""
 prettyChildrenWith label children prefix [child] =

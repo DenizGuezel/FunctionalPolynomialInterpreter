@@ -55,28 +55,6 @@ polyToExprTree (P []) = TConst 0
 polyToExprTree (P [m]) = monomToExprTree m
 polyToExprTree (P (m:ms)) = TAdd (monomToExprTree m) (polyToExprTree (P ms))
 
-
-{- 
-
-Hauptfunktion, die einen Ausdrucksbaum in einen String umwandelt, 
-der den Ausdruck in einer lesbaren Form darstellt.
-
--}
-
-prettyTree :: ExprTree -> String
-prettyTree = prettyTreeWith treeLabel treeChildren
-
-{- 
-
-Diese Hilfsfunktion soll die Kindknoten eines Ausdrucksbaums in einer lesbaren Form darstellen.
-
-Wenn die Liste der Kindknoten leer ist, wird ein leerer String zurückgegeben.
-Wenn die Liste der Kindknoten genau ein Element enthält, wird dieses Element mit einem "`-- " Präfix dargestellt.
-Wenn die Liste der Kindknoten mehr als ein Element enthält, wird das erste Element mit einem "|-- " Präfix dargestellt und 
-die restlichen Elemente werden rekursiv mit einem "|   " Präfix dargestellt. 
-
--}
-
 {- Diese Hilfsfunktion holt je nach Knotentyp die Kindknoten eines Ausdrucksbaums. -}
 
 treeChildren :: ExprTree -> [ExprTree]
@@ -93,26 +71,24 @@ treeLabel (TVar e) = prettyVariable e
 treeLabel (TAdd left right) = "+"
 treeLabel (TMul left right) = "*"
 
+
 {- 
 
-Diese Funktion soll einen Ausdrucksbaum als einen String zurückgeben, der den aktuellen Knoten markiert, der gerade besucht wird.
-Sie bekommt als Eingabe die aktuelle Schrittnummer und den Ausdrucksbaum und gibt als Ausgabe einen String zurück, der den Ausdrucksbaum in einer lesbaren Form darstellt.
+Diese Funktion stellt einen Ausdrucksbaum als lesbaren Textbaum dar.
+
+Sie benutzt die generische Baumformatierung aus Format.hs.
+treeLabel bestimmt, wie ein Knoten angezeigt wird.
+treeChildren bestimmt, welche Kindknoten ein Ausdrucksbaum besitzt.
 
 -}
 
+prettyTree :: ExprTree -> String
+prettyTree = prettyTreeWith treeLabel treeChildren
+
 {- 
 
-Diese Funktion soll einen Ausdrucksbaum als einen String zurückgeben, bei dem der aktuelle Knoten markiert wird.
-
-Sie bekommt als ersten Parameter die aktuelle Schrittnummer.
-Diese Schrittnummer kommt aus der Traversierung, also z.B. Schritt 1, Schritt 2, Schritt 3 usw.
-
-Als zweiten Parameter bekommt sie den Ausdrucksbaum, der angezeigt werden soll.
-
-Die Nummerierung läuft hier in Preorder-Reihenfolge.
-Das bedeutet: zuerst der aktuelle Knoten, dann der linke Teilbaum, dann der rechte Teilbaum.
-
-Wenn die aktuelle Schrittnummer z.B. 3 ist, wird der dritte Knoten im Baum mit >> << markiert.
+Diese Funktion gibt einen Ausdrucksbaum als String dar und markiert den Knoten, der gerade besucht wird.
+Mithilfe der generischen Baumformatierung aus Format.hs wird der Ausdrucksbaum dargestellt.
 
 -}
 

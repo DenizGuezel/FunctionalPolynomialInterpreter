@@ -78,15 +78,6 @@ showStepsText tree steps currentIndex
 
 {- Detail-Darstellung -}
 
-{- Diese Funktion stellt die Detailansicht für ein Polynom dar. -}
-
-showDetailsText :: String -> Poly -> String
-showDetailsText name poly =
-   "Details von " ++ name ++ ":\n"
-   ++ "Polynom: " ++ toPrettyMathPoly poly ++ "\n"
-   ++ "LaTeX: " ++ toLaTeX poly ++ "\n"
-   ++ "Baum:\n" ++ prettyTree (polyToExprTree poly)
-
 {- Diese Funktion stellt die Detailansicht für einen einzelnen Wert dar. -}
 
 showValueDetailsText :: String -> Rational -> String
@@ -108,29 +99,41 @@ showDivDetailsText name quotient rest =
    ++ "Baum Quotient:\n" ++ prettyTree (polyToExprTree quotient) ++ "\n"
    ++ "Baum Rest:\n" ++ prettyTree (polyToExprTree rest)
 
+{-
+
+Diese Funktion stellt die Detailansicht für ein Polynom dar. 
+Wir verwenden diese Funktion, um die Details eines Polynoms in der GUI anzuzeigen, also sobald der Benutzer auf den Button "Details" klickt, 
+wird mithilfe des handlers diese Funktion aufgerufen.
+
+-}
+
+showDetailsText :: String -> Poly -> String
+showDetailsText name poly =
+   let normalizedPoly = normalize poly
+       tree = polyToExprTree normalizedPoly
+   in "Darstellungen von " ++ name ++ ":\n"
+      ++ "Mathematisch: " ++ prettyPoly normalizedPoly ++ "\n"
+      ++ "Monomliste: " ++ showMonomListNormalized normalizedPoly ++ "\n"
+      ++ "Interne Haskell-Darstellung: " ++ show normalizedPoly ++ "\n"
+      ++ "LaTeX: " ++ polyToLaTeX normalizedPoly ++ "\n"
+      ++ "AST: " ++ show tree ++ "\n"
+      ++ "Baum:\n" ++ prettyTree tree
+
 {- 
 
 Diese Funktion soll die Darstellung einer MonomListe als String ermöglichen, 
 die dann in der GUI unter dem Reiter Detaiks angezeigt werden kann.
+
+Die Funktion wird auf bereits normalisierte Polynome angewendet, 
+um die Monomliste in einer standardisierten Form darzustellen.
 
 Die Funktion bekommt als Eingabe ein Polynom, z.B. P [M 3 2, M 2 1, M 1 0] 
 und gibt als Ausgabe einen String zurück, z.B. "[(3,2),(2,1),(1,0)]".
 
 -}
 
-showMonomList :: Poly -> String
-showMonomList poly = let P ms = normalize poly
-    in show [(k,e) | M k e <- ms]
-
-{- Diese Funktion stellt die Darstellung eines Polynoms in Haskell-Format (interne Darstellung) dar. -}
-
-showPolyInHaskell :: Poly -> String
-showPolyInHaskell poly = show (normalize poly)
-
-{- Diese Funktion stellt ein Polynom als einen Ausdrucksbaum dar. -}
-
-toAstView :: Poly -> String
-toAstView poly = show (polyToExprTree poly)
+showMonomListNormalized :: Poly -> String
+showMonomListNormalized (P ms) = show [(k,e) | M k e <- ms]
 
 
 
