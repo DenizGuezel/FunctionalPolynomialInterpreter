@@ -13,6 +13,7 @@ import Poly
 import ParserSimple
 import Tree
 import Analysis
+import Animation
 
 {- Hier kommt die GUI-Logik rein, welche die Interaktion mit dem Benutzer steuert z.B mit Buttons, usw... -}
 
@@ -173,6 +174,10 @@ setup window = do
       # set UI.html "<span class='button-symbol'>📊</span><span>Analyse</span>"
       # set UI.class_ "view-button"
 
+   buttonsteps <- UI.button
+      # set UI.html "<span class='button-symbol'>☰</span><span>Schritte</span>"
+      # set UI.class_ "view-button"
+
    {- Speicher: -}
 
    polyStore <- liftIO $ newIORef ([] :: [StoredPoly]) --Für die Speicherung der Polynome
@@ -201,6 +206,7 @@ setup window = do
       element buttonshowlatex,
       element buttontree,
       element buttonanalysis,
+      element buttonsteps,
       element polyListOutput,
       element output
       
@@ -762,3 +768,39 @@ handleanalysisclick resultStore output = do
          let analysisQuotient = analyzeTree (polyToExprTree quotient)
          let analysisRest = analyzeTree (polyToExprTree rest)
          void $ element output # set UI.text ("Analyse von Baum " ++ name ++ ":\nQuotient:\n" ++ analysisQuotient ++ "\nRest:\n" ++ analysisRest)
+
+{- 
+
+Diese Funktion wird aufgerufen, wenn der Button "Schritte" geklickt wird.
+Sie dient dazu, die Traversierung eines Baumes anzuzeigen.
+
+Wir übergeben resultStore, um das Ergebnis der Berechnung zu lesen, und output, um die Traversierung anzuzeigen.
+Danach wird geprüft, ob es ein Ergebnis gibt oder nicht, indem das Ergebnis auf vier Fälle überprüft wird.
+
+Fall 1: Es gibt kein Ergebnis, dann wird eine Fehlermeldung angezeigt.
+Fall 2: Das Ergebnis ist ein Polynom, dann wird das Polynom in einen Baum umgewandelt und die Traversierung angezeigt.
+Fall 3: Das Ergebnis ist ein Wert, dann wird der Wert in einen Baum umgewandelt und die Traversierung angezeigt.
+Fall 4: Das Ergebnis ist eine Division von zwei Polynomen, dann wird der Quotient und der Rest in einen Baum umgewandelt und die Traversierung angezeigt.
+
+-}
+
+handletraversalanimationclick :: IORef GuiResult -> Element -> UI ()
+handletraversalanimationclick resultStore output = do
+   result <- liftIO $ readIORef resultStore
+   case result of
+      NoResult ->
+         void $ element output # set UI.text "Fehler: Es wurde noch kein Ergebnis berechnet."
+      PolyResult name poly -> do
+         let tree = polyToExprTree poly
+         let traversal = preOrder tree
+         let steps = makeTraversalSteps traversal
+         startTraversalAnimation steps output
+      ValueResult name value -> do
+         let traversal = preOrder (TConst value)
+         let steps = makeTraversalSteps traversal
+         showTraversalAnimation steps output
+      DivResult name quotient rest -> do
+         let tree = polyToExprTree quotient
+         let traversal = preOrder tree
+         let steps = makeTraversalSteps traversal
+         startTraversalAnimation steps output
