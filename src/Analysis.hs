@@ -213,6 +213,29 @@ countVariablesRec (TVar _) count = count + 1
 countVariablesRec (TAdd left right) count = countVariablesRec left (countVariablesRec right count)
 countVariablesRec (TMul left right) count = countVariablesRec left (countVariablesRec right count) 
 
+{- 
+
+Diese Funktion gibt die Knoten eines Baums in Pre-Order Traversal zurück. 
+Pre-Order Traversal bedeutet, dass wir zuerst den aktuellen Knoten besuchen, dann den linken Teilbaum und schließlich den rechten Teilbaum.
+
+Bsp bei einem Baum der Form:
+
+        a
+       / \
+      b   c
+     / \
+    d   e
+
+gilt die Pre-Order Traversal = [a, b, d, e, c], da wir zuerst a besuchen, dann b, dann d, dann e und schließlich c.
+
+-}
+
+preOrder :: ExprTree -> [String]
+preOrder (TConst n) = [prettyRational n]
+preOrder (TVar v) = [prettyVariable v]
+preOrder (TAdd left right) = ["+"] ++ preOrder left ++ preOrder right
+preOrder (TMul left right) = ["*"] ++ preOrder left ++ preOrder right
+
 
 {- Diese Funktion dient zur Darstellung der Baumanalyse in der GUI -}
 
