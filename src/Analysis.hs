@@ -22,7 +22,7 @@ gilt die Tiefe = 3, da der längste Pfad von der Wurzel (a) zu einem Blattknoten
 -}
 
 countDepth :: ExprTree -> Int
-countDepth tree = countDepthRec tree 0
+countDepth tree = countDepthRec tree 1
 
 {- 
 
@@ -116,7 +116,7 @@ Wenn der aktuelle Knoten ein innerer Knoten ist (TAdd oder TMul), wird die Funkt
 Es wird so tief wie möglich nach rechts gegangen, bevor nach links gegangen wird, um die Anzahl der Blätter zu zählen.
 Quasi sobald ein Blatt erreicht wird, wird zurückgegangen und der linke von jedem durchgegangen rechten Teilbaum wird gezählt.
 
-Es können nur maximal zwei Blätter pro innerem Knoten gezählt werden, da jeder innere Knoten genau zwei Kinder hat.
+Ein innerer Knoten hat genau zwei Teilbäume. Deshalb wird die Anzahl der Blätter aus dem linken und rechten Teilbaum zusammengerechnet.
 
 Die Anzahl wird erst erhöht, wenn ein Blattknoten (TConst oder TVar) erreicht wird, und nicht bei inneren Knoten (TAdd oder TMul).
 
@@ -153,7 +153,18 @@ countOperators tree = countOperatorsRec tree 0
 Rekursive Hilfsfunktion, die die Anzahl der Operatoren in einem Baum zählt mithilfe von Pattern Matching.
 
 Gleiches Vorgehen wie bei countNodesRec, nur dass hier nicht automatisch die Anzahl um 1 erhöht wird, 
-wenn wir einen TAdd oder TMul Knoten erreichen, sondern erst, wenn wir die beiden Kinder gezählt haben.
+wenn wir einen TConst oder TVar Knoten erreichen, sondern erst, wenn wir die beiden Kinder gezählt haben.
+
+Quasi wenn wir einen Baum übergeben bekommen, der nur aus einem TConst oder TVar Knoten besteht, wird die Anzahl der Operatoren = 0 sein,
+aber wenn wir einen Baum übergeben bekommen, der aus einem TAdd oder TMul Knoten besteht, wird die Anzahl der Operatoren = 1 sein.
+
+TAdd und TMul sind die Operatoren, die wir zählen wollen, und TConst und TVar sind die Kinder dieser Operatoren, die wir nicht zählen wollen.
+
+visualisiert z.B.:
+
+        TAdd / bzw. (+)
+       /    \
+     TVar   TVar
 
 -}
 
@@ -163,3 +174,52 @@ countOperatorsRec (TVar _) count = count
 countOperatorsRec (TAdd left right) count = countOperatorsRec left (countOperatorsRec right (count + 1))
 countOperatorsRec (TMul left right) count = countOperatorsRec left (countOperatorsRec right (count + 1))
 
+{-
+
+Diese Funktion zählt die Anzahl der Variablen in einem Baum mithilfe der rekursiven Hilfsfunktion countVariablesRec.
+
+z.B für einen Baum der Form:
+
+        a
+       / \
+      b   c
+     / \
+    d   e
+
+gilt die Anzahl der Variablen = 3, da es insgesamt drei Variablen (b, d, e) gibt.
+genauer gesagt: (TVar b), (TVar d) und (TVar e)
+
+-}
+
+countVariables :: ExprTree -> Int
+countVariables tree = countVariablesRec tree 0
+
+{- 
+
+Rekursive Hilfsfunktion, die die Anzahl der Variablen in einem Baum zählt mithilfe von Pattern Matching.
+
+Gleiches Vorgehen wie bei countLeavesRec, nur dass hier nicht automatisch die Anzahl um 1 erhöht wird,
+wenn wir einen TConst Knoten erreichen, sondern erst, wenn wir einen TVar Knoten erreichen, denn dieser repräesentiert eine Variable.
+
+Ebenfalls wird die Anzahl nicht erhöht, wenn wir einen TAdd oder TMul Knoten erreichen, da diese keine Variablen sind.
+
+Wir gehen hier ebenfalls so tief wie möglich nach rechts, bevor wir nach links gehen, um die Anzahl der Variablen zu zählen.
+
+-}
+
+countVariablesRec :: ExprTree -> Int -> Int
+countVariablesRec (TConst _) count = count
+countVariablesRec (TVar _) count = count + 1
+countVariablesRec (TAdd left right) count = countVariablesRec left (countVariablesRec right count)
+countVariablesRec (TMul left right) count = countVariablesRec left (countVariablesRec right count) 
+
+
+{- Diese Funktion dient zur Darstellung der Baumanalyse in der GUI -}
+
+analyseTree :: ExprTree -> String
+analyseTree tree =
+   "Tiefe: " ++ show (countDepth tree) ++ "\n"
+   ++ "Knoten: " ++ show (countNodes tree) ++ "\n"
+   ++ "Blätter: " ++ show (countLeaves tree) ++ "\n"
+   ++ "Operatoren: " ++ show (countOperators tree) ++ "\n"
+   ++ "Variablen: " ++ show (countVariables tree)
