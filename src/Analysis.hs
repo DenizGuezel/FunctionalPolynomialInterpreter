@@ -295,7 +295,39 @@ postOrder (TVar v) = [prettyVariable v]
 postOrder (TAdd left right) = postOrder left ++ postOrder right ++ ["+"]
 postOrder (TMul left right) = postOrder left ++ postOrder right ++ ["*"]
 
+{- 
 
+Diese Funktion gibt die Knoten eines Baums in Level-Order Traversal zurück mithilfe der rekursiven Hilsfunktion. 
+Level-Order Traversal bedeutet, dass wir die Knoten auf jeder Ebene von links nach rechts besuchen.
+
+Bsp bei einem Baum der Form:
+
+        a
+       / \
+      b   c
+     / \
+    d   e
+
+gilt die Level-Order Traversal = [a, b, c, d, e], da wir zuerst a besuchen, dann b und c auf der zweiten Ebene und schließlich d und e auf der dritten Ebene.
+
+-}
+
+levelOrder :: ExprTree -> [String]
+levelOrder tree = levelOrderRec [tree]
+
+{- 
+
+Wenn der Baum leer ist, wird eine leere Liste zurückgegeben.
+Wenn mindestens ein Baum vorhanden ist in der Liste, wird der erste Baum besucht und sein Label zur Ergebnisliste hinzugefügt.
+
+Dann werden die Kindknoten des ersten Baums zur Liste der zu besuchenden Bäume hinzugefügt und die Funktion wird rekursiv aufgerufen,
+bis alle Bäume besucht wurden.
+
+-}
+
+levelOrderRec :: [ExprTree] -> [String]
+levelOrderRec [] = []
+levelOrderRec (tree:rest) = treeLabel tree : levelOrderRec (rest ++ treeChildren tree)
 
 {- Diese Funktion dient zur Darstellung der Baumanalyse in der GUI -}
 
@@ -306,3 +338,4 @@ analyseTree tree =
    ++ "Blätter: " ++ show (countLeaves tree) ++ "\n"
    ++ "Operatoren: " ++ show (countOperators tree) ++ "\n"
    ++ "Variablen: " ++ show (countVariables tree)
+   
