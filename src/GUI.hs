@@ -230,6 +230,7 @@ setup window = do
    on UI.click buttonshowlatex (\_ -> handlelatexclick resultStore output)
    on UI.click buttontree (\_ -> handletreeclick resultStore output)
    on UI.click buttonanalysis (\_ -> handleanalysisclick resultStore output)
+   on UI.click buttonsteps (\_ -> handlestepsclick resultStore output)
 
 {- 
 
@@ -366,7 +367,7 @@ den wir dann mit dem Ergebnis der rekursiven Aufrufe auf den Rest der Liste verk
 
 showStoredPolysRec :: [StoredPoly] -> String
 showStoredPolysRec [] = ""
-showStoredPolysRec (StoredPoly name poly : rest) = name ++ " = " ++ toLaTeX poly ++ "\n" ++ showStoredPolysRec rest
+showStoredPolysRec (StoredPoly name poly : rest) = name ++ " = " ++ toPrettyMathPoly poly ++ "\n" ++ showStoredPolysRec rest
 
 {- 
 
@@ -769,6 +770,43 @@ handleanalysisclick resultStore output = do
          let analysisRest = analyzeTree (polyToExprTree rest)
          void $ element output # set UI.text ("Analyse von Baum " ++ name ++ ":\nQuotient:\n" ++ analysisQuotient ++ "\nRest:\n" ++ analysisRest)
 
+
+{- 
+
+Diese Funktion startet die Animation der Traversierung eines Baumes in der GUI.
+
+Sie bekommt die Traversierungsschritte und den Ausgabebereich output übergeben.
+Zuerst wird ein IORef stepStore erstellt, der als Speicher für den aktuellen Index der Traversierungsschritte dient.
+
+Dann wird ein Timer erstellt, der alle 700 Millisekunden tickt.
+
+Mit on UI.tick timer wird eine Funktion registriert, die bei jedem Tick des Timers aufgerufen wird.
+Innerhalb dieser Funktion wird der aktuelle Index aus stepStore gelesen.
+Wenn der aktuelle Index größer oder gleich der Länge der Traversierungsschritte ist, wird der Timer gestoppt und eine Meldung angezeigt, dass die Traversierung abgeschlossen ist.
+Ansonsten wird mit currentStep der aktuelle Traversierungsschritt aus der Liste der Schritte geholt und im Ausgabebereich angezeigt.
+Zuletzt wird der aktuelle Index um 1 erhöht und in stepStore gespeichert.
+
+-}
+
+startTraversalAnimation :: [TraversalStep] -> Element -> UI ()
+startTraversalAnimation steps output = do
+   stepStore <- liftIO $ newIORef 0
+
+   timer <- UI.timer # set UI.interval 700
+
+   on UI.tick timer $ \_ -> do
+      currentIndex <- liftIO $ readIORef stepStore
+      if currentIndex >= length steps
+         then do
+            UI.stop timer
+            void $ element output # set UI.text "Traversierung abgeschlossen."
+         else do
+            let currentStep = steps !! currentIndex
+            void $ element output # set UI.text (showTraversalStep currentStep)
+            liftIO $ writeIORef stepStore (currentIndex + 1)
+
+   UI.start timer
+
 {- 
 
 Diese Funktion wird aufgerufen, wenn der Button "Schritte" geklickt wird.
@@ -784,8 +822,8 @@ Fall 4: Das Ergebnis ist eine Division von zwei Polynomen, dann wird der Quotien
 
 -}
 
-handletraversalanimationclick :: IORef GuiResult -> Element -> UI ()
-handletraversalanimationclick resultStore output = do
+handlestepsclick :: IORef GuiResult -> Element -> UI ()
+handlestepsclick resultStore output = do
    result <- liftIO $ readIORef resultStore
    case result of
       NoResult ->
@@ -798,7 +836,7 @@ handletraversalanimationclick resultStore output = do
       ValueResult name value -> do
          let traversal = preOrder (TConst value)
          let steps = makeTraversalSteps traversal
-         showTraversalAnimation steps output
+         startTraversalAnimation steps output
       DivResult name quotient rest -> do
          let tree = polyToExprTree quotient
          let traversal = preOrder tree
