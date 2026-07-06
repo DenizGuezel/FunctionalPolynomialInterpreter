@@ -12,6 +12,7 @@ import Data.Ratio (numerator, denominator)
 import Poly
 import ParserSimple
 import Tree
+import Analysis
 
 {- Hier kommt die GUI-Logik rein, welche die Interaktion mit dem Benutzer steuert z.B mit Buttons, usw... -}
 
