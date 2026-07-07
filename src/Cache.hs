@@ -74,7 +74,30 @@ Diese Funktion fügt eine neue Operation und ihren zugehörigen Namen zum Cache 
 Sie bekommt als Eingabe eine Operation, einen Namen und eine Cache (Liste von Operationen und Namen, wo es eingefügt werden soll) 
 und gibt eine neue Cache zurück, die die neue Operation und den Namen enthält.
 
+Wir rufen noch removeCache auf, um sicherzustellen, dass die Operation nicht bereits in der Cache vorhanden ist, bevor wir sie hinzufügen.
+
 -}
 
 insertCache :: Operation -> String -> Cache -> Cache
-insertCache op name cache = (op, name) : cache
+insertCache op name cache = (op, name) : removeCache op cache
+
+{- 
+
+Diese Funktion entfernt eine Operation aus der Cache, wenn sie vorhanden ist.
+Sie nimmt als Eingabe eine Operation und eine Cache (Liste von Operationen und Namen) und 
+gibt eine neue Cache zurück, die die Operation entfernt hat, wenn sie vorhanden war.
+
+Wenn die Cache leer ist, wird eine leere Liste zurückgegeben.
+Wenn die Cache mindestens eine Operation enthält, wird die erste Operation überprüft und wenn 
+sie mit der zu entfernenden Operation übereinstimmt, wird die restliche Cache zurückgegeben, um die Operation zu entfernen.
+Wenn die erste Operation nicht mit der zu entfernenden Operation übereinstimmt, wird die Funktion rekursiv auf die restliche 
+Cache angewendet, um die restlichen Einträge zu überprüfen und die Operation zu entfernen, wenn sie vorhanden ist.
+
+-}
+
+removeCache :: Operation -> Cache -> Cache
+removeCache op [] = []
+removeCache op ((cachedOp, name):rest) =
+    if op == cachedOp
+        then rest
+        else (cachedOp, name) : removeCache op rest
