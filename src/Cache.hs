@@ -66,3 +66,15 @@ lookupCache op ((cachedOp, name):rest) =
     if op == cachedOp
         then Just name
         else lookupCache op rest
+
+{- 
+
+Diese Funktion fügt eine neue Operation und ihren zugehörigen Namen zum Cache hinzu.
+
+Sie bekommt als Eingabe eine Operation, einen Namen und eine Cache (Liste von Operationen und Namen, wo es eingefügt werden soll) 
+und gibt eine neue Cache zurück, die die neue Operation und den Namen enthält.
+
+-}
+
+insertCache :: Operation -> String -> Cache -> Cache
+insertCache op name cache = (op, name) : cache
