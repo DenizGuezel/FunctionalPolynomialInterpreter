@@ -38,7 +38,9 @@ History ist ein Speicher für Einträge (HisztoryEntry), die Ergebnisse von Bere
 z.B HistoryPoly "f" (P [M 1 0, M 2 1]) repräsentiert ein Ergebnis, das ein Polynom ist.
 HistoryValue "g" 3 repräsentiert ein Ergebnis, das ein einzelner Wert ist.
 HistoryDiv "h" (P [M 1 0]) (P [M 2 0]) repräsentiert ein Ergebnis, das eine Division mit Quotient und Rest ist.
-                            
+
+HistoryPoly repräsentiert PolyResult, HistoryValue repräsentiert ValueResult und HistoryDiv repräsentiert DivResult.
+
 -}
 
 data HistoryEntry
@@ -51,7 +53,7 @@ data HistoryEntry
 
 Diese Funktion fügt einen neuen Eintrag in die Historie ein.
 Sie nimmt als Eingabe z.B ein bereits berechnetes Ergebnis (z.B. PolyResult, ValueResult oder DivResult) und 
-die aktuelle Historie und gibt eine neue Historie zurück, die den neuen Eintrag enthält.
+die aktuelle Historie (kann Empty sein oder ein/mehrere Einträge enthalten) und gibt eine neue Historie zurück, die den neuen Eintrag enthält.
 
 Wir brauchen nicht nochmal etxra zu überprüfen, ob wir den input auf eine nicht leere Historie anwenden, da wir das Empty sowieso 
 immer am Ende der Historie haben und wir den neuen Eintrag immer an den Anfang der Historie setzen, sodass wir die Historie immer erweitern können.
@@ -59,7 +61,7 @@ immer am Ende der Historie haben und wir den neuen Eintrag immer an den Anfang d
 -}
 
 addHistory :: a -> History a -> History a
-addHistory input Empty = Entry input Empty
+addHistory input history = Entry input history
 
 {- 
 

@@ -183,9 +183,16 @@ showHistoryText history =
       [] -> "Historie ist leer."
       entries -> "Historie:\n" ++ unlines (zipWith formatEntry [1..] entries)
 
-{- Diese Hilfsfunktion formatiert einen Eintrag in der Historie in einen schön formartierten String. -}
+{- Diese Hilfsfunktion formatiert einen Eintrag, je nach HistoryEntry-Typ in der Historie in einen schön formartierten String. -}
 
-formatEntry :: Int -> String -> String
-formatEntry n entry = show n ++ ". " ++ entry
+formatEntry :: Int -> HistoryEntry -> String
+formatEntry n (HistoryPoly name poly) =
+   show n ++ ". " ++ name ++ ": " ++ toPrettyMathPoly poly
+formatEntry n (HistoryValue name value) =
+   show n ++ ". " ++ name ++ ": " ++ prettyRational value
+formatEntry n (HistoryDiv name quotient rest) =
+   show n ++ ". " ++ name
+   ++ ": Quotient = " ++ toPrettyMathPoly quotient
+   ++ ", Rest = " ++ toPrettyMathPoly rest
 
 
