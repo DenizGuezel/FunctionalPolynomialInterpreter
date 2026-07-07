@@ -33,3 +33,13 @@ Sinn dieser Funktion ist es, die Punkte des Graphen des Polynoms zu berechnen, u
 
 infinitePoints :: Poly -> [(Rational, Rational)]
 infinitePoints poly = [(x, evaluate poly x) | x <- [(-100)..]]
+
+{- 
+
+Diese Funktion zeigt die ersten n Punkte des Graphen eines Polynoms an, die auf dem Graphen des Polynoms liegen.
+Sie nimmt mithilfe von take n Punkte aus der unendlichen Liste von Punkten, die von der Funktion infinitePoints zurückgegeben wird.
+
+-}
+
+visiblePoints :: Int -> Poly -> [(Rational, Rational)]
+visiblePoints n poly = take n (infinitePoints poly)
