@@ -18,3 +18,18 @@ Tupeln zurück, die die Punkte darstellen, die auf dem Graphen des Polynoms lieg
 
 samplePoints :: Poly -> [Rational] -> [(Rational, Rational)]
 samplePoints poly xs = map (\x -> (x, evaluate poly x)) xs
+
+
+{- 
+
+Diese Funktion berechnet für ein gegebenes Polynom eine unendliche Liste von Punkten, die auf dem Graphen des Polynoms liegen.
+Sie bekommt als Eingabe ein Polynom und gibt als Ausgabe eine unendliche Liste von Tupeln zurück, die die Punkte darstellen, die auf dem Graphen des Polynoms liegen.
+
+x ist hierbei eine unendliche Liste von Rationalen Zahlen, die von -100 bis unendlich geht.
+
+Sinn dieser Funktion ist es, die Punkte des Graphen des Polynoms zu berechnen, um sie in der GUI anzuzeigen.
+
+-}
+
+infinitePoints :: Poly -> [(Rational, Rational)]
+infinitePoints poly = [(x, evaluate poly x) | x <- [(-100)..]]
