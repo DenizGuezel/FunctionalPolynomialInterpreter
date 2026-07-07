@@ -38,3 +38,23 @@ wenn es gefunden wird (Just poly), ansonsten gibt sie Nothing zurück.
 
 lookupPoly :: PolyName -> PolyLibrary -> Maybe Poly
 lookupPoly name library = lookup name library
+
+
+{- 
+
+Diese Funktion löscht ein Polynom anhand des Namens aus der PolyLibrary.
+Sie nimmt als Eingabe einen Namen und eine PolyLibrary und gibt eine neue PolyLibrary zurück, 
+die das Polynom mit dem gegebenen Namen nicht mehr enthält.
+
+Wenn die PolyLibrary leer ist, gibt sie eine leere Liste zurück.
+Wenn die PolyLibrary mindestens ein Paar (Name, Polynom) enthält, überprüft sie, 
+ob der Name des ersten Paares mit dem gegebenen Namen übereinstimmt. wenn ja, wird das erste Paar entfernt und die restliche PolyLibrary zurückgegeben.
+Wenn nein, wird das erste Paar beibehalten und die Funktion wird rekursiv auf die restliche PolyLibrary angewendet, um das Polynom zu löschen.
+
+-}
+
+deletePoly :: PolyName -> PolyLibrary -> PolyLibrary
+deletePoly name [] = []
+deletePoly name ((n, p):xs)
+   | name == n = xs
+   | otherwise = (n, p) : deletePoly name xs 
