@@ -177,7 +177,7 @@ showGraphDivText name quotient rest =
 
 {- Diese Hauptfunktion stellt die ganze Historie der Ergebnisse als einen schön formartierten String dar. -}
 
-showHistoryText :: History String -> String
+showHistoryText :: History HistoryEntry-> String
 showHistoryText history =
    case historyToList history of
       [] -> "Historie ist leer."

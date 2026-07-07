@@ -227,6 +227,7 @@ setup window = do
       element buttonsteps,
       element buttondetails,
       element buttongraph,
+      element buttonhistory,
       element polyListOutput,
       element output
       
@@ -253,6 +254,7 @@ setup window = do
    on UI.click buttonsteps (\_ -> handlestepsclick resultStore output)
    on UI.click buttondetails (\_ -> handledetailsclick resultStore output)
    on UI.click buttongraph (\_ -> handlegraphclick resultStore output)
+   on UI.click buttonhistory (\_ -> handlehistoryclick historyStore output)
 
 {- 
 
@@ -834,3 +836,22 @@ handlegraphclick resultStore output = do
       DivResult name quotient rest -> do
          void $ element output # set UI.html (showGraphDivText name quotient rest)
 
+{- 
+
+Diese Funktion wird aufgerufen, wenn der Button "Historie" geklickt wird.
+Sie dient dazu, die History der Ergebnisse von Berechnungen anzuzeigen.
+
+Sie bekommt die History aus historyStore und den Ausgabebereich output übergeben.
+Es wird "history" erstellt, um die gespeicherte History aus historyStore zu lesen und auf 2 Fälle zu prüfen:
+
+1. Fall: Die History ist leer, dann wird eine Fehlermeldung angezeigt.
+2. Fall: Die History enthält Einträge, dann werden diese mithilfe showHistoryText angezeigt.
+
+-}
+
+handlehistoryclick :: IORef (History HistoryEntry) -> Element -> UI ()
+handlehistoryclick historyStore output = do
+   history <- liftIO $ readIORef historyStore
+   case history of
+      Empty -> void $ element output # set UI.text "Fehler: Es wurde noch keine Historie erstellt."
+      other -> void $ element output # set UI.text (showHistoryText history)
