@@ -57,3 +57,28 @@ wird rekursiv auf die restliche Historie angewendet, um die restlichen Einträge
 historyToList :: History a -> [a]
 historyToList Empty = []
 historyToList (Entry input resthistorie) = input : historyToList resthistorie
+
+
+{- 
+
+Diese Funktion gibt den letzten Eintrag der Historie zurück, welcher hinzugefügt wurde, also quasi der letzte hinzugefügte Eintrag.
+Sie nimmt als Eingabe eine Historie und gibt ein Maybe von dem gleichen Datentyp zurück, 
+der in der Historie verwendet wird (z.B. wenn History PolyResult eingegeben wird, wird Maybe PolyResult zurückgegeben, 
+das sagt Entweder bekommt man den Eintrag oder Nothing).
+
+Wenn die Historie leer ist, wird Nothing zurückgegeben.
+Wenn die Historie nicht leer ist, wird der erste Eintrag der Historie zurückgegeben, da wir die Historie immer an 
+den Anfang erweitern und somit der erste Eintrag der letzte hinzugefügte Eintrag ist.
+
+z.B bei einer Historie mit zwei Einträgen: 
+Entry (PolyResult "f" (P [M 1 0, M 2 1])) 
+ (Entry (ValueResult "g" 3) Empty)
+
+gibt lastHistory Entry (PolyResult "f" (P [M 1 0, M 2 1])) 
+(Entry (ValueResult "g" 3) Empty) = Just (PolyResult "f" (P [M 1 0, M 2 1])) 
+
+-}
+
+lastHistory :: History a -> Maybe a
+lastHistory Empty = Nothing
+lastHistory (Entry input Empty) = Just input
