@@ -74,11 +74,13 @@ Wenn die Historie leer ist, wird eine leere Liste zurückgegeben.
 Ansonsten (Wenn mindestens eine Histore vorhanden ist) wird der erste Eintrag der Historie in die Liste aufgenommen und die Funktion 
 wird rekursiv auf die restliche Historie angewendet, um die restlichen Einträge in die Liste aufzunehmen.
 
+mit ":" hängen wir den ersten Eintrag (erster) der Historie an die Liste der restlichen Einträge (resthistorie) an, um eine neue Liste zu erstellen.
+
 -}
 
 historyToList :: History a -> [a]
 historyToList Empty = []
-historyToList (Entry input resthistorie) = input : historyToList resthistorie
+historyToList (Entry erster resthistorie) = erster : historyToList resthistorie
 
 {- 
 
