@@ -32,6 +32,7 @@ data Operation
     | Add Poly Poly
     | Sub Poly Poly
     | Mul Poly Poly
+    | Div Poly Poly
    deriving (Show, Eq)
 
 {- 
@@ -61,7 +62,7 @@ wird die Funktion rekursiv auf die restliche Cache angewendet, um die restlichen
 -}
 
 lookupCache :: Operation -> Cache -> Maybe String
-lookupCache op [] = Nothing
+lookupCache _ [] = Nothing
 lookupCache op ((cachedOp, name):rest) =
     if op == cachedOp
         then Just name
@@ -96,7 +97,7 @@ Cache angewendet, um die restlichen Einträge zu überprüfen und die Operation 
 -}
 
 removeCache :: Operation -> Cache -> Cache
-removeCache op [] = []
+removeCache _ [] = []
 removeCache op ((cachedOp, name):rest) =
     if op == cachedOp
         then rest
