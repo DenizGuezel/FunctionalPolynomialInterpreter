@@ -5,6 +5,7 @@ import Animation (TraversalStep(..), showTraversalStep)
 import Format 
 import Poly
 import Tree (ExprTree(..), polyToExprTree, prettyTree, prettyTreeMarked)
+import Graph
 
 {- 
 
@@ -20,14 +21,17 @@ Das Modul baut also nur die fertigen Strings zusammen und hält die Anzeige-Logi
 Diese Funktion stellt das Ergebnis für ein Polynom dar.
 
 -}
+
 showResultText :: String -> Poly -> String
 showResultText name poly = "Ergebnis von " ++ name ++ ": " ++ toPrettyMathPoly poly
 
 {- Diese Funktion stellt das Ergebnis für einen Wert dar.-}
+
 showValueText :: String -> Rational -> String
 showValueText name value = "Ergebnis von " ++ name ++ ": " ++ prettyRational value
 
 {- Diese Funktion stellt das Ergebnis für eine Division dar. -}
+
 showDivResultText :: String -> Poly -> Poly -> String
 showDivResultText name quotient rest =
    "Ergebnis von " ++ name ++ ": Quotient = " ++ toPrettyMathPoly quotient ++ ", Rest = " ++ toPrettyMathPoly rest
@@ -35,14 +39,17 @@ showDivResultText name quotient rest =
 {- Baum-Darstellung -}
 
 {- Diese Funktion stellt den Baum für ein Polynom dar. -}
+
 showTreeText :: String -> Poly -> String
 showTreeText name poly = "Baum von " ++ name ++ ":\n" ++ prettyTree (polyToExprTree poly)
 
 {- Diese Funktion stellt den Baum für einen einzelnen Wert dar. -}
+
 showValueTreeText :: String -> Rational -> String
 showValueTreeText name value = "Baum von " ++ name ++ ":\n" ++ prettyTree (TConst value)
 
 {- Diese Funktion stellt den Baum für eine Division mit Quotient und Rest dar. -}
+
 showDivTreeText :: String -> Poly -> Poly -> String
 showDivTreeText name quotient rest =
    "Baum von " ++ name ++ ":\nQuotient:\n" ++ prettyTree (polyToExprTree quotient) ++ "\nRest:\n" ++ prettyTree (polyToExprTree rest)
@@ -50,6 +57,7 @@ showDivTreeText name quotient rest =
 {- Analyse-Darstellung -}
 
 {- Diese Funktion stellt die Analyse für ein Polynom dar. -}
+
 showAnalysisText :: String -> Poly -> String
 showAnalysisText name poly = "Analyse von Baum " ++ name ++ ":\n" ++ analyzeTree (polyToExprTree poly)
 
@@ -146,6 +154,22 @@ und gibt als Ausgabe einen String zurück, z.B. "[(3,2),(2,1),(1,0)]".
 showMonomListNormalized :: Poly -> String
 showMonomListNormalized (P ms) = show [(k,e) | M k e <- ms]
 
+{- Graph-Darstellung -}
 
+{- Diese Funktion stellt die Graph-Darstellung eines Polynoms dar. -}
+
+showGraphText :: String -> Poly -> String
+showGraphText name poly = "<h3>Graph von " ++ name ++ ":</h3>\n" ++ graphView poly
+
+{- Diese Funktion stellt die Graph-Darstellung eines einzelnen Wertes dar. -}
+
+showValueGraphText :: String -> Rational -> String
+showValueGraphText name value =
+   "Fehler: " ++ name ++ " ist ein einzelner Wert (" ++ prettyRational value ++ ") und hat keinen Funktionsgraphen."
+
+{- Diese Funktion stellt die Graph-Darstellung einer Division mit Quotient und Rest dar. -}
+showGraphDivText :: String -> Poly -> Poly -> String
+showGraphDivText name quotient rest = 
+   "<h3>Graph von " ++ name ++ ":</h3>\n" ++ graphView quotient ++ "<br><br>" ++ graphView rest
 
 
