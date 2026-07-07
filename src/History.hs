@@ -95,3 +95,8 @@ z.B bei einer Historie mit zwei Einträgen: undoHistory (Entry (PolyResult "f" (
 undoHistory :: History a -> History a
 undoHistory Empty = Empty
 undoHistory (Entry _ resthistorie) = resthistorie
+
+{- Diese Funktion leert die gesamte Historie -}
+
+clearHistory :: History a -> History a
+clearHistory _ = Empty
