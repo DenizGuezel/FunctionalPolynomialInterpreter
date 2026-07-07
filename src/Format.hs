@@ -156,6 +156,8 @@ label ist eine Funktion, die den aktuellen Knoten in einen String umwandelt.
 children ist eine Funktion, die die Kindknoten des aktuellen Knotens zurückgibt.
 tree ist der aktuelle Knoten, der angezeigt werden soll.
 
+Sie dient als generische Baumformatierung (sie weiß nicht was ein ExprTree ist) und kommt daher in Format.hs, da sie nicht Baumspezifisch ist.
+
 -}
 
 prettyTreeWith :: (a -> String) -> (a -> [a]) -> a -> String
@@ -178,6 +180,8 @@ Wenn die Liste der Kindknoten genau ein Element enthält, wird dieses Element mi
 Wenn die Liste der Kindknoten mehr als ein Element enthält, wird das erste Element mit einem "|-- " Präfix dargestellt und 
 die restlichen Elemente werden rekursiv mit einem "|   " Präfix dargestellt. 
 
+Sie dient als generische Baumformatierung (sie weiß nicht was ein ExprTree ist) und kommt daher in Format.hs, da sie nicht Baumspezifisch ist.
+
 -}
 
 prettyChildrenWith :: (a -> String) -> (a -> [a]) -> String -> [a] -> String
@@ -194,6 +198,8 @@ prettyChildrenWith label children prefix (child:rest) =
 
 Diese Funktion soll einen Ausdrucksbaum als einen String zurückgeben, der den aktuellen Knoten markiert, der gerade besucht wird.
 Sie bekommt als Eingabe die aktuelle Schrittnummer und den Ausdrucksbaum und gibt als Ausgabe einen String zurück, der den Ausdrucksbaum in einer lesbaren Form darstellt.
+
+Sie dient als generische Baumformatierung (sie weiß nicht was ein ExprTree ist) und kommt daher in Format.hs, da sie nicht Baumspezifisch ist.
 
 -}
 
@@ -215,6 +221,8 @@ Die Nummerierung läuft hier in Preorder-Reihenfolge.
 Das bedeutet: zuerst der aktuelle Knoten, dann der linke Teilbaum, dann der rechte Teilbaum.
 
 Wenn die aktuelle Schrittnummer z.B. 3 ist, wird der dritte Knoten im Baum mit >> << markiert.
+
+Sie dient als generische Baumformatierung (sie weiß nicht was ein ExprTree ist) und kommt daher in Format.hs, da sie nicht Baumspezifisch ist.
 
 -}
 
@@ -239,6 +247,8 @@ Wenn die Liste der Kindknoten leer ist, wird ein leerer String zurückgegeben.
 Wenn die Liste der Kindknoten genau ein Element enthält, wird dieses Element mit einem "`-- " Präfix dargestellt.
 Wenn die Liste der Kindknoten mindestens (1 oder mehr) ein Element enthält, wird das erste Element mit einem "|-- " Präfix dargestellt und 
 die restlichen Elemente werden rekursiv mit einem "|   " Präfix dargestellt.
+
+Sie dient als generische Baumformatierung (sie weiß nicht was ein ExprTree ist) und kommt daher in Format.hs, da sie nicht Baumspezifisch ist.
 
 -}
 
@@ -298,6 +308,8 @@ formatMarkedChildRest _ _ [] = ""
 formatMarkedChildRest prefix restPrefix (line:linesRest) =
    prefix ++ restPrefix ++ line ++ "\n" ++ formatMarkedChildRest prefix restPrefix linesRest
 
+{- Traversalformate -}
+
 {- 
 
 Diese Funktion dient dazu, eine Liste von Animationsschritten in einen String umzuwandeln, 
@@ -323,8 +335,6 @@ Sie bekommt die Liste der besuchten Knoten und die aktuelle Schrittnummer überg
 formatVisitedStepsRec :: [String] -> Int -> String
 formatVisitedStepsRec [] _ = ""
 formatVisitedStepsRec (x:xs) stepnumber = "Schritt: " ++ show stepnumber ++ ", Knoten: " ++ x ++ "\n" ++ formatVisitedStepsRec xs (stepnumber + 1)
-
-{- Traversalformate -}
 
 {- 
 
