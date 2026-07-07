@@ -33,7 +33,27 @@ Diese Funktion fügt einen neuen Eintrag in die Historie ein.
 Sie nimmt als Eingabe z.B ein bereits berechnetes Ergebnis (z.B. PolyResult, ValueResult oder DivResult) und 
 die aktuelle Historie und gibt eine neue Historie zurück, die den neuen Eintrag enthält.
 
+Wir brauchen nicht nochmal etxra zu überprüfen, ob wir den input auf eine nicht leere Historie anwenden, da wir das Empty sowieso 
+immer am Ende der Historie haben und wir den neuen Eintrag immer an den Anfang der Historie setzen, sodass wir die Historie immer erweitern können.
+
 -}
 
 addHistory :: a -> History a -> History a
 addHistory input Empty = Entry input Empty
+
+{- 
+
+Diese Funktion gibt die History als Liste zurück.
+Sie nimmt als Eingabe eine Historie und gibt eine Liste von Einträgen zurück, die in der Historie enthalten sind.
+Also es folgt, dass der gleiche Datentyp, der in der History verwendet wird, also z.B. PolyResult, dann als gleiche 
+Datentypliste zurückgegeben wird (hier dann [PolyResult]).
+
+Wenn die Historie leer ist, wird eine leere Liste zurückgegeben.
+Ansonsten (Wenn mindestens eine Histore vorhanden ist) wird der erste Eintrag der Historie in die Liste aufgenommen und die Funktion 
+wird rekursiv auf die restliche Historie angewendet, um die restlichen Einträge in die Liste aufzunehmen.
+
+-}
+
+historyToList :: History a -> [a]
+historyToList Empty = []
+historyToList (Entry input resthistorie) = input : historyToList resthistorie
