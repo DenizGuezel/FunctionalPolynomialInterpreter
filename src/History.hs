@@ -1,5 +1,6 @@
 module History where
 
+import Poly 
 
 {- In dieses Modul werden die Historie der Berechnungen gespeichert und verwaltet, damit vergangene Berechnungen angezeigt werden können  -}
 
@@ -26,6 +27,25 @@ data History a =
     Empty
     | Entry a (History a)
     deriving (Show, Eq)
+
+{- 
+
+Dieser Datentyp repräsentiert die verschiedenen Arten von Ergebnissen, die in der Historie gespeichert werden können.
+Es gibt drei Arten von Ergebnissen: PolyResult, ValueResult und DivResult.
+
+History ist ein Speicher für Einträge (HisztoryEntry), die Ergebnisse von Berechnungen darstellen.
+
+z.B HistoryPoly "f" (P [M 1 0, M 2 1]) repräsentiert ein Ergebnis, das ein Polynom ist.
+HistoryValue "g" 3 repräsentiert ein Ergebnis, das ein einzelner Wert ist.
+HistoryDiv "h" (P [M 1 0]) (P [M 2 0]) repräsentiert ein Ergebnis, das eine Division mit Quotient und Rest ist.
+                            
+-}
+
+data HistoryEntry
+   = HistoryPoly String Poly
+   | HistoryValue String Rational
+   | HistoryDiv String Poly Poly
+   deriving (Show, Eq)
 
 {- 
 
