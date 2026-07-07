@@ -99,6 +99,8 @@ points ist die Liste der Punkte, die dargestellt werden sollen.
 
 Mithilfe von scalePoint werden die Punkte skaliert, um sie in den SVG-Elementen darzustellen.
 
+Bsp: pointsToSvg [(1, 2), (3, 4), (5, 6)] gibt einen String zurück, der die SVG-Elemente darstellt, die die Punkte (1, 2), (3, 4) und (5, 6) darstellen.
+
 -}
 
 pointsToSvg :: [(Rational, Rational)] -> String
@@ -144,3 +146,8 @@ scalePoint width height margin points (x, y) =
        px = fromIntegral margin + scaleX * plotWidth
        py = fromIntegral (height - margin) - scaleY * plotHeight
    in (round px, round py)
+
+
+{- Diese Funktion erstellt eine kombinierte Darstellung des Graphen und einer Tabelle der Stützpunkte. -}
+graphView :: Poly -> String
+graphView poly = graphSvg poly ++ "<pre>" ++ formatTable (samplePoints poly [-5..5]) ++ "</pre>"
