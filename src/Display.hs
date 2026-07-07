@@ -7,6 +7,7 @@ import Poly
 import Tree (ExprTree(..), polyToExprTree, prettyTree, prettyTreeMarked)
 import Graph
 import History (History(..), HistoryEntry(..), historyToList)
+import Library (PolyLibrary)
 
 {- 
 
@@ -195,4 +196,9 @@ formatEntry n (HistoryDiv name quotient rest) =
    ++ ": Quotient = " ++ toPrettyMathPoly quotient
    ++ ", Rest = " ++ toPrettyMathPoly rest
 
+{- Library-Darstellung -}
 
+{- Diese Funktion stellt jeden Eintrag aus der PolyLibrary als einen String im Fromat: <polynomname> = <polynom> dar. -}
+showPolyLibraryText :: PolyLibrary -> String
+showPolyLibraryText [] = "Noch keine Polynome vorhanden."
+showPolyLibraryText library = unlines [name ++ " = " ++ toPrettyMathPoly poly | (name, poly) <- library]
