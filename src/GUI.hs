@@ -17,20 +17,9 @@ import Format (prettyRational, toPrettyMathPoly)
 import Display
 import Graph
 import History 
+import Library
 
 {- Hier kommt die GUI-Logik rein, welche die Interaktion mit dem Benutzer steuert z.B mit Buttons, usw... -}
-
-{- 
-
-Hier wird ein neuer Datentyp StoredPoly definiert, der dazu dient, ein Polynom zusammen mit einem Namen zu speichern, 
-quasi Map-Paar sozusagen, damit ein bestimmter Polynom anhand des Namens abgerufen werden kann.
-
-Wird verwendet, um die Auswahl von Polynomen in der GUI als Liste zu realisieren.
-
--}
-
-data StoredPoly = StoredPoly String Poly
-   deriving (Show, Eq)
 
 {- 
 
@@ -197,7 +186,7 @@ setup window = do
 
    {- Speicher: -}
 
-   polyStore <- liftIO $ newIORef ([] :: [StoredPoly]) --Für die Speicherung der Polynome
+   polyStore <- liftIO $ newIORef ([] :: PolyLibrary) --Für die Speicherung der Polynome
    resultStore <- liftIO $ newIORef NoResult --Für die Speicherung der Ergebnisse der Operationen
    historyStore <- liftIO $ newIORef (Empty :: History HistoryEntry) --Für die Speicherung der Historie der Ergebnisse (PolyResult, ValueResult, DivResult)
 
@@ -349,7 +338,7 @@ Es wird ein Name automatisch generiert, z.B. p1, p2, p3 usw. und das Polynom wir
 
 -}
 
-handleaddpolyclick :: Element -> Element -> IORef [StoredPoly] -> UI ()
+handleaddpolyclick :: Element -> Element -> IORef PolyLibrary -> UI ()
 handleaddpolyclick input polyListOutput polyStore = do
    polyStr <- get value input
    let result = parsePolySimple polyStr
@@ -357,43 +346,11 @@ handleaddpolyclick input polyListOutput polyStore = do
       Left err ->
          void $ element polyListOutput # set UI.text ("Fehler: " ++ err)
       Right poly -> do
-         storedPolys <- liftIO $ readIORef polyStore
-         let name = "p" ++ show (length storedPolys + 1)
-         let newPoly = StoredPoly name poly
-         let newStoredPolys = storedPolys ++ [newPoly]
-         liftIO $ writeIORef polyStore newStoredPolys
-         void $ element polyListOutput # set UI.text (showStoredPolys newStoredPolys)
-
-{- 
-
-Diese Funktion wandelt die gespeicherten Polynome in einen String um,
-damit wir sie erstmal einfach in der GUI anzeigen können.
-
-Wenn die Liste leer ist, wird angezeigt, dass noch keine Polynome vorhanden sind.
-
-Wenn mindestens ein StoredPoly vorhanden ist (mindestens ein Element in der Liste, z.b. [StoredPoly "p1" poly1]),
-wird die Hilfsfunktion showStoredPolysRec aufgerufen.
-
-
--}
-
-showStoredPolys :: [StoredPoly] -> String
-showStoredPolys [] = "Noch keine Polynome vorhanden."
-showStoredPolys xs = showStoredPolysRec xs
-
-{- 
-
-Die Hilfsfunktion showStoredPolysRec wird rekursiv aufgerufen, um die gespeicherten Polynome in einen String umzuwandeln.
-
-Falls die übergebene Liste leer ist, wird ein leerer String zurückgegeben.
-Ansonsten wird das erste StoredPoly aus der Liste genommen und in einen String umgewandelt, 
-den wir dann mit dem Ergebnis der rekursiven Aufrufe auf den Rest der Liste verketten.
-
--}
-
-showStoredPolysRec :: [StoredPoly] -> String
-showStoredPolysRec [] = ""
-showStoredPolysRec (StoredPoly name poly : rest) = name ++ " = " ++ toPrettyMathPoly poly ++ "\n" ++ showStoredPolysRec rest
+         library <- liftIO $ readIORef polyStore
+         let name = "p" ++ show (length library + 1)
+         let newLibrary = savePoly name poly library
+         liftIO $ writeIORef polyStore newLibrary
+         void $ element polyListOutput # set UI.text (showPolyLibraryText newLibrary)
 
 {- 
 
@@ -425,12 +382,12 @@ Da add wieder ein Polynom zurückgibt, speichern wir das Ergebnis als PolyResult
 
 -}
 
-handleaddclick :: IORef [StoredPoly] -> IORef GuiResult -> IORef (History HistoryEntry) -> Element -> UI ()
+handleaddclick :: IORef PolyLibrary -> IORef GuiResult -> IORef (History HistoryEntry) -> Element -> UI ()
 handleaddclick polyStore resultStore historyStore output = do
-   storedPolys <- liftIO $ readIORef polyStore
-   case storedPolys of
-      
-      [StoredPoly name1 poly1, StoredPoly name2 poly2] -> do
+   library <- liftIO $ readIORef polyStore
+   case library of
+
+      [(name1, poly1), (name2, poly2)] -> do
          let resultPoly = add poly1 poly2
          liftIO $ writeIORef resultStore (PolyResult (name1 ++ " + " ++ name2) resultPoly)
          liftIO $ modifyIORef historyStore (addHistory (HistoryPoly "Addieren" resultPoly))
@@ -452,12 +409,12 @@ Da sub wieder ein Polynom zurückgibt, benutzen wir PolyResult.
 
 -}
 
-handlesubclick :: IORef [StoredPoly] -> IORef GuiResult -> IORef (History HistoryEntry) -> Element -> UI ()
+handlesubclick :: IORef PolyLibrary -> IORef GuiResult -> IORef (History HistoryEntry) -> Element -> UI ()
 handlesubclick polyStore resultStore historyStore output = do
-   storedPolys <- liftIO $ readIORef polyStore
-   case storedPolys of
+   library <- liftIO $ readIORef polyStore
+   case library of
       
-      [StoredPoly name1 poly1, StoredPoly name2 poly2] -> do
+      [(name1, poly1), (name2, poly2)] -> do
          let resultPoly = sub poly1 poly2
          liftIO $ writeIORef resultStore (PolyResult (name1 ++ " - " ++ name2) resultPoly)
          liftIO $ modifyIORef historyStore (addHistory (HistoryPoly "Subtrahieren" resultPoly))
@@ -479,11 +436,11 @@ Da mult wieder ein Polynom zurückgibt, benutzen wir PolyResult.
 
 -}
 
-handlemultclick :: IORef [StoredPoly] -> IORef GuiResult -> IORef (History HistoryEntry) -> Element -> UI ()
+handlemultclick :: IORef PolyLibrary -> IORef GuiResult -> IORef (History HistoryEntry) -> Element -> UI ()
 handlemultclick polyStore resultStore historyStore output = do
-   storedPolys <- liftIO $ readIORef polyStore
-   case storedPolys of
-      [StoredPoly name1 poly1, StoredPoly name2 poly2] -> do
+   library <- liftIO $ readIORef polyStore
+   case library of
+      [(name1, poly1), (name2, poly2)] -> do
          let resultPoly = mult poly1 poly2
          liftIO $ writeIORef resultStore (PolyResult (name1 ++ " * " ++ name2) resultPoly)
          liftIO $ modifyIORef historyStore (addHistory (HistoryPoly "Multiplizieren" resultPoly))
@@ -521,11 +478,11 @@ Da derivation wieder ein Polynom zurückgibt, benutzen wir PolyResult.
 
 -}
 
-handlederivationclick :: IORef [StoredPoly] -> IORef GuiResult -> IORef (History HistoryEntry) -> Element -> UI ()
+handlederivationclick :: IORef PolyLibrary -> IORef GuiResult -> IORef (History HistoryEntry) -> Element -> UI ()
 handlederivationclick polyStore resultStore historyStore output = do
-   storedPolys <- liftIO $ readIORef polyStore
-   case storedPolys of
-      [StoredPoly name1 poly1] -> do
+   library <- liftIO $ readIORef polyStore
+   case library of
+      [(name1, poly1)] -> do
          let resultPoly = derivation poly1
          liftIO $ writeIORef resultStore (PolyResult (name1 ++ "'") resultPoly)
          liftIO $ modifyIORef historyStore (addHistory (HistoryPoly "Ableiten" resultPoly))
@@ -564,16 +521,16 @@ Deshalb speichern wir das Ergebnis in resultStore als ValueResult.
 
 -}
 
-handleevaluateclick :: IORef [StoredPoly] -> Element -> IORef GuiResult -> IORef (History HistoryEntry) -> Element -> UI ()
+handleevaluateclick :: IORef PolyLibrary -> Element -> IORef GuiResult -> IORef (History HistoryEntry) -> Element -> UI ()
 handleevaluateclick polyStore input resultStore historyStore output = do
-   storedPolys <- liftIO $ readIORef polyStore
+   library <- liftIO $ readIORef polyStore
    xStr <- get value input
    case xStr of
       "" -> void $ element output # set UI.text "Fehler: Bitte geben Sie einen Wert für x ein."
       other -> case readMaybe xStr :: Maybe Rational of
          Nothing -> void $ element output # set UI.text "Fehler: Bitte geben Sie eine gültige Zahl für x ein."
-         Just x -> case storedPolys of
-            [StoredPoly name1 poly1] -> do
+         Just x -> case library of
+            [(name1, poly1)] -> do
                let resultValue = evaluate poly1 x
                liftIO $ writeIORef resultStore (ValueResult (name1 ++ "(" ++ show x ++ ")") resultValue)
                liftIO $ modifyIORef historyStore (addHistory (HistoryValue "Auswerten" resultValue))
@@ -597,11 +554,11 @@ DivResult speichert den Namen der Operation, den Quotienten und den Rest.
 
 -}
 
-handledivclick :: IORef [StoredPoly] -> IORef GuiResult -> IORef (History HistoryEntry) -> Element -> UI ()
+handledivclick :: IORef PolyLibrary -> IORef GuiResult -> IORef (History HistoryEntry) -> Element -> UI ()
 handledivclick polyStore resultStore historyStore output = do
-   storedPolys <- liftIO $ readIORef polyStore
-   case storedPolys of 
-      [StoredPoly name1 poly1, StoredPoly name2 poly2] -> do
+   library <- liftIO $ readIORef polyStore
+   case library of
+      [(name1, poly1), (name2, poly2)] -> do
          let (quotient, rest) = (/%) poly1 poly2
          liftIO $ writeIORef resultStore (DivResult (name1 ++ " / " ++ name2) quotient rest)
          liftIO $ modifyIORef historyStore (addHistory (HistoryDiv "Dividieren" quotient rest))

@@ -1,7 +1,6 @@
 module Library where
 
 import Poly
-import qualified Control.Applicative as PolyLibrary
 
 {- Dieses Modul dient dazu, anders wie History, bewusst Polynome mit Namen zu speichern, damit der Benutzer sie später wiederverwenden kann. -}
 
@@ -20,11 +19,12 @@ Sie nimmt als Eingabe einen Namen, ein Polynom und eine PolyLibrary (auf die wir
 und gibt eine neue PolyLibrary zurück, die das neue Paar enthält.
 
 Mit ":" hängen wir das neue Paar (Name, Polynom) an die bestehende PolyLibrary an, um eine neue PolyLibrary zu erstellen.
+Mit deletePoly stellen wir sicher, dass wir keine Duplikate in der PolyLibrary haben, indem wir das Polynom mit dem gleichen Namen vorher löschen.
 
 -}
 
 savePoly :: PolyName -> Poly -> PolyLibrary -> PolyLibrary
-savePoly name poly library = (name,poly) : library
+savePoly name poly library = (name,poly) : deletePoly name library
 
 {- 
 
