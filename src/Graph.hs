@@ -54,3 +54,20 @@ Standard ist hier dann [-10 .. 10] für x-Werte und die entsprechenden y-Werte w
 
 defaultPoints :: Poly -> [(Rational, Rational)]
 defaultPoints poly = visiblePoints 21 poly 
+
+{- Diese Hilfsfunktion formatiert einen Punkt als String. Bsp: formatPoint (1, 2) = "1 | 2" -}
+
+formatPoint :: (Rational, Rational) -> String
+formatPoint (x, y) = prettyRational x ++ " | " ++ prettyRational y
+
+{- 
+
+Diese Funktion formatiert eine Liste von Punkten als Tabelle, die in der GUI angezeigt werden kann.
+Sie bekommt als Eingabe eine Liste von Tupeln, die die Punkte darstellen, und gibt als Ausgabe einen String zurück, der die Tabelle darstellt.
+
+Sie benutzt die Hilfsfunktion formatPoint, um jeden Punkt in der Liste zu formatieren und fügt dann die Kopfzeile "x | y" und eine Trennlinie hinzu.
+
+-}
+
+formatTable :: [(Rational, Rational)] -> String
+formatTable points = "x | y\n" ++ "-----\n" ++ unlines (map formatPoint points)
