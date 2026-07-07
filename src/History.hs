@@ -2,7 +2,7 @@ module History where
 
 import Poly 
 
-{- In dieses Modul werden die Historie der Berechnungen gespeichert und verwaltet, damit vergangene Berechnungen angezeigt werden können  -}
+{- In dieses Modul werden die Historie der Berechnungen gespeichert und verwaltet, damit vergangene Berechnungen angezeigt werden können.  -}
 
 {- 
 
