@@ -74,6 +74,7 @@ library
         Analysis
         Animation
         Graph
+        History
 
     -- Modules included in this library but not exported.
     -- other-modules:

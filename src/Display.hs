@@ -6,6 +6,7 @@ import Format
 import Poly
 import Tree (ExprTree(..), polyToExprTree, prettyTree, prettyTreeMarked)
 import Graph
+import History (History(..), HistoryEntry(..), historyToList)
 
 {- 
 
@@ -171,5 +172,20 @@ showValueGraphText name value =
 showGraphDivText :: String -> Poly -> Poly -> String
 showGraphDivText name quotient rest = 
    "<h3>Graph von " ++ name ++ ":</h3>\n" ++ graphView quotient ++ "<br><br>" ++ graphView rest
+
+{- Historie-Darstellung -}
+
+{- Diese Hauptfunktion stellt die ganze Historie der Ergebnisse als einen schön formartierten String dar. -}
+
+showHistoryText :: History String -> String
+showHistoryText history =
+   case historyToList history of
+      [] -> "Historie ist leer."
+      entries -> "Historie:\n" ++ unlines (zipWith formatEntry [1..] entries)
+
+{- Diese Hilfsfunktion formatiert einen Eintrag in der Historie in einen schön formartierten String. -}
+
+formatEntry :: Int -> String -> String
+formatEntry n entry = show n ++ ". " ++ entry
 
 

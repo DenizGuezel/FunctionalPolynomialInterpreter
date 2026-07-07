@@ -5,7 +5,7 @@ import qualified Graphics.UI.Threepenny as UI
 import Control.Monad (void)
 import qualified Graphics.UI.Threepenny as Ui
 import qualified Control.Applicative as GUI
-import Data.IORef (IORef, newIORef, readIORef, writeIORef)
+import Data.IORef (IORef, newIORef, readIORef, writeIORef, modifyIORef)
 import Text.Read (readMaybe)
 
 import Poly
@@ -16,6 +16,7 @@ import Animation
 import Format (prettyRational, toPrettyMathPoly)
 import Display
 import Graph
+import History 
 
 {- Hier kommt die GUI-Logik rein, welche die Interaktion mit dem Benutzer steuert z.B mit Buttons, usw... -}
 
@@ -188,10 +189,17 @@ setup window = do
       # set UI.html "<span class='button-symbol'>📈</span><span>Graph</span>"
       # set UI.class_ "view-button"
 
+   buttonhistory <- UI.button
+      # set UI.html "<span class='button-symbol'>🕒</span><span>Historie</span>"
+      # set UI.class_ "view-button"
+
+   {- Ausgabebereich: -}
+
    {- Speicher: -}
 
    polyStore <- liftIO $ newIORef ([] :: [StoredPoly]) --Für die Speicherung der Polynome
    resultStore <- liftIO $ newIORef NoResult --Für die Speicherung der Ergebnisse der Operationen
+   historyStore <- liftIO $ newIORef (Empty :: History HistoryEntry) --Für die Speicherung der Historie der Ergebnisse (PolyResult, ValueResult, DivResult)
 
    {- Ausgabebereiche: -}
 
@@ -825,3 +833,4 @@ handlegraphclick resultStore output = do
          void $ element output # set UI.html (showValueGraphText name value)
       DivResult name quotient rest -> do
          void $ element output # set UI.html (showGraphDivText name quotient rest)
+
