@@ -1,6 +1,7 @@
 module Library where
 
 import Poly
+import qualified Control.Applicative as PolyLibrary
 
 {- Dieses Modul dient dazu, anders wie History, bewusst Polynome mit Namen zu speichern, damit der Benutzer sie später wiederverwenden kann. -}
 
@@ -24,3 +25,16 @@ Mit ":" hängen wir das neue Paar (Name, Polynom) an die bestehende PolyLibrary 
 
 savePoly :: PolyName -> Poly -> PolyLibrary -> PolyLibrary
 savePoly name poly library = (name,poly) : library
+
+{- 
+
+Diese Funktion sucht nach einem Polynom anhand des Namens in der PolyLibrary. 
+Sie nimmt als Eingabe einen Namen und eine PolyLibrary und gibt ein Maybe Poly zurück,
+
+lookup ist eine Funktion aus dem Prelude, die ein Paar (Name, Polynom) in der PolyLibrary sucht und das Polynom zurückgibt, 
+wenn es gefunden wird (Just poly), ansonsten gibt sie Nothing zurück.
+
+-}
+
+lookupPoly :: PolyName -> PolyLibrary -> Maybe Poly
+lookupPoly name library = lookup name library
