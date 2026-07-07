@@ -18,11 +18,7 @@ Das Modul baut also nur die fertigen Strings zusammen und hält die Anzeige-Logi
 
 {- Ergebnis-Darstellung -}
 
-{- 
-
-Diese Funktion stellt das Ergebnis für ein Polynom dar.
-
--}
+{- Diese Funktion stellt das Ergebnis für ein Polynom dar. -}
 
 showResultText :: String -> Poly -> String
 showResultText name poly = "Ergebnis von " ++ name ++ ": " ++ toPrettyMathPoly poly
@@ -202,3 +198,18 @@ formatEntry n (HistoryDiv name quotient rest) =
 showPolyLibraryText :: PolyLibrary -> String
 showPolyLibraryText [] = "Noch keine Polynome vorhanden."
 showPolyLibraryText library = unlines [name ++ " = " ++ toPrettyMathPoly poly | (name, poly) <- library]
+
+{- Random-Darstellung -}
+
+{- Diese Funktion stellt ein zufällig erzeugtes Polynom als String dar. -}
+showRandomPolyText :: String -> Poly -> String
+showRandomPolyText name poly = "Zufallspolynom " ++ name ++ ": " ++ toPrettyMathPoly poly
+
+{- Diese Funktion stellt ein zufällig erzeugtes Polynom mit Quotient und Rest als String dar. -}
+showRandomDivText :: String -> Poly -> Poly -> String
+showRandomDivText name quotient rest =
+   "Zufallspolynom " ++ name ++ ": Quotient = " ++ toPrettyMathPoly quotient ++ ", Rest = " ++ toPrettyMathPoly rest
+
+{- Diese Funktion stellt einen zufällig erzeugten Wert als String dar. -}
+showRandomValueText :: String -> Rational -> String
+showRandomValueText name value = "Zufallswert " ++ name ++ ": " ++ prettyRational value
