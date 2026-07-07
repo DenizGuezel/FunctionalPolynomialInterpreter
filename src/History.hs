@@ -58,7 +58,6 @@ historyToList :: History a -> [a]
 historyToList Empty = []
 historyToList (Entry input resthistorie) = input : historyToList resthistorie
 
-
 {- 
 
 Diese Funktion gibt den letzten Eintrag der Historie zurück, welcher hinzugefügt wurde, also quasi der letzte hinzugefügte Eintrag.
@@ -70,15 +69,29 @@ Wenn die Historie leer ist, wird Nothing zurückgegeben.
 Wenn die Historie nicht leer ist, wird der erste Eintrag der Historie zurückgegeben, da wir die Historie immer an 
 den Anfang erweitern und somit der erste Eintrag der letzte hinzugefügte Eintrag ist.
 
-z.B bei einer Historie mit zwei Einträgen: 
+z.B gibt latestHistory bei einer History mit zwei Einträgen: 
 Entry (PolyResult "f" (P [M 1 0, M 2 1])) 
- (Entry (ValueResult "g" 3) Empty)
-
-gibt lastHistory Entry (PolyResult "f" (P [M 1 0, M 2 1])) 
 (Entry (ValueResult "g" 3) Empty) = Just (PolyResult "f" (P [M 1 0, M 2 1])) 
 
 -}
 
-lastHistory :: History a -> Maybe a
-lastHistory Empty = Nothing
-lastHistory (Entry input Empty) = Just input
+latestHistory :: History a -> Maybe a
+latestHistory Empty = Nothing
+latestHistory (Entry input _) = Just input
+
+{- 
+
+Diese Funktion entfernt den zuletzt hinzugefügten Eintrag der Historie.
+Sie nimmt als Eingabe eine Historie und gibt eine neue Historie zurück, die den zuletzt hinzugefügten Eintrag entfernt hat.
+
+Wenn die Historie leer ist, wird eine leere Historie zurückgegeben.
+Wenn die Historie nicht leer ist, wird der erste Eintrag der Historie entfernt und die Funktion gibt die restliche Historie zurück.
+
+z.B bei einer Historie mit zwei Einträgen: undoHistory (Entry (PolyResult "f" (P [M 1 0, M 2 1])) 
+(Entry (ValueResult "g" 3) Empty)) = Entry (ValueResult "g" 3) Empty
+
+-}
+
+undoHistory :: History a -> History a
+undoHistory Empty = Empty
+undoHistory (Entry _ resthistorie) = resthistorie
