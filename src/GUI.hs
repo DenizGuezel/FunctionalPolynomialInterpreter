@@ -15,6 +15,7 @@ import Analysis
 import Animation
 import Format (prettyRational, toPrettyMathPoly)
 import Display
+import Graph
 
 {- Hier kommt die GUI-Logik rein, welche die Interaktion mit dem Benutzer steuert z.B mit Buttons, usw... -}
 
@@ -183,6 +184,10 @@ setup window = do
       # set UI.html "<span class='button-symbol'>🔍</span><span>Details</span>"
       # set UI.class_ "view-button"
 
+   buttongraph <- UI.button
+      # set UI.html "<span class='button-symbol'>📈</span><span>Graph</span>"
+      # set UI.class_ "view-button"
+
    {- Speicher: -}
 
    polyStore <- liftIO $ newIORef ([] :: [StoredPoly]) --Für die Speicherung der Polynome
@@ -213,6 +218,7 @@ setup window = do
       element buttonanalysis,
       element buttonsteps,
       element buttondetails,
+      element buttongraph,
       element polyListOutput,
       element output
       
@@ -238,6 +244,7 @@ setup window = do
    on UI.click buttonanalysis (\_ -> handleanalysisclick resultStore output)
    on UI.click buttonsteps (\_ -> handlestepsclick resultStore output)
    on UI.click buttondetails (\_ -> handledetailsclick resultStore output)
+   on UI.click buttongraph (\_ -> handlegraphclick resultStore output)
 
 {- 
 
@@ -791,3 +798,30 @@ handledetailsclick resultStore output = do
          void $ element output # set UI.text (showValueDetailsText name value)
       DivResult name quotient rest ->
          void $ element output # set UI.text (showDivDetailsText name quotient rest)
+
+{- 
+
+Diese Funktion wird aufgerufen, wenn der Button "Graph" geklickt wird.
+Sie dient dazu, den Graphen eines Polynoms anzuzeigen.
+
+Funktioniert ähnlich wie die anderen Darstellungsfunktionen, nur dass hier die Funktion graphView 
+aufgerufen wird, um den Graphen des Polynoms zu erstellen.
+
+Ebenfalls nutzen wir bei einer gültigen Ausgabe eines FunktionsGraphen UI.html anstatt UI.text, 
+da wir hier HTML-Code zurückgeben, um den Graphen in der GUI anzuzeigen.
+
+-}
+
+handlegraphclick :: IORef GuiResult -> Element -> UI ()
+handlegraphclick resultStore output = do
+   result <- liftIO $ readIORef resultStore
+   case result of
+      NoResult ->
+         void $ element output # set UI.text "Fehler: Es wurde noch kein Ergebnis berechnet."
+      PolyResult name poly -> do
+         let graph = graphView poly
+         void $ element output # set UI.html (showGraphText name poly)
+      ValueResult name value -> do
+         void $ element output # set UI.html (showValueGraphText name value)
+      DivResult name quotient rest -> do
+         void $ element output # set UI.html (showGraphDivText name quotient rest)
