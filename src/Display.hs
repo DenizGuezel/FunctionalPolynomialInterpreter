@@ -8,6 +8,7 @@ import Tree (ExprTree(..), polyToExprTree, prettyTree, prettyTreeMarked)
 import Graph
 import History (History(..), HistoryEntry(..), historyToList)
 import Library (PolyLibrary)
+import qualified Control.Applicative as Wert
 
 {- 
 
@@ -201,15 +202,16 @@ showPolyLibraryText library = unlines [name ++ " = " ++ toPrettyMathPoly poly | 
 
 {- Random-Darstellung -}
 
-{- Diese Funktion stellt ein zufällig erzeugtes Polynom als String dar. -}
+{- 
+
+Diese Funktion stellt ein zufällig erzeugtes Polynom als String dar. 
+Wir brauchen es nicht noch für ValueResult oder DivResult, da wir nur zufällige Polynome erzeugen wollen, 
+die wir dann in der GUI anzeigen.
+
+Der Zufallspolynom-Button in der GUI erzeugt keine Divisiom und keinen einzelnen Wert.
+Division und Auswertung entstehen erst, wenn der Benutzer die entsprechenden Buttons für die Operationen klickt.
+
+-}
+
 showRandomPolyText :: String -> Poly -> String
 showRandomPolyText name poly = "Zufallspolynom " ++ name ++ ": " ++ toPrettyMathPoly poly
-
-{- Diese Funktion stellt ein zufällig erzeugtes Polynom mit Quotient und Rest als String dar. -}
-showRandomDivText :: String -> Poly -> Poly -> String
-showRandomDivText name quotient rest =
-   "Zufallspolynom " ++ name ++ ": Quotient = " ++ toPrettyMathPoly quotient ++ ", Rest = " ++ toPrettyMathPoly rest
-
-{- Diese Funktion stellt einen zufällig erzeugten Wert als String dar. -}
-showRandomValueText :: String -> Rational -> String
-showRandomValueText name value = "Zufallswert " ++ name ++ ": " ++ prettyRational value

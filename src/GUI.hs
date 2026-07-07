@@ -18,6 +18,7 @@ import Display
 import Graph
 import History 
 import Library
+import Random
 
 {- Hier kommt die GUI-Logik rein, welche die Interaktion mit dem Benutzer steuert z.B mit Buttons, usw... -}
 
@@ -149,6 +150,10 @@ setup window = do
       # set UI.html "<span class='button-symbol'>÷</span><span>Dividieren</span>"
       # set UI.class_ "operation-button"
 
+   buttonrandompoly <- UI.button
+      # set UI.html "<span class='button-symbol'>🎲</span><span>Zufallspolynom</span>"
+      # set UI.class_ "operation-button"
+
    {- Darstellung-Buttons: -}
    buttonshowresult <- UI.button
       # set UI.html "<span class='button-symbol'>i</span><span>Ergebnis</span>"
@@ -217,6 +222,7 @@ setup window = do
       element buttondetails,
       element buttongraph,
       element buttonhistory,
+      element buttonrandompoly,
       element polyListOutput,
       element output
       
@@ -244,6 +250,9 @@ setup window = do
    on UI.click buttondetails (\_ -> handledetailsclick resultStore output)
    on UI.click buttongraph (\_ -> handlegraphclick resultStore output)
    on UI.click buttonhistory (\_ -> handlehistoryclick historyStore output)
+   on UI.click buttonrandompoly (\_ -> handlerandompolyclick resultStore polyStore polyListOutput output)
+
+{- Operationshandler -}
 
 {- 
 
@@ -568,6 +577,42 @@ handledivclick polyStore resultStore historyStore output = do
 
 {- 
 
+Diese Funktion dient zur Veranschaulichung eines zufälligen Polynoms in der GUI.
+Sie wird aufgerufen, wenn der Button "Zufallspolynom" geklickt wird.
+
+Sie erhält resultStore, polyStore, polyListOutput und output übergeben.
+resultStore ist der Speicher für das Ergebnis der Operation, 
+polyStore ist der Speicher für die gespeicherten Polynome,
+polyListOutput ist der Ausgabebereich für die Polynomliste und output ist der Ausgabebereich für das Ergebnis.
+
+library ist ist die aktuelle PolynomBibliothek, die wir aus polyStore auslesen.
+poly wird mit randomPoly erzeugt, welches ein zufälliges Polynom generiert.
+
+Danach wird ein Name für das Polynom erzeugt, z.B. r1, r2, r3 usw.
+newLibrary ist die neue PolynomBibliothek, die das neue zufällige Polynom enthält.
+
+Wir speichern die neue PolynomBibliothek in polyStore und das Ergebnis in resultStore.
+
+Zuletzt zeigen wir die neue Polynomliste in polyListOutput an und das Ergebnis in output.
+
+-}
+
+handlerandompolyclick :: IORef GuiResult -> IORef PolyLibrary -> Element -> Element -> UI ()
+handlerandompolyclick resultStore polyStore polyListOutput output = do
+   library <- liftIO $ readIORef polyStore
+   poly <- liftIO randomPoly
+   let name = "r" ++ show (length library + 1)
+   let newLibrary = savePoly name poly library
+   liftIO $ writeIORef polyStore newLibrary
+   liftIO $ writeIORef resultStore (PolyResult name poly)
+   void $ element polyListOutput # set UI.text (showPolyLibraryText newLibrary)
+   void $ element output # set UI.text (showRandomPolyText name poly)
+   
+
+{- Darstellungshandler -}
+
+{- 
+
 Diese Funktion errechnet nichts neu, sondern zeigt das Ergebnis als LaTeX in der GUI an, wenn der Button "LaTeX" geklickt wird.
 Wir lesen das Ergebnis einer Berechnung aus resultStore aus und prüfen vier Fälle:
 
@@ -594,7 +639,6 @@ handlelatexclick resultStore output = do
          void $ element output # set UI.text
             ("LaTeX von " ++ name ++ ": Quotient = "
              ++ toLaTeX quotient ++ ", Rest = " ++ toLaTeX rest)
-
 
 {- 
 

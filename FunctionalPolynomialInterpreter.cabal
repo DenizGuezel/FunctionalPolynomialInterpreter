@@ -87,7 +87,9 @@ library
     -- Other library packages from which modules are imported.
     build-depends:
         base ^>=4.18.3.0,
+        random,
         threepenny-gui
+        
 
     -- Directories containing source files.
     hs-source-dirs:   src
@@ -112,6 +114,7 @@ executable FunctionalPolynomialInterpreter
     build-depends:
         base ^>=4.18.3.0,
         FunctionalPolynomialInterpreter,
+        random,
         threepenny-gui
 
     -- Directories containing source files.
