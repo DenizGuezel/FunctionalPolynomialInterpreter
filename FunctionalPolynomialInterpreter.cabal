@@ -67,7 +67,18 @@ library
     exposed-modules:
         Poly
         ParserSimple
+        Format
+        Display
+        Tree
         GUI
+        Analysis
+        Animation
+        Graph
+        History
+        Library
+        Random
+        Cache
+        Parallel
 
     -- Modules included in this library but not exported.
     -- other-modules:
@@ -78,7 +89,9 @@ library
     -- Other library packages from which modules are imported.
     build-depends:
         base ^>=4.18.3.0,
-        threepenny-gui
+        random,
+        threepenny-gui,
+        parallel
 
     -- Directories containing source files.
     hs-source-dirs:   src
@@ -103,7 +116,9 @@ executable FunctionalPolynomialInterpreter
     build-depends:
         base ^>=4.18.3.0,
         FunctionalPolynomialInterpreter,
-        threepenny-gui
+        random,
+        threepenny-gui,
+        parallel
 
     -- Directories containing source files.
     hs-source-dirs:   src

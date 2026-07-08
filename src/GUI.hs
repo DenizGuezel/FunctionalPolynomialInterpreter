@@ -3,27 +3,26 @@ module GUI where
 import Graphics.UI.Threepenny.Core
 import qualified Graphics.UI.Threepenny as UI
 import Control.Monad (void)
+import qualified Graphics.UI.Threepenny as Ui
+import qualified Control.Applicative as GUI
+import Data.IORef (IORef, newIORef, readIORef, writeIORef, modifyIORef)
+import Text.Read (readMaybe)
 
 import Poly
 import ParserSimple
-import qualified Graphics.UI.Threepenny as Ui
-import qualified Control.Applicative as GUI
-import Data.IORef (IORef, newIORef, readIORef, writeIORef)
-import Text.Read (readMaybe)
-import Data.Ratio (numerator, denominator)
--- Hier kommt die GUI-Logik rein, welche die Interaktion mit dem Benutzer steuert z.B mit Buttons, usw... --
+import Tree
+import Analysis
+import Animation
+import Format (prettyRational, toPrettyMathPoly)
+import Display
+import Graph
+import History 
+import Library
+import Random
+import Cache
+import Parallel
 
-{- 
-
-Hier wird ein neuer Datentyp StoredPoly definiert, der dazu dient, ein Polynom zusammen mit einem Namen zu speichern, 
-quasi Map-Paar sozusagen, damit ein bestimmter Polynom anhand des Namens abgerufen werden kann.
-
-Wird verwendet, um die Auswahl von Polynomen in der GUI als Liste zu realisieren.
-
--}
-
-data StoredPoly = StoredPoly String Poly
-   deriving (Show, Eq)
+{- Hier kommt die GUI-Logik rein, welche die Interaktion mit dem Benutzer steuert z.B mit Buttons. Die GUI benutzt die anderen Module, um die Interaktion zu ermöglichen. -}
 
 {- 
 
@@ -44,6 +43,38 @@ data GuiResult
    | ValueResult String Rational
    | DivResult String Poly Poly
    deriving (Show, Eq)
+
+{- 
+
+Diese Funktion resultOverviewHtml wird verwendet, um das Ergebnis einer GUI-Operation in HTML darzustellen.
+Sie nimmt ein GuiResult als Eingabe und gibt einen String zurück, der HTML-Code enthält, um das Ergebnis in der GUI anzuzeigen.
+
+Diese Funktion bleibt in Gui.hs, da sie nicht nur allgemeine Textanzeige tätigt, 
+sondern spezifisch für die GUI ist, da sie HTML-Code erzeugt, der in der GUI angezeigt wird.
+
+-}
+
+resultOverviewHtml :: GuiResult -> String
+resultOverviewHtml NoResult =
+   "<div><span>Operation</span><strong>-</strong></div>"
+   ++ "<div><span>Eingabe</span><strong>-</strong></div>"
+   ++ "<div><span>Ausgabe</span><strong>-</strong></div>"
+   ++ "<div><span>Wert</span><strong>-</strong></div>"
+resultOverviewHtml (PolyResult name poly) =
+   "<div><span>Operation</span><strong>" ++ name ++ "</strong></div>"
+   ++ "<div><span>Eingabe</span><strong>" ++ name ++ "</strong></div>"
+   ++ "<div><span>Ausgabe</span><strong>" ++ toPrettyMathPoly poly ++ "</strong></div>"
+   ++ "<div><span>Wert</span><strong>-</strong></div>"
+resultOverviewHtml (ValueResult name value) =
+   "<div><span>Operation</span><strong>Auswerten</strong></div>"
+   ++ "<div><span>Eingabe</span><strong>" ++ name ++ "</strong></div>"
+   ++ "<div><span>Ausgabe</span><strong>-</strong></div>"
+   ++ "<div><span>Wert</span><strong>" ++ prettyRational value ++ "</strong></div>"
+resultOverviewHtml (DivResult name quotient rest) =
+   "<div><span>Operation</span><strong>" ++ name ++ "</strong></div>"
+   ++ "<div><span>Eingabe</span><strong>" ++ name ++ "</strong></div>"
+   ++ "<div><span>Ausgabe</span><strong>Q = " ++ toPrettyMathPoly quotient ++ "</strong></div>"
+   ++ "<div><span>Wert</span><strong>R = " ++ toPrettyMathPoly rest ++ "</strong></div>"
 
 {- 
 
@@ -110,12 +141,12 @@ setup window = do
       # set UI.class_ "header"
       #+ [element lambdaLogo, element headline]
 
-   {- Eingabefelder: -}
+   {- Eingabefelder -}
 
    input <- UI.input # set (attr "placeholder") "Polynom hinzufügen"
    inputX <- UI.input # set (attr "placeholder") "x-Wert"
 
-   {- Operation-Buttons: -}
+   {- Operation-Buttons -}
 
    buttonnormalize <- UI.button
       # set UI.html "<span class='button-symbol'>N</span><span>Normalisieren</span>"
@@ -153,7 +184,15 @@ setup window = do
       # set UI.html "<span class='button-symbol'>÷</span><span>Dividieren</span>"
       # set UI.class_ "operation-button"
 
-   {- Darstellung-Buttons: -}
+   buttonrandompoly <- UI.button
+      # set UI.html "<span class='button-symbol'>🎲</span><span>Zufallspolynom</span>"
+      # set UI.class_ "operation-button"
+
+   buttonparallel <- UI.button
+      # set UI.html "<span class='button-symbol'>⚡</span><span>Parallel</span>"
+      # set UI.class_ "operation-button"
+
+   {- Darstellung-Buttons -}
    buttonshowresult <- UI.button
       # set UI.html "<span class='button-symbol'>i</span><span>Ergebnis</span>"
       # set UI.class_ "view-button"
@@ -162,54 +201,231 @@ setup window = do
       # set UI.html "<span class='button-symbol'>TeX</span><span>LaTeX</span>"
       # set UI.class_ "view-button"
 
-   {- Speicher: -}
+   buttontree <- UI.button
+      # set UI.html "<span class='button-symbol'>🌳</span><span>Baum</span>"
+      # set UI.class_ "view-button"
 
-   polyStore <- liftIO $ newIORef ([] :: [StoredPoly]) --Für die Speicherung der Polynome
+   buttonanalysis <- UI.button
+      # set UI.html "<span class='button-symbol'>📊</span><span>Analyse</span>"
+      # set UI.class_ "view-button"
+
+   buttonsteps <- UI.button
+      # set UI.html "<span class='button-symbol'>☰</span><span>Schritte</span>"
+      # set UI.class_ "view-button"
+
+   buttondetails <- UI.button
+      # set UI.html "<span class='button-symbol'>🔍</span><span>Details</span>"
+      # set UI.class_ "view-button"
+
+   buttongraph <- UI.button
+      # set UI.html "<span class='button-symbol'>📈</span><span>Graph</span>"
+      # set UI.class_ "view-button"
+
+   buttonhistory <- UI.button
+      # set UI.html "<span class='button-symbol'>🕒</span><span>Historie</span>"
+      # set UI.class_ "view-button"
+
+   {- Speicher -}
+
+   polyStore <- liftIO $ newIORef ([] :: PolyLibrary) --Für die Speicherung der Polynome
    resultStore <- liftIO $ newIORef NoResult --Für die Speicherung der Ergebnisse der Operationen
+   historyStore <- liftIO $ newIORef (Empty :: History HistoryEntry) --Für die Speicherung der Historie der Ergebnisse (PolyResult, ValueResult, DivResult)
+   cacheStore <- liftIO $ newIORef ([] :: Cache) --Für die Speicherung der Operationen, die bereits durchgeführt wurden, um sie wiederverwenden zu können, nicht die Ergebnisse einer Berechnung, sondern die Operation selbst, die durchgeführt werden soll.
 
-   {- Ausgabebereiche: -}
+   {- Ausgabebereiche -}
 
-   output <- UI.div # set UI.text ""
+   output <- UI.pre # set UI.text ""
    polyListOutput <- UI.pre # set UI.text "Noch keine Polynome vorhanden."
 
-   getBody window #+ [
+   {- Eingabebereiche -}
 
-      element header,
-      element input,
-      element inputX,
-      element buttonnormalize,
-      element buttonnegat,
-      element buttonaddpoly,
-      element buttonadd,
-      element buttonsub,
-      element buttonmult,
-      element buttonderivation,
-      element buttonevaluate,
-      element buttondiv,
-      element buttonshowresult,
-      element buttonshowlatex,
-      element polyListOutput,
-      element output
-      
-      ] 
+   inputTitle <- UI.h2 # set UI.text "Eingabe"
+   polyLabel <- UI.label # set UI.text "Polynom"
+   xLabel <- UI.label # set UI.text "x-Wert"
+   formatHint <- UI.div
+      # set UI.text "Format: Koeffizient Exponent; ..."
+      # set UI.class_ "hint"
+
+   inputPanel <- UI.div
+      # set UI.class_ "panel input-panel"
+      #+ [ element inputTitle
+         , element polyLabel
+         , element input
+         , element xLabel
+         , element inputX
+         , element buttonaddpoly
+         , element buttonrandompoly
+         , element formatHint
+         ]
+
+   {- Polynomliste -}
+
+   libraryTitle <- UI.h2 # set UI.text "Polynomliste"
+   clearSelectionButton <- UI.button
+      # set UI.html "<span class='small-button-symbol'>♙</span><span>Auswahl löschen</span>"
+      # set UI.class_ "secondary-button"
+   removePolyButton <- UI.button
+      # set UI.html "<span class='small-button-symbol'>⌫</span><span>Polynom entfernen</span>"
+      # set UI.class_ "secondary-button"
+   libraryActions <- UI.div
+      # set UI.class_ "library-actions"
+      #+ [element clearSelectionButton, element removePolyButton]
+   libraryPanel <- UI.div
+      # set UI.class_ "panel library-panel"
+      #+ [element libraryTitle, element polyListOutput, element libraryActions]
+
+   {- Speicherung der Operation-Buttons -}
+
+   operationsTitle <- UI.h2 # set UI.text "Polynomoperationen"
+   operationGrid <- UI.div
+      # set UI.class_ "operation-grid"
+      #+ [ element buttonnormalize
+         , element buttonnegat
+         , element buttonadd
+         , element buttonsub
+         , element buttonmult
+         , element buttondiv
+         , element buttonderivation
+         , element buttonevaluate
+         , element buttonparallel
+         ]
+
+   {- Speicherung der Darstellung-Buttons-}
+
+   displayTitle <- UI.h2 # set UI.text "Darstellung"
+   displayGrid <- UI.div
+      # set UI.class_ "view-grid"
+      #+ [ element buttonshowresult
+         , element buttonshowlatex
+         , element buttontree
+         , element buttonanalysis
+         , element buttonsteps
+         , element buttondetails
+         , element buttongraph
+         , element buttonhistory
+         ]
+
+   {- Zentraler Steuerungsbereich-}
+
+   centerPanel <- UI.div
+      # set UI.class_ "panel center-panel"
+      #+ [ element operationsTitle
+         , element operationGrid
+         , UI.hr
+         , element displayTitle
+         , element displayGrid
+         ]
+
+   {- Ergebnisübersicht-}
+
+   resultTitle <- UI.h2 # set UI.text "Ergebnis"
+   resultOverview <- UI.div
+      # set UI.class_ "result-overview"
+      # set UI.html (resultOverviewHtml NoResult)
+   resultPanel <- UI.div
+      # set UI.class_ "panel result-panel"
+      #+ [element resultTitle, element resultOverview]
+
+   leftColumn <- UI.div
+      # set UI.class_ "left-column"
+      #+ [element inputPanel, element libraryPanel]
+
+   {- Tabs für die Darstellung der Ergebnisse: -}
+
+   outputTitle <- UI.h2 # set UI.text "Darstellung"
+   outputTabResult <- UI.span # set UI.text "Ergebnis" # set UI.class_ "active"
+   outputTabLatex <- UI.span # set UI.text "LaTeX"
+   outputTabTree <- UI.span # set UI.text "Baum"
+   outputTabAnalysis <- UI.span # set UI.text "Analyse"
+   outputTabSteps <- UI.span # set UI.text "Schritte"
+   outputTabDetails <- UI.span # set UI.text "Details"
+   outputTabHistory <- UI.span # set UI.text "Historie"
+   outputTabGraph <- UI.span # set UI.text "Graph"
+
+   {- Speicherung der Output-Tabs -}
+
+   outputTabs <- UI.div
+      # set UI.class_ "output-tabs"
+      #+ [ element outputTabResult
+         , element outputTabLatex
+         , element outputTabTree
+         , element outputTabAnalysis
+         , element outputTabSteps
+         , element outputTabDetails
+         , element outputTabHistory
+         , element outputTabGraph
+         ]
+
+   {- Darstellung des Output-Bereichs -}
+
+   outputPanel <- UI.div
+      # set UI.class_ "panel output-panel"
+      #+ [element outputTitle, element outputTabs, element output]
+
+   mainTop <- UI.div
+      # set UI.class_ "main-top"
+      #+ [element centerPanel, element resultPanel]
+
+   mainColumn <- UI.div
+      # set UI.class_ "main-column"
+      #+ [element mainTop, element outputPanel]
+
+   topGrid <- UI.div
+      # set UI.class_ "top-grid"
+      #+ [element leftColumn, element mainColumn]
+
+   statusBar <- UI.div
+      # set UI.class_ "status-bar"
+      # set UI.html "<div><span class='status-ok'>✓</span> OK: Berechnung erfolgreich.</div><div>Haskell Kernel: aktiv <span class='status-dot'></span></div>"
+
+   appShell <- UI.div
+      # set UI.class_ "app-shell"
+      #+ [element header, element topGrid]
+
+   void $ getBody window #+ [element appShell, element statusBar]
+
+   {- Logik für das umswitchen der Output-Tabs -}
+
+   let tabClass tab active = if tab == active then "active" else ""
+   let activateTab active = do
+         void $ element outputTabResult # set UI.class_ (tabClass "Ergebnis" active)
+         void $ element outputTabLatex # set UI.class_ (tabClass "LaTeX" active)
+         void $ element outputTabTree # set UI.class_ (tabClass "Baum" active)
+         void $ element outputTabAnalysis # set UI.class_ (tabClass "Analyse" active)
+         void $ element outputTabSteps # set UI.class_ (tabClass "Schritte" active)
+         void $ element outputTabDetails # set UI.class_ (tabClass "Details" active)
+         void $ element outputTabHistory # set UI.class_ (tabClass "Historie" active)
+         void $ element outputTabGraph # set UI.class_ (tabClass "Graph" active)
+   let refreshResultOverview = do
+         result <- liftIO $ readIORef resultStore
+         void $ element resultOverview # set UI.html (resultOverviewHtml result)
 
    {- ActionListener auf die Operation-Buttons: -}
 
-   on UI.click buttonnormalize (\_ -> handlenormalizeclick input resultStore output) 
-   on UI.click buttonnegat (\_ -> handlenegatclick input resultStore output)
+   on UI.click buttonnormalize (\_ -> handlenormalizeclick input resultStore historyStore cacheStore output >> refreshResultOverview >> activateTab "Ergebnis") 
+   on UI.click buttonnegat (\_ -> handlenegatclick input resultStore historyStore cacheStore output >> refreshResultOverview >> activateTab "Ergebnis")
    on UI.click buttonaddpoly (\_ -> handleaddpolyclick input polyListOutput polyStore)
-   on UI.click buttonadd (\_ -> handleaddclick polyStore resultStore output)
-   on UI.click buttonsub (\_ -> handlesubclick polyStore resultStore output)
-   on UI.click buttonmult (\_ -> handlemultclick polyStore resultStore output)
-   on UI.click buttonderivation (\_ -> handlederivationclick polyStore resultStore output)
-   on UI.click buttonevaluate (\_ -> handleevaluateclick polyStore inputX resultStore output)
-   on UI.click buttondiv (\_ -> handledivclick polyStore resultStore output)
+   on UI.click buttonadd (\_ -> handleaddclick polyStore resultStore historyStore cacheStore output >> refreshResultOverview >> activateTab "Ergebnis")
+   on UI.click buttonsub (\_ -> handlesubclick polyStore resultStore historyStore cacheStore output >> refreshResultOverview >> activateTab "Ergebnis")
+   on UI.click buttonmult (\_ -> handlemultclick polyStore resultStore historyStore cacheStore output >> refreshResultOverview >> activateTab "Ergebnis")
+   on UI.click buttonderivation (\_ -> handlederivationclick polyStore resultStore historyStore cacheStore output >> refreshResultOverview >> activateTab "Ergebnis")
+   on UI.click buttonevaluate (\_ -> handleevaluateclick polyStore inputX resultStore historyStore cacheStore output >> refreshResultOverview >> activateTab "Ergebnis")
+   on UI.click buttondiv (\_ -> handledivclick polyStore resultStore historyStore cacheStore output >> refreshResultOverview >> activateTab "Ergebnis")
+   on UI.click buttonrandompoly (\_ -> handlerandompolyclick resultStore polyStore polyListOutput output >> refreshResultOverview >> activateTab "Ergebnis")
+   on UI.click buttonparallel (\_ -> handleparallelclick polyStore inputX output >> activateTab "Ergebnis")
 
    {- ActionListener auf die Darstellung-Bbuttons: -}
 
-   on UI.click buttonshowresult (\_ -> handleshowresultclick resultStore output)
-   on UI.click buttonshowlatex (\_ -> handlelatexclick resultStore output)
-   
+   on UI.click buttonshowresult (\_ -> activateTab "Ergebnis" >> handleshowresultclick resultStore output >> refreshResultOverview)
+   on UI.click buttonshowlatex (\_ -> activateTab "LaTeX" >> handlelatexclick resultStore output >> refreshResultOverview)
+   on UI.click buttontree (\_ -> activateTab "Baum" >> handletreeclick resultStore output >> refreshResultOverview)
+   on UI.click buttonanalysis (\_ -> activateTab "Analyse" >> handleanalysisclick resultStore output >> refreshResultOverview)
+   on UI.click buttonsteps (\_ -> activateTab "Schritte" >> handlestepsclick resultStore output >> refreshResultOverview)
+   on UI.click buttondetails (\_ -> activateTab "Details" >> handledetailsclick resultStore output >> refreshResultOverview)
+   on UI.click buttongraph (\_ -> activateTab "Graph" >> handlegraphclick resultStore output >> refreshResultOverview)
+   on UI.click buttonhistory (\_ -> activateTab "Historie" >> handlehistoryclick historyStore output)   
+
+{- Operationshandler -}
 
 {- 
 
@@ -240,16 +456,28 @@ set UI.text einen Ui.Element zurückgibt, den wir hier aber nicht benötigen.
 
 -}
 
-handlenormalizeclick :: Element -> IORef GuiResult -> Element -> UI ()
-handlenormalizeclick input resultStore output = do
+handlenormalizeclick :: Element -> IORef GuiResult -> IORef (History HistoryEntry) -> IORef Cache -> Element -> UI ()
+handlenormalizeclick input resultStore historyStore cacheStore output = do
    polyStr <- get value input
-   let result = parsePolySimple polyStr 
+   let result = parsePolySimple polyStr
    case result of
-      Left err ->  void $ element output # set UI.text ("Fehler: " ++ err)
+      Left err ->
+         void $ element output # set UI.text ("Fehler: " ++ err)
       Right poly -> do
-         let resultPoly = normalize poly
-         liftIO $ writeIORef resultStore (PolyResult "Normalisieren" resultPoly)
-         void $ element output # set UI.text ("Ergebnis: " ++ toPrettyMathPoly resultPoly)
+         cache <- liftIO $ readIORef cacheStore
+         let operation = Normalize poly
+         case lookupCache operation cache of
+            Just cachedResult ->
+               void $ element output # set UI.text ("Aus Cache geladen:\n" ++ cachedResult)
+            Nothing -> do
+               let resultPoly = normalize poly
+               let resultText = "Ergebnis: " ++ toPrettyMathPoly resultPoly
+               liftIO $ writeIORef resultStore (PolyResult "Normalisieren" resultPoly)
+               liftIO $ modifyIORef historyStore
+                  (addHistory (HistoryPoly "Normalisieren" resultPoly))
+               liftIO $ modifyIORef cacheStore
+                  (insertCache operation resultText)
+               void $ element output # set UI.text ("Neu berechnet:\n" ++ resultText)
 {- 
 
 Diese Funktion dient zur Veranschaulichung eines negierten Polynoms in der GUI.
@@ -263,16 +491,28 @@ Da negat wieder ein Polynom zurückgibt, speichern wir das Ergebnis als PolyResu
 
 -}
 
-handlenegatclick :: Element -> IORef GuiResult -> Element -> UI ()
-handlenegatclick input resultStore output = do
+handlenegatclick :: Element -> IORef GuiResult -> IORef (History HistoryEntry) -> IORef Cache -> Element -> UI ()
+handlenegatclick input resultStore historyStore cacheStore output = do
    polyStr <- get value input
    let result = parsePolySimple polyStr
    case result of
-      Left err ->  void $ element output # set UI.text ("Fehler: " ++ err)
+      Left err ->
+         void $ element output # set UI.text ("Fehler: " ++ err)
       Right poly -> do
-         let resultPoly = negat poly
-         liftIO $ writeIORef resultStore (PolyResult "Negieren" resultPoly)
-         void $ element output # set UI.text ("Ergebnis: " ++ toPrettyMathPoly resultPoly)
+         cache <- liftIO $ readIORef cacheStore
+         let operation = Negate poly
+         case lookupCache operation cache of
+            Just cachedResult ->
+               void $ element output # set UI.text ("Aus Cache geladen:\n" ++ cachedResult)
+            Nothing -> do
+               let resultPoly = negat poly
+               let resultText = "Ergebnis: " ++ toPrettyMathPoly resultPoly
+               liftIO $ writeIORef resultStore (PolyResult "Negieren" resultPoly)
+               liftIO $ modifyIORef historyStore
+                  (addHistory (HistoryPoly "Negieren" resultPoly))
+               liftIO $ modifyIORef cacheStore
+                  (insertCache operation resultText)
+               void $ element output # set UI.text ("Neu berechnet:\n" ++ resultText)
 
 {- 
 
@@ -302,7 +542,7 @@ Es wird ein Name automatisch generiert, z.B. p1, p2, p3 usw. und das Polynom wir
 
 -}
 
-handleaddpolyclick :: Element -> Element -> IORef [StoredPoly] -> UI ()
+handleaddpolyclick :: Element -> Element -> IORef PolyLibrary -> UI ()
 handleaddpolyclick input polyListOutput polyStore = do
    polyStr <- get value input
    let result = parsePolySimple polyStr
@@ -310,43 +550,11 @@ handleaddpolyclick input polyListOutput polyStore = do
       Left err ->
          void $ element polyListOutput # set UI.text ("Fehler: " ++ err)
       Right poly -> do
-         storedPolys <- liftIO $ readIORef polyStore
-         let name = "p" ++ show (length storedPolys + 1)
-         let newPoly = StoredPoly name poly
-         let newStoredPolys = storedPolys ++ [newPoly]
-         liftIO $ writeIORef polyStore newStoredPolys
-         void $ element polyListOutput # set UI.text (showStoredPolys newStoredPolys)
-
-{- 
-
-Diese Funktion wandelt die gespeicherten Polynome in einen String um,
-damit wir sie erstmal einfach in der GUI anzeigen können.
-
-Wenn die Liste leer ist, wird angezeigt, dass noch keine Polynome vorhanden sind.
-
-Wenn mindestens ein StoredPoly vorhanden ist (mindestens ein Element in der Liste, z.b. [StoredPoly "p1" poly1]),
-wird die Hilfsfunktion showStoredPolysRec aufgerufen.
-
-
--}
-
-showStoredPolys :: [StoredPoly] -> String
-showStoredPolys [] = "Noch keine Polynome vorhanden."
-showStoredPolys xs = showStoredPolysRec xs
-
-{- 
-
-Die Hilfsfunktion showStoredPolysRec wird rekursiv aufgerufen, um die gespeicherten Polynome in einen String umzuwandeln.
-
-Falls die übergebene Liste leer ist, wird ein leerer String zurückgegeben.
-Ansonsten wird das erste StoredPoly aus der Liste genommen und in einen String umgewandelt, 
-den wir dann mit dem Ergebnis der rekursiven Aufrufe auf den Rest der Liste verketten.
-
--}
-
-showStoredPolysRec :: [StoredPoly] -> String
-showStoredPolysRec [] = ""
-showStoredPolysRec (StoredPoly name poly : rest) = name ++ " = " ++ toLaTeX poly ++ "\n" ++ showStoredPolysRec rest
+         library <- liftIO $ readIORef polyStore
+         let name = "p" ++ show (length library + 1)
+         let newLibrary = savePoly name poly library
+         liftIO $ writeIORef polyStore newLibrary
+         void $ element polyListOutput # set UI.text (showPolyLibraryText newLibrary)
 
 {- 
 
@@ -378,19 +586,37 @@ Da add wieder ein Polynom zurückgibt, speichern wir das Ergebnis als PolyResult
 
 -}
 
-handleaddclick :: IORef [StoredPoly] -> IORef GuiResult -> Element -> UI ()
-handleaddclick polyStore resultStore output = do
-   storedPolys <- liftIO $ readIORef polyStore
-   case storedPolys of
-      
-      [StoredPoly name1 poly1, StoredPoly name2 poly2] -> do
-         let resultPoly = add poly1 poly2
-         liftIO $ writeIORef resultStore (PolyResult (name1 ++ " + " ++ name2) resultPoly)
-         void $ element output # set UI.text ("Ergebnis: " ++ toPrettyMathPoly resultPoly)
+handleaddclick :: IORef PolyLibrary -> IORef GuiResult -> IORef (History HistoryEntry) -> IORef Cache -> Element -> UI ()
+handleaddclick polyStore resultStore historyStore cacheStore output = do
+   library <- liftIO $ readIORef polyStore
+   case library of
+      [(name1, poly1), (name2, poly2)] -> do
+         cache <- liftIO $ readIORef cacheStore
+         let operation = Add poly1 poly2
 
-      [] -> void $ element output # set UI.text "Fehler: Addieren benötigt zwei Polynome. Es wurde noch kein Polynom gespeichert." 
+         case lookupCache operation cache of
+            Just cachedResult ->
+               void $ element output # set UI.text ("Aus Cache geladen:\n" ++ cachedResult)
 
-      other -> void $ element output # set UI.text ("Fehler: Addieren benötigt zwei Polynome. Es wurde/n aber " ++ show (length other) ++ " Polynom/e gespeichert.")
+            Nothing -> do
+               let resultPoly = add poly1 poly2
+               let resultText = "Ergebnis: " ++ toPrettyMathPoly resultPoly
+
+               liftIO $ writeIORef resultStore (PolyResult (name1 ++ " + " ++ name2) resultPoly)
+               liftIO $ modifyIORef historyStore
+                  (addHistory (HistoryPoly (name1 ++ " + " ++ name2) resultPoly))
+               liftIO $ modifyIORef cacheStore
+                  (insertCache operation resultText)
+
+               void $ element output # set UI.text ("Neu berechnet:\n" ++ resultText)
+
+      [] ->
+         void $ element output # set UI.text "Fehler: Addieren benötigt zwei Polynome. Es wurde noch kein Polynom gespeichert."
+
+      other ->
+         void $ element output # set UI.text
+            ("Fehler: Addieren benötigt zwei Polynome. Es wurde/n aber "
+             ++ show (length other) ++ " Polynom/e gespeichert.")
 
 {- 
 
@@ -403,19 +629,37 @@ Da sub wieder ein Polynom zurückgibt, benutzen wir PolyResult.
 
 -}
 
-handlesubclick :: IORef [StoredPoly] -> IORef GuiResult -> Element -> UI ()
-handlesubclick polyStore resultStore output = do
-   storedPolys <- liftIO $ readIORef polyStore
-   case storedPolys of
-      
-      [StoredPoly name1 poly1, StoredPoly name2 poly2] -> do
-         let resultPoly = sub poly1 poly2
-         liftIO $ writeIORef resultStore (PolyResult (name1 ++ " - " ++ name2) resultPoly)
-         void $ element output # set UI.text ("Ergebnis: " ++ toPrettyMathPoly resultPoly)
+handlesubclick :: IORef PolyLibrary -> IORef GuiResult -> IORef (History HistoryEntry) -> IORef Cache -> Element -> UI ()
+handlesubclick polyStore resultStore historyStore cacheStore output = do
+   library <- liftIO $ readIORef polyStore
+   case library of
+      [(name1, poly1), (name2, poly2)] -> do
+         cache <- liftIO $ readIORef cacheStore
+         let operation = Sub poly1 poly2
 
-      [] -> void $ element output # set UI.text "Fehler: Subtrahieren benötigt zwei Polynome. Es wurde noch kein Polynom gespeichert."
+         case lookupCache operation cache of
+            Just cachedResult ->
+               void $ element output # set UI.text ("Aus Cache geladen:\n" ++ cachedResult)
 
-      other -> void $ element output # set UI.text ("Fehler: Subtrahieren benötigt zwei Polynome. Es wurde/n aber " ++ show (length other) ++ " Polynom/e gespeichert.")
+            Nothing -> do
+               let resultPoly = sub poly1 poly2
+               let resultText = "Ergebnis: " ++ toPrettyMathPoly resultPoly
+
+               liftIO $ writeIORef resultStore (PolyResult (name1 ++ " - " ++ name2) resultPoly)
+               liftIO $ modifyIORef historyStore
+                  (addHistory (HistoryPoly (name1 ++ " - " ++ name2) resultPoly))
+               liftIO $ modifyIORef cacheStore
+                  (insertCache operation resultText)
+
+               void $ element output # set UI.text ("Neu berechnet:\n" ++ resultText)
+
+      [] ->
+         void $ element output # set UI.text "Fehler: Subtrahieren benötigt zwei Polynome. Es wurde noch kein Polynom gespeichert."
+
+      other ->
+         void $ element output # set UI.text
+            ("Fehler: Subtrahieren benötigt zwei Polynome. Es wurde/n aber "
+             ++ show (length other) ++ " Polynom/e gespeichert.")
 
 
 {- 
@@ -429,15 +673,29 @@ Da mult wieder ein Polynom zurückgibt, benutzen wir PolyResult.
 
 -}
 
-handlemultclick :: IORef [StoredPoly] -> IORef GuiResult -> Element -> UI ()
-handlemultclick polyStore resultStore output = do
-   storedPolys <- liftIO $ readIORef polyStore
-   case storedPolys of
-      
-      [StoredPoly name1 poly1, StoredPoly name2 poly2] -> do
-         let resultPoly = mult poly1 poly2
-         liftIO $ writeIORef resultStore (PolyResult (name1 ++ " * " ++ name2) resultPoly)
-         void $ element output # set UI.text ("Ergebnis: " ++ toPrettyMathPoly resultPoly)
+handlemultclick :: IORef PolyLibrary -> IORef GuiResult -> IORef (History HistoryEntry) -> IORef Cache -> Element -> UI ()
+handlemultclick polyStore resultStore historyStore cacheStore output = do
+   library <- liftIO $ readIORef polyStore
+   case library of
+      [(name1, poly1), (name2, poly2)] -> do
+         cache <- liftIO $ readIORef cacheStore
+         let operation = Mul poly1 poly2
+
+         case lookupCache operation cache of
+            Just cachedResult ->
+               void $ element output # set UI.text ("Aus Cache geladen:\n" ++ cachedResult)
+
+            Nothing -> do
+               let resultPoly = mult poly1 poly2
+               let resultText = "Ergebnis: " ++ toPrettyMathPoly resultPoly
+
+               liftIO $ writeIORef resultStore (PolyResult (name1 ++ " * " ++ name2) resultPoly)
+               liftIO $ modifyIORef historyStore
+                  (addHistory (HistoryPoly (name1 ++ " * " ++ name2) resultPoly))
+               liftIO $ modifyIORef cacheStore
+                  (insertCache operation resultText)
+
+               void $ element output # set UI.text ("Neu berechnet:\n" ++ resultText)
 
       [] -> void $ element output # set UI.text "Fehler: Multiplizieren benötigt zwei Polynome. Es wurde noch kein Polynom gespeichert."
 
@@ -471,19 +729,31 @@ Da derivation wieder ein Polynom zurückgibt, benutzen wir PolyResult.
 
 -}
 
-handlederivationclick :: IORef [StoredPoly] -> IORef GuiResult -> Element -> UI ()
-handlederivationclick polyStore resultStore output = do
-   storedPolys <- liftIO $ readIORef polyStore
-   case storedPolys of
-
-      [StoredPoly name1 poly1] -> do
-         let resultPoly = derivation poly1
-         liftIO $ writeIORef resultStore (PolyResult (name1 ++ "'") resultPoly)
-         void $ element output # set UI.text ("Ergebnis: " ++ toPrettyMathPoly resultPoly)
-
-      [] -> void $ element output # set UI.text "Fehler: Ableiten benötigt ein Polynom. Es wurde noch kein Polynom gespeichert."
-
-      other -> void $ element output # set UI.text ("Fehler: Ableiten benötigt ein Polynom. Es wurde/n aber " ++ show (length other) ++ " Polynom/e gespeichert.")
+handlederivationclick :: IORef PolyLibrary -> IORef GuiResult -> IORef (History HistoryEntry) -> IORef Cache -> Element -> UI ()
+handlederivationclick polyStore resultStore historyStore cacheStore output = do
+   library <- liftIO $ readIORef polyStore
+   case library of
+      [(name1, poly1)] -> do
+         cache <- liftIO $ readIORef cacheStore
+         let operation = Derive poly1
+         case lookupCache operation cache of
+            Just cachedResult ->
+               void $ element output # set UI.text ("Aus Cache geladen:\n" ++ cachedResult)
+            Nothing -> do
+               let resultPoly = derivation poly1
+               let resultText = "Ergebnis: " ++ toPrettyMathPoly resultPoly
+               liftIO $ writeIORef resultStore (PolyResult (name1 ++ "'") resultPoly)
+               liftIO $ modifyIORef historyStore
+                  (addHistory (HistoryPoly "Ableiten" resultPoly))
+               liftIO $ modifyIORef cacheStore
+                  (insertCache operation resultText)
+               void $ element output # set UI.text ("Neu berechnet:\n" ++ resultText)
+      [] ->
+         void $ element output # set UI.text "Fehler: Ableiten benötigt ein Polynom. Es wurde noch kein Polynom gespeichert."
+      other ->
+         void $ element output # set UI.text
+            ("Fehler: Ableiten benötigt ein Polynom. Es wurde/n aber "
+             ++ show (length other) ++ " Polynom/e gespeichert.")
 
 
 {- 
@@ -516,23 +786,46 @@ Deshalb speichern wir das Ergebnis in resultStore als ValueResult.
 
 -}
 
-handleevaluateclick :: IORef [StoredPoly] -> Element -> IORef GuiResult -> Element -> UI ()
-handleevaluateclick polyStore input resultStore output = do
-   storedPolys <- liftIO $ readIORef polyStore
+handleevaluateclick :: IORef PolyLibrary -> Element -> IORef GuiResult -> IORef (History HistoryEntry) -> IORef Cache -> Element -> UI ()
+handleevaluateclick polyStore input resultStore historyStore cacheStore output = do
+   library <- liftIO $ readIORef polyStore
    xStr <- get value input
    case xStr of
-      "" -> void $ element output # set UI.text "Fehler: Bitte geben Sie einen Wert für x ein."
-      other -> case readMaybe xStr :: Maybe Rational of
-         Nothing -> void $ element output # set UI.text "Fehler: Bitte geben Sie eine gültige Zahl für x ein."
-         Just x -> case storedPolys of
-            [StoredPoly name1 poly1] -> do
-               let resultValue = evaluate poly1 x
-               liftIO $ writeIORef resultStore (ValueResult (name1 ++ "(" ++ show x ++ ")") resultValue)
-               void $ element output # set UI.text ("Ergebnis: " ++ toPrettyMathRational resultValue)
+      "" ->
+         void $ element output # set UI.text "Fehler: Bitte geben Sie einen Wert für x ein."
 
-            [] -> void $ element output # set UI.text "Fehler: Auswerten benötigt ein Polynom. Es wurde noch kein Polynom gespeichert."
+      _ -> case readMaybe xStr :: Maybe Rational of
+         Nothing ->
+            void $ element output # set UI.text "Fehler: Bitte geben Sie eine gültige Zahl für x ein."
 
-            other -> void $ element output # set UI.text ("Fehler: Auswerten benötigt ein Polynom. Es wurde/n aber " ++ show (length other) ++ " Polynom/e gespeichert.")
+         Just x -> case library of
+            [(name1, poly1)] -> do
+               cache <- liftIO $ readIORef cacheStore
+               let operation = Evaluate poly1 x
+
+               case lookupCache operation cache of
+                  Just cachedResult ->
+                     void $ element output # set UI.text ("Aus Cache geladen:\n" ++ cachedResult)
+
+                  Nothing -> do
+                     let resultValue = evaluate poly1 x
+                     let resultText = "Ergebnis: " ++ prettyRational resultValue
+
+                     liftIO $ writeIORef resultStore (ValueResult (name1 ++ "(" ++ show x ++ ")") resultValue)
+                     liftIO $ modifyIORef historyStore
+                        (addHistory (HistoryValue (name1 ++ "(" ++ show x ++ ")") resultValue))
+                     liftIO $ modifyIORef cacheStore
+                        (insertCache operation resultText)
+
+                     void $ element output # set UI.text ("Neu berechnet:\n" ++ resultText)
+
+            [] ->
+               void $ element output # set UI.text "Fehler: Auswerten benötigt ein Polynom. Es wurde noch kein Polynom gespeichert."
+
+            other ->
+               void $ element output # set UI.text
+                  ("Fehler: Auswerten benötigt ein Polynom. Es wurde/n aber "
+                   ++ show (length other) ++ " Polynom/e gespeichert.")
 
 {- 
 
@@ -550,19 +843,116 @@ DivResult speichert den Namen der Operation, den Quotienten und den Rest.
 
 -}
 
-handledivclick :: IORef [StoredPoly] -> IORef GuiResult -> Element -> UI ()
-handledivclick polyStore resultStore output = do
-   storedPolys <- liftIO $ readIORef polyStore
-   case storedPolys of 
-      
-      [StoredPoly name1 poly1, StoredPoly name2 poly2] -> do
-         let (quotient, rest) = (/%) poly1 poly2
-         liftIO $ writeIORef resultStore (DivResult (name1 ++ " / " ++ name2) quotient rest)
-         void $ element output # set UI.text ("Ergebnis: " ++ name1 ++ " / " ++ name2 ++ " = " ++ toPrettyMathPoly quotient ++ ", Rest: " ++ toPrettyMathPoly rest)
+handledivclick :: IORef PolyLibrary -> IORef GuiResult -> IORef (History HistoryEntry) -> IORef Cache -> Element -> UI ()
+handledivclick polyStore resultStore historyStore cacheStore output = do
+   library <- liftIO $ readIORef polyStore
+   case library of
+      [(name1, poly1), (name2, poly2)] -> do
+         cache <- liftIO $ readIORef cacheStore
+         let operation = Div poly1 poly2
 
-      [] -> void $ element output # set UI.text "Fehler: Dividieren benötigt zwei Polynome. Es wurde noch kein Polynom gespeichert."
+         case lookupCache operation cache of
+            Just cachedResult ->
+               void $ element output # set UI.text ("Aus Cache geladen:\n" ++ cachedResult)
 
-      other -> void $ element output # set UI.text ("Fehler: Dividieren benötigt zwei Polynome. Es wurde/n aber " ++ show (length other) ++ " Polynom/e gespeichert.")
+            Nothing -> do
+               let (quotient, rest) = (/%) poly1 poly2
+               let resultText =
+                     "Ergebnis: " ++ name1 ++ " / " ++ name2
+                     ++ " = " ++ toPrettyMathPoly quotient
+                     ++ ", Rest: " ++ toPrettyMathPoly rest
+
+               liftIO $ writeIORef resultStore (DivResult (name1 ++ " / " ++ name2) quotient rest)
+               liftIO $ modifyIORef historyStore
+                  (addHistory (HistoryDiv (name1 ++ " / " ++ name2) quotient rest))
+               liftIO $ modifyIORef cacheStore
+                  (insertCache operation resultText)
+
+               void $ element output # set UI.text ("Neu berechnet:\n" ++ resultText)
+
+      [] ->
+         void $ element output # set UI.text "Fehler: Dividieren benötigt zwei Polynome. Es wurde noch kein Polynom gespeichert."
+
+      other ->
+         void $ element output # set UI.text
+            ("Fehler: Dividieren benötigt zwei Polynome. Es wurde/n aber "
+             ++ show (length other) ++ " Polynom/e gespeichert.")
+
+{- 
+
+Diese Funktion dient zur Veranschaulichung eines zufälligen Polynoms in der GUI.
+Sie wird aufgerufen, wenn der Button "Zufallspolynom" geklickt wird.
+
+Sie erhält resultStore, polyStore, polyListOutput und output übergeben.
+resultStore ist der Speicher für das Ergebnis der Operation, 
+polyStore ist der Speicher für die gespeicherten Polynome,
+polyListOutput ist der Ausgabebereich für die Polynomliste und output ist der Ausgabebereich für das Ergebnis.
+
+library ist ist die aktuelle PolynomBibliothek, die wir aus polyStore auslesen.
+poly wird mit randomPoly erzeugt, welches ein zufälliges Polynom generiert.
+
+Danach wird ein Name für das Polynom erzeugt, z.B. r1, r2, r3 usw.
+newLibrary ist die neue PolynomBibliothek, die das neue zufällige Polynom enthält.
+
+Wir speichern die neue PolynomBibliothek in polyStore und das Ergebnis in resultStore.
+
+Zuletzt zeigen wir die neue Polynomliste in polyListOutput an und das Ergebnis in output.
+
+-}
+
+handlerandompolyclick :: IORef GuiResult -> IORef PolyLibrary -> Element -> Element -> UI ()
+handlerandompolyclick resultStore polyStore polyListOutput output = do
+   library <- liftIO $ readIORef polyStore
+   poly <- liftIO randomPoly
+   let name = "r" ++ show (length library + 1)
+   let newLibrary = savePoly name poly library
+   liftIO $ writeIORef polyStore newLibrary
+   liftIO $ writeIORef resultStore (PolyResult name poly)
+   void $ element polyListOutput # set UI.text (showPolyLibraryText newLibrary)
+   void $ element output # set UI.text (showRandomPolyText name poly)
+   
+{- 
+
+Diese Funktion dient wird aufgerufen, wenn der Button "Parallel" geklickt wird.
+Sie dient dazu, die Auswertung von mehreren Polynomen an einer bestimmten Stelle parallel durchzuführen.
+
+Sie nekommt polyStore, input und output übergeben. polyStore ist der Speicher für die gespeicherten Polynome, 
+input ist das Eingabefeld für den Wert von x und output ist der Ausgabebereich für das Ergebnis.
+
+Danach wird library erstellt, das die aktuelle PolynomBibliothek aus polyStore ausliest und xStr wird erstellt, 
+das den Wert von x aus dem Eingabefeld input ausliest.
+
+xStr wird auf zwei Fälle geprüft:
+Fall 1: xStr ist leer, dann wird eine Fehlermeldung angezeigt.
+Fall 2: xStr ist nicht leer, dann wird geprüft, ob es sich vielleicht um eine gültige 
+Zahl (Just x) handelt oder auch nicht (Nothing), mithilfe von readMaybe:
+
+Fall 2.1: Es handelt sich nicht um eine gültige Zahl, dann wird eine Fehlermeldung angezeigt.
+Fall 2.2: Es handelt sich um eine gültige Zahl, dann prüfen wir die gespeicherten Polynome auf 2 Fälle:
+
+Fall 2.2.1: Es ist kein Polynom gespeichert, dann wird eine Fehlermeldung angezeigt.
+Fall 2.2.2 (Andernfalls): Es sind ein oder mehrere Polynome gespeichert, dann wird die Auswertung parallel durchgeführt und das Ergebnis angezeigt.
+
+-}
+
+handleparallelclick :: IORef PolyLibrary -> Element -> Element -> UI ()
+handleparallelclick polyStore input output = do
+   library <- liftIO $ readIORef polyStore
+   xStr <- get value input
+   case xStr of
+      ""->
+         void $ element output # set UI.text "Fehler: Bitte geben Sie einen Wert für x ein."
+      _ -> case readMaybe xStr :: Maybe Rational of
+         Nothing ->
+            void $ element output # set UI.text "Fehler: Bitte geben Sie eine gültige Zahl für x ein."
+         Just x -> do
+            case library of
+               [] -> void $ element output # set UI.text "Fehler: Es wurde noch kein Polynom gespeichert."
+               _ -> do
+                  let results = evaluateNamedManyParallel x library
+                  void $ element output # set UI.text (showParallelResultsText x results)
+
+{- Darstellungshandler -}
 
 {- 
 
@@ -579,24 +969,19 @@ Fall 4: Das Ergebnis ist eine Division von zwei Polynomen, dann wird der Quotien
 handlelatexclick :: IORef GuiResult -> Element -> UI ()
 handlelatexclick resultStore output = do
    result <- liftIO $ readIORef resultStore
-
    case result of
       NoResult ->
          void $ element output # set UI.text "Fehler: Es wurde noch kein Ergebnis berechnet."
-
       PolyResult name poly ->
          void $ element output # set UI.text
             ("LaTeX von " ++ name ++ ": " ++ toLaTeX poly)
-
       ValueResult name value ->
          void $ element output # set UI.text
             ("LaTeX von " ++ name ++ ": " ++ toLaTeX value)
-
       DivResult name quotient rest ->
          void $ element output # set UI.text
             ("LaTeX von " ++ name ++ ": Quotient = "
              ++ toLaTeX quotient ++ ", Rest = " ++ toLaTeX rest)
-
 
 {- 
 
@@ -611,91 +996,215 @@ um das Ergebnis in einer mathematischen Form anzuzeigen, die für den Benutzer l
 handleshowresultclick :: IORef GuiResult -> Element -> UI ()
 handleshowresultclick resultStore output = do
    result <- liftIO $ readIORef resultStore
-
    case result of
       NoResult ->
          void $ element output # set UI.text "Fehler: Es wurde noch kein Ergebnis berechnet."
-
-      PolyResult name poly ->
-         void $ element output # set UI.text
-            ("Ergebnis von " ++ name ++ ": " ++ toPrettyMathPoly poly)
-
-      ValueResult name value ->
-         void $ element output # set UI.text
-            ("Ergebnis von " ++ name ++ ": " ++ toPrettyMathRational value)
-
+      PolyResult name poly -> void $ element output # set UI.text (showResultText name poly)
+      ValueResult name value -> void $ element output # set UI.text (showValueText name value)
       DivResult name quotient rest ->
          void $ element output # set UI.text
-            ("Ergebnis von " ++ name ++ ": Quotient = "
-             ++ toPrettyMathPoly quotient ++ ", Rest = " ++ toPrettyMathPoly rest)
+            (showDivResultText name quotient rest)
 
 {- 
 
-Diese Funktionen dienen dazu, Polynome und rationale Zahlen in einer mathematischen Form darzustellen, 
-die für den Benutzer leichter verständlich ist.
+Diese Funktion wird aufgerufen, wenn der Button "Baum" geklickt wird.
+Sie dient dazu, das Ergebnis einer Berechnung in Form eines Baumes anzuzeigen.
 
-Die Hauptfunktion toPrettyMathPoly (welche auch eine Hilfsfunktion eigentlich für handleShowResultClick ist) ruft die Hilfsfunktion prettyPoly auf, 
-um das Polynom in eine mathematische Form zu bringen.
+Die Funktion bekommt die aktuellen Ergebnisse aus resultStore und den Ausgabebereich output übergeben.
+Danach wird geprüft, ob es ein Ergebnis gibt oder nicht, indem das Ergebnis auf vier Fälle überprüft wird.
 
-prettyPoly ruft wiederum die Hilfsfunktionen prettyMonomFirst und prettyMonomRest auf, 
-um die einzelnen Monome des Polynoms in eine mathematische Form zu bringen.
-
-Genau so geht es weiter, bis die kleinste Einheit, nämlich die Koeffizienten und Exponenten, in eine mathematische Form gebracht werden.
+Fall 1: Es gibt kein Ergebnis, dann wird eine Fehlermeldung angezeigt.
+Fall 2: Das Ergebnis ist ein Polynom, dann wird das Polynom in einen Baum umgewandelt und angezeigt.
+Fall 3: Das Ergebnis ist ein Wert, dann wird der Wert in einen Baum umgewandelt und angezeigt.
+Fall 4: Das Ergebnis ist eine Division von zwei Polynomen, dann wird der Quotient und der Rest in einen Baum umgewandelt und angezeigt.
 
 -}
 
-toPrettyMathPoly :: Poly -> String
-toPrettyMathPoly p = prettyPoly (normalize p)
+handletreeclick :: IORef GuiResult -> Element -> UI ()
+handletreeclick resultStore output = do
+   result <- liftIO $ readIORef resultStore
+   case result of
+      NoResult -> void $ element output # set UI.text "Fehler: Es wurde noch kein Ergebnis berechnet."
+      PolyResult name poly -> do
+         let tree = polyToExprTree poly
+         void $ element output # set UI.text (showTreeText name poly)
+      ValueResult name value -> do
+         void $ element output # set UI.text (showValueTreeText name value)
+      DivResult name quotient rest -> do
+         void $ element output # set UI.text (showDivTreeText name quotient rest)
 
-prettyPoly :: Poly -> String
-prettyPoly (P []) = "0"
+{- 
 
-prettyPoly (P (m:ms)) = prettyMonomFirst m ++ prettyMonomRest ms
+Diese Funktion wird aufgerufen, wenn der Button "Analyse" geklickt wird.
+Sie dient dazu, die Analyse eines Baumes anzuzeigen.
 
-prettyMonomRest :: [Monom] -> String
-prettyMonomRest [] = ""
+Die Funktion bekommt die aktuellen Ergebnisse aus resultStore und den Ausgabebereich output übergeben.
+Danach wird geprüft, ob es ein Ergebnis gibt oder nicht, indem das Ergebnis auf vier Fälle überprüft wird.
 
-prettyMonomRest (m:ms) = prettyMonomWithSign m ++ prettyMonomRest ms
+Fall 1: Es gibt kein Ergebnis, dann wird eine Fehlermeldung angezeigt.
+Fall 2: Das Ergebnis ist ein Polynom, dann wird das Polynom in einen Baum umgewandelt und analysiert.
+Fall 3: Das Ergebnis ist ein Wert, dann wird der Wert in einen Baum umgewandelt und analysiert.
+Fall 4: Das Ergebnis ist eine Division von zwei Polynomen, dann wird der Quotient und der Rest in einen Baum umgewandelt und analysiert.
 
-prettyMonomWithSign :: Monom -> String
-prettyMonomWithSign (M k e)
-   | k >= 0 =
-      " + " ++ prettyMonom (M k e)
-   | otherwise =
-      " - " ++ prettyMonom (M (-k) e)
+-}
 
-prettyMonomFirst :: Monom -> String
-prettyMonomFirst (M k e)
-   | k < 0 =
-      "-" ++ prettyMonom (M (-k) e)
-   | otherwise =
-      prettyMonom (M k e)
+handleanalysisclick :: IORef GuiResult -> Element -> UI ()
+handleanalysisclick resultStore output = do
+   result <- liftIO $ readIORef resultStore
+   case result of
+      NoResult -> void $ element output # set UI.text "Fehler: Es wurde noch kein Ergebnis berechnet."
+      PolyResult name poly -> do
+         void $ element output # set UI.text (showAnalysisText name poly)
+      ValueResult name value -> do
+         void $ element output # set UI.text (showValueAnalysisText name value)
+      DivResult name quotient rest -> do
+         void $ element output # set UI.text (showDivAnalysisText name quotient rest)
 
-prettyMonom :: Monom -> String
-prettyMonom (M k 0) = toPrettyMathRational k
 
-prettyMonom (M k 1)
-   | k == 1 =
-      "x"
-   | otherwise =
-      toPrettyMathRational k ++ "x"
+{- 
 
-prettyMonom (M k e)
-   | k == 1 =
-      "x" ++ prettyExponent e
-   | otherwise =
-      toPrettyMathRational k ++ "x" ++ prettyExponent e
+Diese Funktion startet die Animation der Traversierung eines Baumes in der GUI.
 
-toPrettyMathRational :: Rational -> String
-toPrettyMathRational r
-   | denominator r == 1 =
-      show (numerator r)
-   | otherwise =
-      show (numerator r) ++ "/" ++ show (denominator r)
+Sie bekommt den Baum, die Traversierungsschritte und den Ausgabebereich output übergeben.
+Es wird ein IORef stepStore erstellt, um den aktuellen Schritt der Traversierung zu speichern.
 
-prettyExponent :: Int -> String
-prettyExponent 0 = ""
-prettyExponent 1 = ""
-prettyExponent 2 = "²"
-prettyExponent 3 = "³"
-prettyExponent e = "^" ++ show e
+Wir erstellen einen Timer, der alle 700 Millisekunden tickt.
+
+Mit on UI.tick timer $ \_ -> do sagen wir, was passieren soll, wenn der Timer (also jedes mal, wenn er tickt) tickt.
+Innerhalb des Timers wird der aktuelle Schritt aus stepStore gelesen.
+Wenn der aktuelle Schritt größer oder gleich der Länge der Traversierungsschritte ist, wird der Timer gestoppt und eine Nachricht angezeigt, dass die Traversierung abgeschlossen ist.
+Ansonsten wird mit currentStep der aktuelle Traversierungsschritt aus der Liste der Traversierungsschritte geholt und im Ausgabebereich angezeigt.
+Der Baum wird dabei ebenfalls im schönen Format angezeigt, damit der Benutzer den aktuellen Zustand des Baumes sehen kann.
+zuletzt wird der aktuelle Schritt um 1 erhöht, damit beim nächsten Tick der nächste Schritt angezeigt wird.
+
+-}
+
+startTraversalAnimation :: ExprTree -> [TraversalStep] -> Element -> UI ()
+startTraversalAnimation tree steps output = do
+   stepStore <- liftIO $ newIORef 0
+
+   timer <- UI.timer # set UI.interval 700
+
+   on UI.tick timer $ \_ -> do
+      currentIndex <- liftIO $ readIORef stepStore
+      if currentIndex >= length steps
+         then do
+            UI.stop timer
+            void $ element output # set UI.text (showStepsText tree steps currentIndex)
+         else do
+            void $ element output # set UI.text (showStepsText tree steps currentIndex)
+            liftIO $ writeIORef stepStore (currentIndex + 1)
+
+   UI.start timer
+
+{- 
+
+Diese Funktion wird aufgerufen, wenn der Button "Schritte" geklickt wird.
+Sie dient dazu, die Traversierung eines Baumes anzuzeigen.
+
+Wir übergeben resultStore, um das Ergebnis der Berechnung zu lesen, und output, um die Traversierung anzuzeigen.
+Danach wird geprüft, ob es ein Ergebnis gibt oder nicht, indem das Ergebnis auf vier Fälle überprüft wird.
+
+Fall 1: Es gibt kein Ergebnis, dann wird eine Fehlermeldung angezeigt.
+Fall 2: Das Ergebnis ist ein Polynom, dann wird das Polynom in einen Baum umgewandelt und die Traversierung angezeigt.
+Fall 3: Das Ergebnis ist ein Wert, dann wird der Wert in einen Baum umgewandelt und die Traversierung angezeigt.
+Fall 4: Das Ergebnis ist eine Division von zwei Polynomen, dann wird der Quotient und der Rest in einen Baum umgewandelt und die Traversierung angezeigt.
+
+-}
+
+handlestepsclick :: IORef GuiResult -> Element -> UI ()
+handlestepsclick resultStore output = do
+   result <- liftIO $ readIORef resultStore
+   case result of
+      NoResult ->
+         void $ element output # set UI.text "Fehler: Es wurde noch kein Ergebnis berechnet."
+      PolyResult name poly -> do
+         let tree = polyToExprTree poly
+         let traversal = preOrder tree
+         let steps = makeTraversalSteps traversal
+         startTraversalAnimation tree steps output
+      ValueResult name value -> do
+         let tree = TConst value
+         let traversal = preOrder tree
+         let steps = makeTraversalSteps traversal
+         startTraversalAnimation tree steps output
+      DivResult name quotient rest -> do
+         let tree = polyToExprTree quotient
+         let traversal = preOrder tree
+         let steps = makeTraversalSteps traversal
+         startTraversalAnimation tree steps output
+
+{-
+
+Diese Funktion wird aufgerufen, wenn der Button "Details" geklickt wird.
+Sie dient dazu, die Details eines Ergebnisses anzuzeigen.
+
+Wir übergeben resultStore, um das Ergebnis der Berechnung zu lesen, und output, um die Details anzuzeigen.
+Danach wird geprüft, ob es ein Ergebnis gibt oder nicht, indem das Ergebnis auf vier Fälle überprüft wird.
+
+Fall 1: Es gibt kein Ergebnis, dann wird eine Fehlermeldung angezeigt.
+Fall 2: Das Ergebnis ist ein Polynom, dann werden die Details des Polynoms angezeigt.
+Fall 3: Das Ergebnis ist ein Wert, dann werden die Details des Wertes angezeigt.
+Fall 4: Das Ergebnis ist eine Division von zwei Polynomen, dann werden die Details des
+
+-}
+
+handledetailsclick :: IORef GuiResult -> Element -> UI ()
+handledetailsclick resultStore output = do
+   result <- liftIO $ readIORef resultStore
+   case result of
+      NoResult ->
+         void $ element output # set UI.text "Fehler: Es wurde noch kein Ergebnis berechnet."
+      PolyResult name poly ->
+         void $ element output # set UI.text (showDetailsText name poly)
+      ValueResult name value ->
+         void $ element output # set UI.text (showValueDetailsText name value)
+      DivResult name quotient rest ->
+         void $ element output # set UI.text (showDivDetailsText name quotient rest)
+
+{- 
+
+Diese Funktion wird aufgerufen, wenn der Button "Graph" geklickt wird.
+Sie dient dazu, den Graphen eines Polynoms anzuzeigen.
+
+Funktioniert ähnlich wie die anderen Darstellungsfunktionen, nur dass hier die Funktion graphView 
+aufgerufen wird, um den Graphen des Polynoms zu erstellen.
+
+Ebenfalls nutzen wir bei einer gültigen Ausgabe eines FunktionsGraphen UI.html anstatt UI.text, 
+da wir hier HTML-Code zurückgeben, um den Graphen in der GUI anzuzeigen.
+
+-}
+
+handlegraphclick :: IORef GuiResult -> Element -> UI ()
+handlegraphclick resultStore output = do
+   result <- liftIO $ readIORef resultStore
+   case result of
+      NoResult ->
+         void $ element output # set UI.text "Fehler: Es wurde noch kein Ergebnis berechnet."
+      PolyResult name poly -> do
+         let graph = graphView poly
+         void $ element output # set UI.html (showGraphText name poly)
+      ValueResult name value -> do
+         void $ element output # set UI.html (showValueGraphText name value)
+      DivResult name quotient rest -> do
+         void $ element output # set UI.html (showGraphDivText name quotient rest)
+
+{- 
+
+Diese Funktion wird aufgerufen, wenn der Button "Historie" geklickt wird.
+Sie dient dazu, die History der Ergebnisse von Berechnungen anzuzeigen.
+
+Sie bekommt die History aus historyStore und den Ausgabebereich output übergeben.
+Es wird "history" erstellt, um die gespeicherte History aus historyStore zu lesen und auf 2 Fälle zu prüfen:
+
+1. Fall: Die History ist leer, dann wird eine Fehlermeldung angezeigt.
+2. Fall: Die History enthält Einträge, dann werden diese mithilfe showHistoryText angezeigt.
+
+-}
+
+handlehistoryclick :: IORef (History HistoryEntry) -> Element -> UI ()
+handlehistoryclick historyStore output = do
+   history <- liftIO $ readIORef historyStore
+   case history of
+      Empty -> void $ element output # set UI.text "Fehler: Es wurde noch keine Historie erstellt."
+      other -> void $ element output # set UI.text (showHistoryText history)
