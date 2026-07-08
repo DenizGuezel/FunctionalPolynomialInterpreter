@@ -16,40 +16,40 @@ input {
 }
 
 .app-shell {
-  padding: 24px 28px 76px;
+  padding: 18px 28px 70px;
 }
 
 .header {
   display: flex;
   align-items: center;
   gap: 20px;
-  margin-bottom: 14px;
+  margin-bottom: 12px;
 }
 
 .lambda-logo {
-  width: 70px;
-  height: 70px;
+  width: 64px;
+  height: 64px;
   border-radius: 8px;
   background: linear-gradient(135deg, #075766, #0b7285);
   color: white;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 46px;
+  font-size: 42px;
   font-weight: 700;
   flex: 0 0 auto;
 }
 
 .app-title {
   margin: 0;
-  font-size: 34px;
+  font-size: 32px;
   color: #0f172a;
   letter-spacing: 0;
 }
 
 .top-grid {
   display: grid;
-  grid-template-columns: minmax(280px, 360px) minmax(440px, 1fr) minmax(280px, 360px);
+  grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
   gap: 14px;
   align-items: start;
 }
@@ -59,7 +59,22 @@ input {
   gap: 14px;
 }
 
+.main-column {
+  min-width: 0;
+  display: grid;
+  gap: 14px;
+}
+
+.main-top {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(520px, 1fr) minmax(280px, 360px);
+  gap: 14px;
+  align-items: start;
+}
+
 .panel {
+  min-width: 0;
   background: white;
   border: 1px solid #d7dee8;
   border-radius: 8px;
@@ -101,7 +116,7 @@ input {
 }
 
 .library-panel {
-  min-height: 260px;
+  min-height: 225px;
   display: grid;
   grid-template-rows: auto 1fr auto;
   gap: 12px;
@@ -109,7 +124,7 @@ input {
 
 .library-panel pre {
   margin: 0;
-  min-height: 150px;
+  min-height: 120px;
   border: 1px solid #cfd8e3;
   border-radius: 6px;
   padding: 10px 12px;
@@ -133,19 +148,19 @@ input {
 
 .operation-grid {
   display: grid;
-  grid-template-columns: repeat(6, minmax(86px, 1fr));
+  grid-template-columns: repeat(5, minmax(92px, 1fr));
   gap: 10px;
 }
 
 .view-grid {
   display: grid;
-  grid-template-columns: repeat(8, minmax(76px, 1fr));
+  grid-template-columns: repeat(4, minmax(100px, 1fr));
   gap: 8px;
 }
 
 .operation-button {
   min-width: 0;
-  height: 74px;
+  min-height: 62px;
   border: 1px solid #cfd8e3;
   border-radius: 8px;
   background: white;
@@ -155,9 +170,19 @@ input {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  padding: 8px;
+  gap: 4px;
+  padding: 7px 8px;
+  font-size: 13px;
+  line-height: 1.15;
+  text-align: center;
   cursor: pointer;
+}
+
+.operation-button span:last-child,
+.view-button span:last-child {
+  display: block;
+  max-width: 100%;
+  overflow-wrap: anywhere;
 }
 
 .operation-button:hover,
@@ -168,7 +193,7 @@ input {
 }
 
 .button-symbol {
-  font-size: 26px;
+  font-size: 22px;
   line-height: 1;
   color: #006070;
   font-weight: 700;
@@ -215,7 +240,8 @@ input {
 }
 
 .result-panel {
-  min-height: 235px;
+  min-height: 205px;
+  align-self: end;
 }
 
 .result-overview {
@@ -227,7 +253,7 @@ input {
 .result-overview div {
   display: grid;
   grid-template-columns: 42% 58%;
-  min-height: 44px;
+  min-height: 40px;
   border-bottom: 1px solid #d7dee8;
 }
 
@@ -254,8 +280,8 @@ input {
 }
 
 .output-panel {
-  margin-top: 14px;
-  min-height: 270px;
+  margin-top: 0;
+  min-height: 245px;
 }
 
 .output-panel h2 {
@@ -264,7 +290,7 @@ input {
 
 .output-tabs {
   display: grid;
-  grid-template-columns: repeat(7, minmax(80px, 1fr));
+  grid-template-columns: repeat(8, minmax(80px, 1fr));
   border-top: 1px solid #d7dee8;
   border-bottom: 1px solid #d7dee8;
   margin-bottom: 0;
@@ -279,14 +305,14 @@ input {
   font-size: 13px;
 }
 
-.output-tabs span:nth-child(3) {
+.output-tabs span.active {
   color: #0a6370;
   font-weight: 700;
   border-bottom: 3px solid #0a6370;
 }
 
 .output-panel pre {
-  min-height: 210px;
+  min-height: 175px;
   margin: 0;
   border: 1px solid #d7dee8;
   border-top: 0;
@@ -340,6 +366,10 @@ input {
 
 @media (max-width: 1180px) {
   .top-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .main-top {
     grid-template-columns: 1fr;
   }
 

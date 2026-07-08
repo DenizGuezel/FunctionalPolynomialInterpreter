@@ -223,3 +223,5 @@ showParallelResultsText :: Rational -> [(String, Rational)] -> String
 showParallelResultsText x results = 
    "Parallele Auswertung bei x = " ++ prettyRational x ++ ":\n" 
    ++ unlines [name ++ ": " ++ prettyRational value | (name, value) <- results]
+
+

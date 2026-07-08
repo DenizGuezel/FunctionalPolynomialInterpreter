@@ -22,7 +22,7 @@ import Random
 import Cache
 import Parallel
 
-{- Hier kommt die GUI-Logik rein, welche die Interaktion mit dem Benutzer steuert z.B mit Buttons, usw... -}
+{- Hier kommt die GUI-Logik rein, welche die Interaktion mit dem Benutzer steuert z.B mit Buttons. Die GUI benutzt die anderen Module, um die Interaktion zu ermöglichen. -}
 
 {- 
 
@@ -43,6 +43,38 @@ data GuiResult
    | ValueResult String Rational
    | DivResult String Poly Poly
    deriving (Show, Eq)
+
+{- 
+
+Diese Funktion resultOverviewHtml wird verwendet, um das Ergebnis einer GUI-Operation in HTML darzustellen.
+Sie nimmt ein GuiResult als Eingabe und gibt einen String zurück, der HTML-Code enthält, um das Ergebnis in der GUI anzuzeigen.
+
+Diese Funktion bleibt in Gui.hs, da sie nicht nur allgemeine Textanzeige tätigt, 
+sondern spezifisch für die GUI ist, da sie HTML-Code erzeugt, der in der GUI angezeigt wird.
+
+-}
+
+resultOverviewHtml :: GuiResult -> String
+resultOverviewHtml NoResult =
+   "<div><span>Operation</span><strong>-</strong></div>"
+   ++ "<div><span>Eingabe</span><strong>-</strong></div>"
+   ++ "<div><span>Ausgabe</span><strong>-</strong></div>"
+   ++ "<div><span>Wert</span><strong>-</strong></div>"
+resultOverviewHtml (PolyResult name poly) =
+   "<div><span>Operation</span><strong>" ++ name ++ "</strong></div>"
+   ++ "<div><span>Eingabe</span><strong>" ++ name ++ "</strong></div>"
+   ++ "<div><span>Ausgabe</span><strong>" ++ toPrettyMathPoly poly ++ "</strong></div>"
+   ++ "<div><span>Wert</span><strong>-</strong></div>"
+resultOverviewHtml (ValueResult name value) =
+   "<div><span>Operation</span><strong>Auswerten</strong></div>"
+   ++ "<div><span>Eingabe</span><strong>" ++ name ++ "</strong></div>"
+   ++ "<div><span>Ausgabe</span><strong>-</strong></div>"
+   ++ "<div><span>Wert</span><strong>" ++ prettyRational value ++ "</strong></div>"
+resultOverviewHtml (DivResult name quotient rest) =
+   "<div><span>Operation</span><strong>" ++ name ++ "</strong></div>"
+   ++ "<div><span>Eingabe</span><strong>" ++ name ++ "</strong></div>"
+   ++ "<div><span>Ausgabe</span><strong>Q = " ++ toPrettyMathPoly quotient ++ "</strong></div>"
+   ++ "<div><span>Wert</span><strong>R = " ++ toPrettyMathPoly rest ++ "</strong></div>"
 
 {- 
 
@@ -109,12 +141,12 @@ setup window = do
       # set UI.class_ "header"
       #+ [element lambdaLogo, element headline]
 
-   {- Eingabefelder: -}
+   {- Eingabefelder -}
 
    input <- UI.input # set (attr "placeholder") "Polynom hinzufügen"
    inputX <- UI.input # set (attr "placeholder") "x-Wert"
 
-   {- Operation-Buttons: -}
+   {- Operation-Buttons -}
 
    buttonnormalize <- UI.button
       # set UI.html "<span class='button-symbol'>N</span><span>Normalisieren</span>"
@@ -160,9 +192,7 @@ setup window = do
       # set UI.html "<span class='button-symbol'>⚡</span><span>Parallel</span>"
       # set UI.class_ "operation-button"
 
-   {- Action-Buttons: -}
-
-   {- Darstellung-Buttons: -}
+   {- Darstellung-Buttons -}
    buttonshowresult <- UI.button
       # set UI.html "<span class='button-symbol'>i</span><span>Ergebnis</span>"
       # set UI.class_ "view-button"
@@ -195,19 +225,19 @@ setup window = do
       # set UI.html "<span class='button-symbol'>🕒</span><span>Historie</span>"
       # set UI.class_ "view-button"
 
-   {- Ausgabebereich: -}
-
-   {- Speicher: -}
+   {- Speicher -}
 
    polyStore <- liftIO $ newIORef ([] :: PolyLibrary) --Für die Speicherung der Polynome
    resultStore <- liftIO $ newIORef NoResult --Für die Speicherung der Ergebnisse der Operationen
    historyStore <- liftIO $ newIORef (Empty :: History HistoryEntry) --Für die Speicherung der Historie der Ergebnisse (PolyResult, ValueResult, DivResult)
    cacheStore <- liftIO $ newIORef ([] :: Cache) --Für die Speicherung der Operationen, die bereits durchgeführt wurden, um sie wiederverwenden zu können, nicht die Ergebnisse einer Berechnung, sondern die Operation selbst, die durchgeführt werden soll.
 
-   {- Ausgabebereiche: -}
+   {- Ausgabebereiche -}
 
    output <- UI.pre # set UI.text ""
    polyListOutput <- UI.pre # set UI.text "Noch keine Polynome vorhanden."
+
+   {- Eingabebereiche -}
 
    inputTitle <- UI.h2 # set UI.text "Eingabe"
    polyLabel <- UI.label # set UI.text "Polynom"
@@ -228,6 +258,8 @@ setup window = do
          , element formatHint
          ]
 
+   {- Polynomliste -}
+
    libraryTitle <- UI.h2 # set UI.text "Polynomliste"
    clearSelectionButton <- UI.button
       # set UI.html "<span class='small-button-symbol'>♙</span><span>Auswahl löschen</span>"
@@ -241,6 +273,8 @@ setup window = do
    libraryPanel <- UI.div
       # set UI.class_ "panel library-panel"
       #+ [element libraryTitle, element polyListOutput, element libraryActions]
+
+   {- Speicherung der Operation-Buttons -}
 
    operationsTitle <- UI.h2 # set UI.text "Polynomoperationen"
    operationGrid <- UI.div
@@ -256,6 +290,8 @@ setup window = do
          , element buttonparallel
          ]
 
+   {- Speicherung der Darstellung-Buttons-}
+
    displayTitle <- UI.h2 # set UI.text "Darstellung"
    displayGrid <- UI.div
       # set UI.class_ "view-grid"
@@ -269,6 +305,8 @@ setup window = do
          , element buttonhistory
          ]
 
+   {- Zentraler Steuerungsbereich-}
+
    centerPanel <- UI.div
       # set UI.class_ "panel center-panel"
       #+ [ element operationsTitle
@@ -278,10 +316,12 @@ setup window = do
          , element displayGrid
          ]
 
+   {- Ergebnisübersicht-}
+
    resultTitle <- UI.h2 # set UI.text "Ergebnis"
    resultOverview <- UI.div
       # set UI.class_ "result-overview"
-      # set UI.html "<div><span>Operation</span><strong>-</strong></div><div><span>Eingabe</span><strong>-</strong></div><div><span>Ausgabe</span><strong>-</strong></div><div><span>Wert</span><strong>-</strong></div>"
+      # set UI.html (resultOverviewHtml NoResult)
    resultPanel <- UI.div
       # set UI.class_ "panel result-panel"
       #+ [element resultTitle, element resultOverview]
@@ -290,24 +330,49 @@ setup window = do
       # set UI.class_ "left-column"
       #+ [element inputPanel, element libraryPanel]
 
-   topGrid <- UI.div
-      # set UI.class_ "top-grid"
-      #+ [element leftColumn, element centerPanel, element resultPanel]
+   {- Tabs für die Darstellung der Ergebnisse: -}
 
    outputTitle <- UI.h2 # set UI.text "Darstellung"
+   outputTabResult <- UI.span # set UI.text "Ergebnis" # set UI.class_ "active"
+   outputTabLatex <- UI.span # set UI.text "LaTeX"
+   outputTabTree <- UI.span # set UI.text "Baum"
+   outputTabAnalysis <- UI.span # set UI.text "Analyse"
+   outputTabSteps <- UI.span # set UI.text "Schritte"
+   outputTabDetails <- UI.span # set UI.text "Details"
+   outputTabHistory <- UI.span # set UI.text "Historie"
+   outputTabGraph <- UI.span # set UI.text "Graph"
+
+   {- Speicherung der Output-Tabs -}
+
    outputTabs <- UI.div
       # set UI.class_ "output-tabs"
-      #+ [ UI.span # set UI.text "Ergebnis"
-         , UI.span # set UI.text "LaTeX"
-         , UI.span # set UI.text "Baum"
-         , UI.span # set UI.text "Analyse"
-         , UI.span # set UI.text "Schritte"
-         , UI.span # set UI.text "Historie"
-         , UI.span # set UI.text "Graph"
+      #+ [ element outputTabResult
+         , element outputTabLatex
+         , element outputTabTree
+         , element outputTabAnalysis
+         , element outputTabSteps
+         , element outputTabDetails
+         , element outputTabHistory
+         , element outputTabGraph
          ]
+
+   {- Darstellung des Output-Bereichs -}
+
    outputPanel <- UI.div
       # set UI.class_ "panel output-panel"
       #+ [element outputTitle, element outputTabs, element output]
+
+   mainTop <- UI.div
+      # set UI.class_ "main-top"
+      #+ [element centerPanel, element resultPanel]
+
+   mainColumn <- UI.div
+      # set UI.class_ "main-column"
+      #+ [element mainTop, element outputPanel]
+
+   topGrid <- UI.div
+      # set UI.class_ "top-grid"
+      #+ [element leftColumn, element mainColumn]
 
    statusBar <- UI.div
       # set UI.class_ "status-bar"
@@ -315,34 +380,50 @@ setup window = do
 
    appShell <- UI.div
       # set UI.class_ "app-shell"
-      #+ [element header, element topGrid, element outputPanel]
+      #+ [element header, element topGrid]
 
    void $ getBody window #+ [element appShell, element statusBar]
 
+   {- Logik für das umswitchen der Output-Tabs -}
+
+   let tabClass tab active = if tab == active then "active" else ""
+   let activateTab active = do
+         void $ element outputTabResult # set UI.class_ (tabClass "Ergebnis" active)
+         void $ element outputTabLatex # set UI.class_ (tabClass "LaTeX" active)
+         void $ element outputTabTree # set UI.class_ (tabClass "Baum" active)
+         void $ element outputTabAnalysis # set UI.class_ (tabClass "Analyse" active)
+         void $ element outputTabSteps # set UI.class_ (tabClass "Schritte" active)
+         void $ element outputTabDetails # set UI.class_ (tabClass "Details" active)
+         void $ element outputTabHistory # set UI.class_ (tabClass "Historie" active)
+         void $ element outputTabGraph # set UI.class_ (tabClass "Graph" active)
+   let refreshResultOverview = do
+         result <- liftIO $ readIORef resultStore
+         void $ element resultOverview # set UI.html (resultOverviewHtml result)
+
    {- ActionListener auf die Operation-Buttons: -}
 
-   on UI.click buttonnormalize (\_ -> handlenormalizeclick input resultStore historyStore cacheStore output) 
-   on UI.click buttonnegat (\_ -> handlenegatclick input resultStore historyStore cacheStore output)
+   on UI.click buttonnormalize (\_ -> handlenormalizeclick input resultStore historyStore cacheStore output >> refreshResultOverview >> activateTab "Ergebnis") 
+   on UI.click buttonnegat (\_ -> handlenegatclick input resultStore historyStore cacheStore output >> refreshResultOverview >> activateTab "Ergebnis")
    on UI.click buttonaddpoly (\_ -> handleaddpolyclick input polyListOutput polyStore)
-   on UI.click buttonadd (\_ -> handleaddclick polyStore resultStore historyStore cacheStore output)
-   on UI.click buttonsub (\_ -> handlesubclick polyStore resultStore historyStore cacheStore output)
-   on UI.click buttonmult (\_ -> handlemultclick polyStore resultStore historyStore cacheStore output)
-   on UI.click buttonderivation (\_ -> handlederivationclick polyStore resultStore historyStore cacheStore output)
-   on UI.click buttonevaluate (\_ -> handleevaluateclick polyStore inputX resultStore historyStore cacheStore output)
-   on UI.click buttondiv (\_ -> handledivclick polyStore resultStore historyStore cacheStore output)
-   on UI.click buttonrandompoly (\_ -> handlerandompolyclick resultStore polyStore polyListOutput output)
-   on UI.click buttonparallel (\_ -> handleparallelclick polyStore inputX output)
+   on UI.click buttonadd (\_ -> handleaddclick polyStore resultStore historyStore cacheStore output >> refreshResultOverview >> activateTab "Ergebnis")
+   on UI.click buttonsub (\_ -> handlesubclick polyStore resultStore historyStore cacheStore output >> refreshResultOverview >> activateTab "Ergebnis")
+   on UI.click buttonmult (\_ -> handlemultclick polyStore resultStore historyStore cacheStore output >> refreshResultOverview >> activateTab "Ergebnis")
+   on UI.click buttonderivation (\_ -> handlederivationclick polyStore resultStore historyStore cacheStore output >> refreshResultOverview >> activateTab "Ergebnis")
+   on UI.click buttonevaluate (\_ -> handleevaluateclick polyStore inputX resultStore historyStore cacheStore output >> refreshResultOverview >> activateTab "Ergebnis")
+   on UI.click buttondiv (\_ -> handledivclick polyStore resultStore historyStore cacheStore output >> refreshResultOverview >> activateTab "Ergebnis")
+   on UI.click buttonrandompoly (\_ -> handlerandompolyclick resultStore polyStore polyListOutput output >> refreshResultOverview >> activateTab "Ergebnis")
+   on UI.click buttonparallel (\_ -> handleparallelclick polyStore inputX output >> activateTab "Ergebnis")
 
    {- ActionListener auf die Darstellung-Bbuttons: -}
 
-   on UI.click buttonshowresult (\_ -> handleshowresultclick resultStore output)
-   on UI.click buttonshowlatex (\_ -> handlelatexclick resultStore output)
-   on UI.click buttontree (\_ -> handletreeclick resultStore output)
-   on UI.click buttonanalysis (\_ -> handleanalysisclick resultStore output)
-   on UI.click buttonsteps (\_ -> handlestepsclick resultStore output)
-   on UI.click buttondetails (\_ -> handledetailsclick resultStore output)
-   on UI.click buttongraph (\_ -> handlegraphclick resultStore output)
-   on UI.click buttonhistory (\_ -> handlehistoryclick historyStore output)   
+   on UI.click buttonshowresult (\_ -> activateTab "Ergebnis" >> handleshowresultclick resultStore output >> refreshResultOverview)
+   on UI.click buttonshowlatex (\_ -> activateTab "LaTeX" >> handlelatexclick resultStore output >> refreshResultOverview)
+   on UI.click buttontree (\_ -> activateTab "Baum" >> handletreeclick resultStore output >> refreshResultOverview)
+   on UI.click buttonanalysis (\_ -> activateTab "Analyse" >> handleanalysisclick resultStore output >> refreshResultOverview)
+   on UI.click buttonsteps (\_ -> activateTab "Schritte" >> handlestepsclick resultStore output >> refreshResultOverview)
+   on UI.click buttondetails (\_ -> activateTab "Details" >> handledetailsclick resultStore output >> refreshResultOverview)
+   on UI.click buttongraph (\_ -> activateTab "Graph" >> handlegraphclick resultStore output >> refreshResultOverview)
+   on UI.click buttonhistory (\_ -> activateTab "Historie" >> handlehistoryclick historyStore output)   
 
 {- Operationshandler -}
 
