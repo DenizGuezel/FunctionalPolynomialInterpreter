@@ -20,6 +20,7 @@ import History
 import Library
 import Random
 import Cache
+import Parallel
 
 {- Hier kommt die GUI-Logik rein, welche die Interaktion mit dem Benutzer steuert z.B mit Buttons, usw... -}
 
@@ -155,6 +156,12 @@ setup window = do
       # set UI.html "<span class='button-symbol'>🎲</span><span>Zufallspolynom</span>"
       # set UI.class_ "operation-button"
 
+   buttonparallel <- UI.button
+      # set UI.html "<span class='button-symbol'>⚡</span><span>Parallel</span>"
+      # set UI.class_ "operation-button"
+
+   {- Action-Buttons: -}
+
    {- Darstellung-Buttons: -}
    buttonshowresult <- UI.button
       # set UI.html "<span class='button-symbol'>i</span><span>Ergebnis</span>"
@@ -202,33 +209,115 @@ setup window = do
    output <- UI.pre # set UI.text ""
    polyListOutput <- UI.pre # set UI.text "Noch keine Polynome vorhanden."
 
-   getBody window #+ [
+   inputTitle <- UI.h2 # set UI.text "Eingabe"
+   polyLabel <- UI.label # set UI.text "Polynom"
+   xLabel <- UI.label # set UI.text "x-Wert"
+   formatHint <- UI.div
+      # set UI.text "Format: Koeffizient Exponent; ..."
+      # set UI.class_ "hint"
 
-      element header,
-      element input,
-      element inputX,
-      element buttonnormalize,
-      element buttonnegat,
-      element buttonaddpoly,
-      element buttonadd,
-      element buttonsub,
-      element buttonmult,
-      element buttonderivation,
-      element buttonevaluate,
-      element buttondiv,
-      element buttonshowresult,
-      element buttonshowlatex,
-      element buttontree,
-      element buttonanalysis,
-      element buttonsteps,
-      element buttondetails,
-      element buttongraph,
-      element buttonhistory,
-      element buttonrandompoly,
-      element polyListOutput,
-      element output
-      
-      ] 
+   inputPanel <- UI.div
+      # set UI.class_ "panel input-panel"
+      #+ [ element inputTitle
+         , element polyLabel
+         , element input
+         , element xLabel
+         , element inputX
+         , element buttonaddpoly
+         , element buttonrandompoly
+         , element formatHint
+         ]
+
+   libraryTitle <- UI.h2 # set UI.text "Polynomliste"
+   clearSelectionButton <- UI.button
+      # set UI.html "<span class='small-button-symbol'>♙</span><span>Auswahl löschen</span>"
+      # set UI.class_ "secondary-button"
+   removePolyButton <- UI.button
+      # set UI.html "<span class='small-button-symbol'>⌫</span><span>Polynom entfernen</span>"
+      # set UI.class_ "secondary-button"
+   libraryActions <- UI.div
+      # set UI.class_ "library-actions"
+      #+ [element clearSelectionButton, element removePolyButton]
+   libraryPanel <- UI.div
+      # set UI.class_ "panel library-panel"
+      #+ [element libraryTitle, element polyListOutput, element libraryActions]
+
+   operationsTitle <- UI.h2 # set UI.text "Polynomoperationen"
+   operationGrid <- UI.div
+      # set UI.class_ "operation-grid"
+      #+ [ element buttonnormalize
+         , element buttonnegat
+         , element buttonadd
+         , element buttonsub
+         , element buttonmult
+         , element buttondiv
+         , element buttonderivation
+         , element buttonevaluate
+         , element buttonparallel
+         ]
+
+   displayTitle <- UI.h2 # set UI.text "Darstellung"
+   displayGrid <- UI.div
+      # set UI.class_ "view-grid"
+      #+ [ element buttonshowresult
+         , element buttonshowlatex
+         , element buttontree
+         , element buttonanalysis
+         , element buttonsteps
+         , element buttondetails
+         , element buttongraph
+         , element buttonhistory
+         ]
+
+   centerPanel <- UI.div
+      # set UI.class_ "panel center-panel"
+      #+ [ element operationsTitle
+         , element operationGrid
+         , UI.hr
+         , element displayTitle
+         , element displayGrid
+         ]
+
+   resultTitle <- UI.h2 # set UI.text "Ergebnis"
+   resultOverview <- UI.div
+      # set UI.class_ "result-overview"
+      # set UI.html "<div><span>Operation</span><strong>-</strong></div><div><span>Eingabe</span><strong>-</strong></div><div><span>Ausgabe</span><strong>-</strong></div><div><span>Wert</span><strong>-</strong></div>"
+   resultPanel <- UI.div
+      # set UI.class_ "panel result-panel"
+      #+ [element resultTitle, element resultOverview]
+
+   leftColumn <- UI.div
+      # set UI.class_ "left-column"
+      #+ [element inputPanel, element libraryPanel]
+
+   topGrid <- UI.div
+      # set UI.class_ "top-grid"
+      #+ [element leftColumn, element centerPanel, element resultPanel]
+
+   outputTitle <- UI.h2 # set UI.text "Darstellung"
+   outputTabs <- UI.div
+      # set UI.class_ "output-tabs"
+      #+ [ UI.span # set UI.text "Ergebnis"
+         , UI.span # set UI.text "LaTeX"
+         , UI.span # set UI.text "Baum"
+         , UI.span # set UI.text "Analyse"
+         , UI.span # set UI.text "Schritte"
+         , UI.span # set UI.text "Historie"
+         , UI.span # set UI.text "Graph"
+         ]
+   outputPanel <- UI.div
+      # set UI.class_ "panel output-panel"
+      #+ [element outputTitle, element outputTabs, element output]
+
+   statusBar <- UI.div
+      # set UI.class_ "status-bar"
+      # set UI.html "<div><span class='status-ok'>✓</span> OK: Berechnung erfolgreich.</div><div>Haskell Kernel: aktiv <span class='status-dot'></span></div>"
+
+   appShell <- UI.div
+      # set UI.class_ "app-shell"
+      #+ [element header, element topGrid, element outputPanel]
+
+   void $ getBody window #+ [element appShell, element statusBar]
 
    {- ActionListener auf die Operation-Buttons: -}
 
@@ -241,6 +330,8 @@ setup window = do
    on UI.click buttonderivation (\_ -> handlederivationclick polyStore resultStore historyStore cacheStore output)
    on UI.click buttonevaluate (\_ -> handleevaluateclick polyStore inputX resultStore historyStore cacheStore output)
    on UI.click buttondiv (\_ -> handledivclick polyStore resultStore historyStore cacheStore output)
+   on UI.click buttonrandompoly (\_ -> handlerandompolyclick resultStore polyStore polyListOutput output)
+   on UI.click buttonparallel (\_ -> handleparallelclick polyStore inputX output)
 
    {- ActionListener auf die Darstellung-Bbuttons: -}
 
@@ -251,8 +342,7 @@ setup window = do
    on UI.click buttonsteps (\_ -> handlestepsclick resultStore output)
    on UI.click buttondetails (\_ -> handledetailsclick resultStore output)
    on UI.click buttongraph (\_ -> handlegraphclick resultStore output)
-   on UI.click buttonhistory (\_ -> handlehistoryclick historyStore output)
-   on UI.click buttonrandompoly (\_ -> handlerandompolyclick resultStore polyStore polyListOutput output)
+   on UI.click buttonhistory (\_ -> handlehistoryclick historyStore output)   
 
 {- Operationshandler -}
 
@@ -740,6 +830,46 @@ handlerandompolyclick resultStore polyStore polyListOutput output = do
    void $ element polyListOutput # set UI.text (showPolyLibraryText newLibrary)
    void $ element output # set UI.text (showRandomPolyText name poly)
    
+{- 
+
+Diese Funktion dient wird aufgerufen, wenn der Button "Parallel" geklickt wird.
+Sie dient dazu, die Auswertung von mehreren Polynomen an einer bestimmten Stelle parallel durchzuführen.
+
+Sie nekommt polyStore, input und output übergeben. polyStore ist der Speicher für die gespeicherten Polynome, 
+input ist das Eingabefeld für den Wert von x und output ist der Ausgabebereich für das Ergebnis.
+
+Danach wird library erstellt, das die aktuelle PolynomBibliothek aus polyStore ausliest und xStr wird erstellt, 
+das den Wert von x aus dem Eingabefeld input ausliest.
+
+xStr wird auf zwei Fälle geprüft:
+Fall 1: xStr ist leer, dann wird eine Fehlermeldung angezeigt.
+Fall 2: xStr ist nicht leer, dann wird geprüft, ob es sich vielleicht um eine gültige 
+Zahl (Just x) handelt oder auch nicht (Nothing), mithilfe von readMaybe:
+
+Fall 2.1: Es handelt sich nicht um eine gültige Zahl, dann wird eine Fehlermeldung angezeigt.
+Fall 2.2: Es handelt sich um eine gültige Zahl, dann prüfen wir die gespeicherten Polynome auf 2 Fälle:
+
+Fall 2.2.1: Es ist kein Polynom gespeichert, dann wird eine Fehlermeldung angezeigt.
+Fall 2.2.2 (Andernfalls): Es sind ein oder mehrere Polynome gespeichert, dann wird die Auswertung parallel durchgeführt und das Ergebnis angezeigt.
+
+-}
+
+handleparallelclick :: IORef PolyLibrary -> Element -> Element -> UI ()
+handleparallelclick polyStore input output = do
+   library <- liftIO $ readIORef polyStore
+   xStr <- get value input
+   case xStr of
+      ""->
+         void $ element output # set UI.text "Fehler: Bitte geben Sie einen Wert für x ein."
+      _ -> case readMaybe xStr :: Maybe Rational of
+         Nothing ->
+            void $ element output # set UI.text "Fehler: Bitte geben Sie eine gültige Zahl für x ein."
+         Just x -> do
+            case library of
+               [] -> void $ element output # set UI.text "Fehler: Es wurde noch kein Polynom gespeichert."
+               _ -> do
+                  let results = evaluateNamedManyParallel x library
+                  void $ element output # set UI.text (showParallelResultsText x results)
 
 {- Darstellungshandler -}
 

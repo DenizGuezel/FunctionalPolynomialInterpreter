@@ -90,8 +90,8 @@ library
     build-depends:
         base ^>=4.18.3.0,
         random,
-        threepenny-gui
-        
+        threepenny-gui,
+        parallel
 
     -- Directories containing source files.
     hs-source-dirs:   src
@@ -117,7 +117,8 @@ executable FunctionalPolynomialInterpreter
         base ^>=4.18.3.0,
         FunctionalPolynomialInterpreter,
         random,
-        threepenny-gui
+        threepenny-gui,
+        parallel
 
     -- Directories containing source files.
     hs-source-dirs:   src
