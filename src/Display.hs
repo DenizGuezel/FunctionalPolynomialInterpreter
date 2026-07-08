@@ -215,3 +215,11 @@ Division und Auswertung entstehen erst, wenn der Benutzer die entsprechenden But
 
 showRandomPolyText :: String -> Poly -> String
 showRandomPolyText name poly = "Zufallspolynom " ++ name ++ ": " ++ toPrettyMathPoly poly
+
+{- Parallel-Darstellung -}
+
+{- Diese Funktion stellt die Ergebnisse einer parallelen Auswertung als String dar. -}
+showParallelResultsText :: Rational -> [(String, Rational)] -> String
+showParallelResultsText x results = 
+   "Parallele Auswertung bei x = " ++ prettyRational x ++ ":\n" 
+   ++ unlines [name ++ ": " ++ prettyRational value | (name, value) <- results]
