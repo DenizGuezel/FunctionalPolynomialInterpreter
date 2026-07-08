@@ -122,7 +122,8 @@ input {
   gap: 12px;
 }
 
-.library-panel pre {
+.library-panel pre,
+.poly-list {
   margin: 0;
   min-height: 120px;
   border: 1px solid #cfd8e3;
@@ -132,6 +133,45 @@ input {
   white-space: pre-wrap;
   font-size: 15px;
   line-height: 1.6;
+}
+
+.poly-list {
+  padding: 0;
+  overflow: auto;
+}
+
+.poly-row {
+  display: grid;
+  grid-template-columns: 28px 54px 1fr;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 12px;
+  border-bottom: 1px solid #d7dee8;
+}
+
+.poly-row:last-child {
+  border-bottom: 0;
+}
+
+.poly-row input {
+  width: 16px;
+  height: 16px;
+  min-height: 16px;
+  padding: 0;
+  accent-color: #0a6370;
+}
+
+.poly-name {
+  font-weight: 600;
+}
+
+.poly-value {
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+.poly-list-empty {
+  padding: 10px 12px;
 }
 
 .library-actions {
