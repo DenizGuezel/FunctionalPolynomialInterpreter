@@ -78,6 +78,7 @@ library
         Library
         Random
         Cache
+        Parallel
 
     -- Modules included in this library but not exported.
     -- other-modules:
