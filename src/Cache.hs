@@ -45,7 +45,7 @@ Datentypen erstellen wollen und keine neuen Konstruktoren oder Funktionen benöt
 
 -}
 
-type Cache = [(Operation, String)]
+type Cache a = [(Operation, a)]
 
 {- 
 
@@ -61,7 +61,7 @@ wird die Funktion rekursiv auf die restliche Cache angewendet, um die restlichen
 
 -}
 
-lookupCache :: Operation -> Cache -> Maybe String
+lookupCache :: Operation -> Cache a -> Maybe a
 lookupCache _ [] = Nothing
 lookupCache op ((cachedOp, name):rest) =
     if op == cachedOp
@@ -79,7 +79,7 @@ Wir rufen noch removeCache auf, um sicherzustellen, dass die Operation nicht ber
 
 -}
 
-insertCache :: Operation -> String -> Cache -> Cache
+insertCache :: Operation -> a -> Cache a -> Cache a
 insertCache op name cache = (op, name) : removeCache op cache
 
 {- 
@@ -96,7 +96,7 @@ Cache angewendet, um die restlichen Einträge zu überprüfen und die Operation 
 
 -}
 
-removeCache :: Operation -> Cache -> Cache
+removeCache :: Operation -> Cache a -> Cache a
 removeCache _ [] = []
 removeCache op ((cachedOp, name):rest) =
     if op == cachedOp
