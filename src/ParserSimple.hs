@@ -131,3 +131,26 @@ splitBySemicolon s = let (before, after) = break (== ';') s
                           [] -> [before]
                           (_:rest) -> before : splitBySemicolon rest
 
+
+{- 
+
+Diese Hilfsfunktion soll einen String, der einen Bruch beschreibt, in einen Rational parsen.
+Sie bekommt als Eingabe z.B "3/4" und gibt als Ausgabe Maybe Rational zurück, das entweder Nothing (wenn der String kein gültiger Bruch ist) 
+oder Just r (wenn der String ein gültiger Bruch ist) enthält.
+
+Dazu wird der String an dem Schrägstrich (/) aufgeteilt, um den Zähler und den Nenner zu extrahieren.
+
+Wenn der String kein Schrägstrich enthält, wird Nothing zurückgegeben, da es sich nicht um einen gültigen Bruch handelt.
+Wenn der String einen Schrägstrich enthält, wird der Zähler-String und der Nenner-String in Integer geparst.
+
+-}
+
+parseFraction :: String -> Maybe Rational
+parseFraction str =
+   case break (== '/') str of
+      (numStr, '/' : denStr) ->
+         case (readMaybe numStr :: Maybe Integer, readMaybe denStr :: Maybe Integer) of
+            (Just num, Just den)
+               | den /= 0 -> Just (num % den)
+            _ -> Nothing
+      _ -> Nothing
