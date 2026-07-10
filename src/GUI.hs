@@ -45,6 +45,29 @@ data GuiResult
    | DivResult String Poly Poly
    deriving (Show, Eq)
 
+{-
+
+Dieser Datentyp wird für den Cache benutzt.
+Anders als GuiResult speichert CachedResult keinen Anzeigenamen wie "p1 + p2".
+
+Der Cache soll nur das mathematische Ergebnis wiederverwenden.
+Der aktuelle Name der Operation wird danach in der GUI neu ergänzt.
+
+Das ist sauberer, weil ein gecachtes Ergebnis nicht mehr an alte GUI-Namen gebunden ist.
+
+-}
+
+data CachedResult
+   = CachedPoly Poly
+   | CachedValue Rational
+   | CachedDiv Poly Poly
+   deriving (Show, Eq)
+
+cachedToGuiResult :: String -> CachedResult -> GuiResult
+cachedToGuiResult name (CachedPoly poly) = PolyResult name poly
+cachedToGuiResult name (CachedValue value) = ValueResult name value
+cachedToGuiResult name (CachedDiv quotient rest) = DivResult name quotient rest
+
 {- 
 
 Diese Funktion resultOverviewHtml wird verwendet, um das Ergebnis einer GUI-Operation in HTML darzustellen.
@@ -244,7 +267,7 @@ setup window = do
    polyStore <- liftIO $ newIORef ([] :: PolyLibrary) --Für die Speicherung der Polynome
    resultStore <- liftIO $ newIORef NoResult --Für die Speicherung der Ergebnisse der Operationen
    historyStore <- liftIO $ newIORef (Empty :: History HistoryEntry) --Für die Speicherung der Historie der Ergebnisse (PolyResult, ValueResult, DivResult)
-   cacheStore <- liftIO $ newIORef ([] :: Cache GuiResult) --Für die Speicherung der Operationen, die bereits durchgeführt wurden, um sie wiederverwenden zu können, nicht die Ergebnisse einer Berechnung, sondern die Operation selbst, die durchgeführt werden soll.
+   cacheStore <- liftIO $ newIORef ([] :: Cache CachedResult) --Für die Speicherung der Operationen, die bereits durchgeführt wurden, um sie wiederverwenden zu können, nicht die Ergebnisse einer Berechnung, sondern die Operation selbst, die durchgeführt werden soll.
    selectedStore <- liftIO $ newIORef ([] :: [String]) --Für die Speicherung der ausgewählten Polynome in der GUI, um sie für Operationen wie Addieren, Subtrahieren, Multiplizieren, Dividieren, etc. zu verwenden. Sinnvoll für eine Checkbox-Liste, damit wir bestimmte Polynome auswählen können.
    
    {- Ausgabebereiche -}
@@ -648,21 +671,15 @@ set UI.text einen Ui.Element zurückgibt, den wir hier aber nicht benötigen.
 
 -}
 
-handlenormalizeclick :: IORef PolyLibrary -> IORef [String] -> Element -> IORef GuiResult -> IORef (History HistoryEntry) -> IORef (Cache GuiResult) -> Element -> UI ()
+handlenormalizeclick :: IORef PolyLibrary -> IORef [String] -> Element -> IORef GuiResult -> IORef (History HistoryEntry) -> IORef (Cache CachedResult) -> Element -> UI ()
 handlenormalizeclick polyStore selectedStore input resultStore historyStore cacheStore output = do
    library <- liftIO $ readIORef polyStore
    selectedNames <- liftIO $ readIORef selectedStore
    let selectedLibrary = selectedPolys library selectedNames
    case selectedLibrary of
       [(name, poly)] -> normalizeAndShow name poly
-      [] -> do
-         polyStr <- get value input
-         let result = parsePolySimple polyStr
-         case result of
-            Left err ->
-               void $ element output # set UI.text ("Fehler: " ++ err)
-            Right poly ->
-               normalizeAndShow "Normalisieren" poly
+      [] ->
+         void $ element output # set UI.text "Fehler: Normalisieren benötigt ein ausgewähltes Polynom. Bitte wählen Sie genau ein Polynom aus."
       other ->
          void $ element output # set UI.text
             ("Fehler: Normalisieren benötigt genau ein ausgewähltes Polynom. Es wurde/n aber "
@@ -673,13 +690,15 @@ handlenormalizeclick polyStore selectedStore input resultStore historyStore cach
          let operation = Normalize poly
          case lookupCache operation cache of
             Just cachedResult -> do
-               liftIO $ writeIORef resultStore cachedResult
-               void $ element output # set UI.text ("Aus Cache geladen:\n" ++ guiResultText cachedResult)
+               let guiResult = cachedToGuiResult name cachedResult
+               liftIO $ writeIORef resultStore guiResult
+               void $ element output # set UI.text ("Aus Cache geladen:\n" ++ guiResultText guiResult)
             Nothing -> do
                let resultPoly = normalize poly
                let resultText = "Ergebnis: " ++ toPrettyMathPoly resultPoly
-               let cachedResult = PolyResult name resultPoly
-               liftIO $ writeIORef resultStore cachedResult
+               let cachedResult = CachedPoly resultPoly
+               let guiResult = cachedToGuiResult name cachedResult
+               liftIO $ writeIORef resultStore guiResult
                liftIO $ modifyIORef historyStore
                   (addHistory (HistoryPoly name resultPoly))
                liftIO $ modifyIORef cacheStore
@@ -698,21 +717,15 @@ Da negat wieder ein Polynom zurückgibt, speichern wir das Ergebnis als PolyResu
 
 -}
 
-handlenegatclick :: IORef PolyLibrary -> IORef [String] -> Element -> IORef GuiResult -> IORef (History HistoryEntry) -> IORef (Cache GuiResult) -> Element -> UI ()
+handlenegatclick :: IORef PolyLibrary -> IORef [String] -> Element -> IORef GuiResult -> IORef (History HistoryEntry) -> IORef (Cache CachedResult) -> Element -> UI ()
 handlenegatclick polyStore selectedStore input resultStore historyStore cacheStore output = do
    library <- liftIO $ readIORef polyStore
    selectedNames <- liftIO $ readIORef selectedStore
    let selectedLibrary = selectedPolys library selectedNames
    case selectedLibrary of
       [(name, poly)] -> negateAndShow name poly
-      [] -> do
-         polyStr <- get value input
-         let result = parsePolySimple polyStr
-         case result of
-            Left err ->
-               void $ element output # set UI.text ("Fehler: " ++ err)
-            Right poly ->
-               negateAndShow "Negieren" poly
+      [] ->
+         void $ element output # set UI.text "Fehler: Negieren benötigt ein ausgewähltes Polynom. Bitte wählen Sie genau ein Polynom aus."
       other ->
          void $ element output # set UI.text
             ("Fehler: Negieren benötigt genau ein ausgewähltes Polynom. Es wurde/n aber "
@@ -723,13 +736,15 @@ handlenegatclick polyStore selectedStore input resultStore historyStore cacheSto
          let operation = Negate poly
          case lookupCache operation cache of
             Just cachedResult -> do
-               liftIO $ writeIORef resultStore cachedResult
-               void $ element output # set UI.text ("Aus Cache geladen:\n" ++ guiResultText cachedResult)
+               let guiResult = cachedToGuiResult name cachedResult
+               liftIO $ writeIORef resultStore guiResult
+               void $ element output # set UI.text ("Aus Cache geladen:\n" ++ guiResultText guiResult)
             Nothing -> do
                let resultPoly = negat poly
                let resultText = "Ergebnis: " ++ toPrettyMathPoly resultPoly
-               let cachedResult = PolyResult name resultPoly
-               liftIO $ writeIORef resultStore cachedResult
+               let cachedResult = CachedPoly resultPoly
+               let guiResult = cachedToGuiResult name cachedResult
+               liftIO $ writeIORef resultStore guiResult
                liftIO $ modifyIORef historyStore
                   (addHistory (HistoryPoly name resultPoly))
                liftIO $ modifyIORef cacheStore
@@ -809,7 +824,7 @@ Da add wieder ein Polynom zurückgibt, speichern wir das Ergebnis als PolyResult
 
 -}
 
-handleaddclick :: IORef PolyLibrary -> IORef [String] -> IORef GuiResult -> IORef (History HistoryEntry) -> IORef (Cache GuiResult) -> Element -> UI ()
+handleaddclick :: IORef PolyLibrary -> IORef [String] -> IORef GuiResult -> IORef (History HistoryEntry) -> IORef (Cache CachedResult) -> Element -> UI ()
 handleaddclick polyStore selectedStore resultStore historyStore cacheStore output = do
    library <- liftIO $ readIORef polyStore
    selectedNames <- liftIO $ readIORef selectedStore
@@ -821,15 +836,17 @@ handleaddclick polyStore selectedStore resultStore historyStore cacheStore outpu
 
          case lookupCache operation cache of
             Just cachedResult -> do
-               liftIO $ writeIORef resultStore cachedResult
-               void $ element output # set UI.text ("Aus Cache geladen:\n" ++ guiResultText cachedResult)
+               let guiResult = cachedToGuiResult (name1 ++ " + " ++ name2) cachedResult
+               liftIO $ writeIORef resultStore guiResult
+               void $ element output # set UI.text ("Aus Cache geladen:\n" ++ guiResultText guiResult)
 
             Nothing -> do
                let resultPoly = add poly1 poly2
                let resultText = "Ergebnis: " ++ toPrettyMathPoly resultPoly
 
-               let cachedResult = PolyResult (name1 ++ " + " ++ name2) resultPoly
-               liftIO $ writeIORef resultStore cachedResult
+               let cachedResult = CachedPoly resultPoly
+               let guiResult = cachedToGuiResult (name1 ++ " + " ++ name2) cachedResult
+               liftIO $ writeIORef resultStore guiResult
                liftIO $ modifyIORef historyStore
                   (addHistory (HistoryPoly (name1 ++ " + " ++ name2) resultPoly))
                liftIO $ modifyIORef cacheStore
@@ -856,7 +873,7 @@ Da sub wieder ein Polynom zurückgibt, benutzen wir PolyResult.
 
 -}
 
-handlesubclick :: IORef PolyLibrary -> IORef [String] -> IORef GuiResult -> IORef (History HistoryEntry) -> IORef (Cache GuiResult) -> Element -> UI ()
+handlesubclick :: IORef PolyLibrary -> IORef [String] -> IORef GuiResult -> IORef (History HistoryEntry) -> IORef (Cache CachedResult) -> Element -> UI ()
 handlesubclick polyStore selectedStore resultStore historyStore cacheStore output = do
    library <- liftIO $ readIORef polyStore
    selectedNames <- liftIO $ readIORef selectedStore
@@ -868,15 +885,17 @@ handlesubclick polyStore selectedStore resultStore historyStore cacheStore outpu
 
          case lookupCache operation cache of
             Just cachedResult -> do
-               liftIO $ writeIORef resultStore cachedResult
-               void $ element output # set UI.text ("Aus Cache geladen:\n" ++ guiResultText cachedResult)
+               let guiResult = cachedToGuiResult (name1 ++ " - " ++ name2) cachedResult
+               liftIO $ writeIORef resultStore guiResult
+               void $ element output # set UI.text ("Aus Cache geladen:\n" ++ guiResultText guiResult)
 
             Nothing -> do
                let resultPoly = sub poly1 poly2
                let resultText = "Ergebnis: " ++ toPrettyMathPoly resultPoly
 
-               let cachedResult = PolyResult (name1 ++ " - " ++ name2) resultPoly
-               liftIO $ writeIORef resultStore cachedResult
+               let cachedResult = CachedPoly resultPoly
+               let guiResult = cachedToGuiResult (name1 ++ " - " ++ name2) cachedResult
+               liftIO $ writeIORef resultStore guiResult
                liftIO $ modifyIORef historyStore
                   (addHistory (HistoryPoly (name1 ++ " - " ++ name2) resultPoly))
                liftIO $ modifyIORef cacheStore
@@ -903,7 +922,7 @@ Da mult wieder ein Polynom zurückgibt, benutzen wir PolyResult.
 
 -}
 
-handlemultclick :: IORef PolyLibrary -> IORef [String] -> IORef GuiResult -> IORef (History HistoryEntry) -> IORef (Cache GuiResult) -> Element -> UI ()
+handlemultclick :: IORef PolyLibrary -> IORef [String] -> IORef GuiResult -> IORef (History HistoryEntry) -> IORef (Cache CachedResult) -> Element -> UI ()
 handlemultclick polyStore selectedStore resultStore historyStore cacheStore output = do
    library <- liftIO $ readIORef polyStore
    selectedNames <- liftIO $ readIORef selectedStore
@@ -915,15 +934,17 @@ handlemultclick polyStore selectedStore resultStore historyStore cacheStore outp
 
          case lookupCache operation cache of
             Just cachedResult -> do
-               liftIO $ writeIORef resultStore cachedResult
-               void $ element output # set UI.text ("Aus Cache geladen:\n" ++ guiResultText cachedResult)
+               let guiResult = cachedToGuiResult (name1 ++ " * " ++ name2) cachedResult
+               liftIO $ writeIORef resultStore guiResult
+               void $ element output # set UI.text ("Aus Cache geladen:\n" ++ guiResultText guiResult)
 
             Nothing -> do
                let resultPoly = mult poly1 poly2
                let resultText = "Ergebnis: " ++ toPrettyMathPoly resultPoly
 
-               let cachedResult = PolyResult (name1 ++ " * " ++ name2) resultPoly
-               liftIO $ writeIORef resultStore cachedResult
+               let cachedResult = CachedPoly resultPoly
+               let guiResult = cachedToGuiResult (name1 ++ " * " ++ name2) cachedResult
+               liftIO $ writeIORef resultStore guiResult
                liftIO $ modifyIORef historyStore
                   (addHistory (HistoryPoly (name1 ++ " * " ++ name2) resultPoly))
                liftIO $ modifyIORef cacheStore
@@ -963,7 +984,7 @@ Da derivation wieder ein Polynom zurückgibt, benutzen wir PolyResult.
 
 -}
 
-handlederivationclick :: IORef PolyLibrary -> IORef [String] -> IORef GuiResult -> IORef (History HistoryEntry) -> IORef (Cache GuiResult) -> Element -> UI ()
+handlederivationclick :: IORef PolyLibrary -> IORef [String] -> IORef GuiResult -> IORef (History HistoryEntry) -> IORef (Cache CachedResult) -> Element -> UI ()
 handlederivationclick polyStore selectedStore resultStore historyStore cacheStore output = do
    library <- liftIO $ readIORef polyStore
    selectedNames <- liftIO $ readIORef selectedStore
@@ -974,13 +995,15 @@ handlederivationclick polyStore selectedStore resultStore historyStore cacheStor
          let operation = Derive poly1
          case lookupCache operation cache of
             Just cachedResult -> do
-               liftIO $ writeIORef resultStore cachedResult
-               void $ element output # set UI.text ("Aus Cache geladen:\n" ++ guiResultText cachedResult)
+               let guiResult = cachedToGuiResult (name1 ++ "'") cachedResult
+               liftIO $ writeIORef resultStore guiResult
+               void $ element output # set UI.text ("Aus Cache geladen:\n" ++ guiResultText guiResult)
             Nothing -> do
                let resultPoly = derivation poly1
                let resultText = "Ergebnis: " ++ toPrettyMathPoly resultPoly
-               let cachedResult = PolyResult (name1 ++ "'") resultPoly
-               liftIO $ writeIORef resultStore cachedResult
+               let cachedResult = CachedPoly resultPoly
+               let guiResult = cachedToGuiResult (name1 ++ "'") cachedResult
+               liftIO $ writeIORef resultStore guiResult
                liftIO $ modifyIORef historyStore
                   (addHistory (HistoryPoly "Ableiten" resultPoly))
                liftIO $ modifyIORef cacheStore
@@ -1024,7 +1047,7 @@ Deshalb speichern wir das Ergebnis in resultStore als ValueResult.
 
 -}
 
-handleevaluateclick :: IORef PolyLibrary -> IORef [String] -> Element -> IORef GuiResult -> IORef (History HistoryEntry) -> IORef (Cache GuiResult) -> Element -> UI ()
+handleevaluateclick :: IORef PolyLibrary -> IORef [String] -> Element -> IORef GuiResult -> IORef (History HistoryEntry) -> IORef (Cache CachedResult) -> Element -> UI ()
 handleevaluateclick polyStore selectedStore input resultStore historyStore cacheStore output = do
    library <- liftIO $ readIORef polyStore
    selectedNames <- liftIO $ readIORef selectedStore
@@ -1045,15 +1068,17 @@ handleevaluateclick polyStore selectedStore input resultStore historyStore cache
 
                case lookupCache operation cache of
                   Just cachedResult -> do
-                     liftIO $ writeIORef resultStore cachedResult
-                     void $ element output # set UI.text ("Aus Cache geladen:\n" ++ guiResultText cachedResult)
+                     let guiResult = cachedToGuiResult (name1 ++ "(" ++ show x ++ ")") cachedResult
+                     liftIO $ writeIORef resultStore guiResult
+                     void $ element output # set UI.text ("Aus Cache geladen:\n" ++ guiResultText guiResult)
 
                   Nothing -> do
                      let resultValue = evaluate poly1 x
                      let resultText = "Ergebnis: " ++ prettyRational resultValue
 
-                     let cachedResult = ValueResult (name1 ++ "(" ++ show x ++ ")") resultValue
-                     liftIO $ writeIORef resultStore cachedResult
+                     let cachedResult = CachedValue resultValue
+                     let guiResult = cachedToGuiResult (name1 ++ "(" ++ show x ++ ")") cachedResult
+                     liftIO $ writeIORef resultStore guiResult
                      liftIO $ modifyIORef historyStore
                         (addHistory (HistoryValue (name1 ++ "(" ++ show x ++ ")") resultValue))
                      liftIO $ modifyIORef cacheStore
@@ -1085,7 +1110,7 @@ DivResult speichert den Namen der Operation, den Quotienten und den Rest.
 
 -}
 
-handledivclick :: IORef PolyLibrary -> IORef [String] -> IORef GuiResult -> IORef (History HistoryEntry) -> IORef (Cache GuiResult) -> Element -> UI ()
+handledivclick :: IORef PolyLibrary -> IORef [String] -> IORef GuiResult -> IORef (History HistoryEntry) -> IORef (Cache CachedResult) -> Element -> UI ()
 handledivclick polyStore selectedStore resultStore historyStore cacheStore output = do
    library <- liftIO $ readIORef polyStore
    selectedNames <- liftIO $ readIORef selectedStore
@@ -1097,8 +1122,9 @@ handledivclick polyStore selectedStore resultStore historyStore cacheStore outpu
 
          case lookupCache operation cache of
             Just cachedResult -> do
-               liftIO $ writeIORef resultStore cachedResult
-               void $ element output # set UI.text ("Aus Cache geladen:\n" ++ guiResultText cachedResult)
+               let guiResult = cachedToGuiResult (name1 ++ " / " ++ name2) cachedResult
+               liftIO $ writeIORef resultStore guiResult
+               void $ element output # set UI.text ("Aus Cache geladen:\n" ++ guiResultText guiResult)
 
             Nothing -> do
                let (quotient, rest) = (/%) poly1 poly2
@@ -1107,8 +1133,9 @@ handledivclick polyStore selectedStore resultStore historyStore cacheStore outpu
                      ++ " = " ++ toPrettyMathPoly quotient
                      ++ ", Rest: " ++ toPrettyMathPoly rest
 
-               let cachedResult = DivResult (name1 ++ " / " ++ name2) quotient rest
-               liftIO $ writeIORef resultStore cachedResult
+               let cachedResult = CachedDiv quotient rest
+               let guiResult = cachedToGuiResult (name1 ++ " / " ++ name2) cachedResult
+               liftIO $ writeIORef resultStore guiResult
                liftIO $ modifyIORef historyStore
                   (addHistory (HistoryDiv (name1 ++ " / " ++ name2) quotient rest))
                liftIO $ modifyIORef cacheStore
@@ -1454,6 +1481,3 @@ handlehistoryclick historyStore output = do
    case history of
       Empty -> void $ element output # set UI.text "Fehler: Es wurde noch keine Historie erstellt."
       other -> void $ element output # set UI.text (showHistoryText history)
-
-
-
