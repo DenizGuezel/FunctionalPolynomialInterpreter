@@ -6,6 +6,7 @@ import Control.Monad (void)
 import qualified Graphics.UI.Threepenny as Ui
 import qualified Control.Applicative as GUI
 import Data.IORef (IORef, newIORef, readIORef, writeIORef, modifyIORef)
+import Data.List (isPrefixOf)
 import Text.Read (readMaybe)
 
 import Poly
@@ -374,15 +375,34 @@ setup window = do
       # set UI.class_ "top-grid"
       #+ [element leftColumn, element mainColumn]
 
-   statusBar <- UI.div
+   _statusBar <- UI.div
       # set UI.class_ "status-bar"
       # set UI.html "<div><span class='status-ok'>✓</span> OK: Berechnung erfolgreich.</div><div>Haskell Kernel: aktiv <span class='status-dot'></span></div>"
+
+   {- Dynamische Statusleiste -}
+
+   statusIcon <- UI.span
+      # set UI.class_ "status-ok"
+      # set UI.text "✓"
+
+   statusText <- UI.span
+      # set UI.text "Bereit."
+
+   statusLeft <- UI.div
+      #+ [element statusIcon, element statusText]
+
+   statusRight <- UI.div
+      # set UI.html "Haskell Kernel: aktiv <span class='status-dot'></span>"
+
+   dynamicStatusBar <- UI.div
+      # set UI.class_ "status-bar"
+      #+ [element statusLeft, element statusRight]
 
    appShell <- UI.div
       # set UI.class_ "app-shell"
       #+ [element header, element topGrid]
 
-   void $ getBody window #+ [element appShell, element statusBar]
+   void $ getBody window #+ [element appShell, element dynamicStatusBar]
 
    {- Logik für das umswitchen der Output-Tabs -}
 
@@ -399,44 +419,67 @@ setup window = do
    let refreshResultOverview = do
          result <- liftIO $ readIORef resultStore
          void $ element resultOverview # set UI.html (resultOverviewHtml result)
+   let setStatusOk message = do
+         void $ element statusIcon # set UI.class_ "status-ok" # set UI.text "✓"
+         void $ element statusText # set UI.text message
+   let setStatusError message = do
+         void $ element statusIcon # set UI.class_ "status-error" # set UI.text "×"
+         void $ element statusText # set UI.text message
+   let updateStatusFromOutput = do
+         message <- callFunction $ ffi "$(%1).text()" output
+         if "Fehler:" `isPrefixOf` message
+            then setStatusError message
+            else setStatusOk "OK: Berechnung erfolgreich."
+   let updateStatusFromPolyListMessage = do
+         message <- callFunction $ ffi "$(%1).text()" polyListMessage
+         if "Fehler:" `isPrefixOf` message
+            then setStatusError message
+            else if null message
+                    then setStatusOk "OK: Polynomliste aktualisiert."
+                    else setStatusOk message
    refreshPolyList polyStore selectedStore polyListOutput
 
    {- ActionListener auf die Operation-Buttons: -}
 
-   on UI.click buttonnormalize (\_ -> handlenormalizeclick polyStore selectedStore input resultStore historyStore cacheStore output >> refreshResultOverview >> activateTab "Ergebnis") 
-   on UI.click buttonnegat (\_ -> handlenegatclick polyStore selectedStore input resultStore historyStore cacheStore output >> refreshResultOverview >> activateTab "Ergebnis")
-   on UI.click buttonaddpoly (\_ -> handleaddpolyclick input polyStore selectedStore polyListOutput polyListMessage)
-   on UI.click buttonadd (\_ -> handleaddclick polyStore selectedStore resultStore historyStore cacheStore output >> refreshResultOverview >> activateTab "Ergebnis")
-   on UI.click buttonsub (\_ -> handlesubclick polyStore selectedStore resultStore historyStore cacheStore output >> refreshResultOverview >> activateTab "Ergebnis")
-   on UI.click buttonmult (\_ -> handlemultclick polyStore selectedStore resultStore historyStore cacheStore output >> refreshResultOverview >> activateTab "Ergebnis")
-   on UI.click buttonderivation (\_ -> handlederivationclick polyStore selectedStore resultStore historyStore cacheStore output >> refreshResultOverview >> activateTab "Ergebnis")
-   on UI.click buttonevaluate (\_ -> handleevaluateclick polyStore selectedStore inputX resultStore historyStore cacheStore output >> refreshResultOverview >> activateTab "Ergebnis")
-   on UI.click buttondiv (\_ -> handledivclick polyStore selectedStore resultStore historyStore cacheStore output >> refreshResultOverview >> activateTab "Ergebnis")
-   on UI.click buttonrandompoly (\_ -> handlerandompolyclick resultStore polyStore selectedStore polyListOutput output >> refreshResultOverview >> activateTab "Ergebnis")
-   on UI.click buttonparallel (\_ -> handleparallelclick polyStore inputX output >> activateTab "Ergebnis")
-   on UI.click clearSelectionButton (\_ -> handleclearselectionclick polyStore selectedStore polyListOutput polyListMessage)
-   on UI.click removePolyButton (\_ -> handleremovepolyclick polyStore selectedStore polyListOutput polyListMessage)
+   on UI.click buttonnormalize (\_ -> handlenormalizeclick polyStore selectedStore input resultStore historyStore cacheStore output >> refreshResultOverview >> updateStatusFromOutput >> activateTab "Ergebnis") 
+   on UI.click buttonnegat (\_ -> handlenegatclick polyStore selectedStore input resultStore historyStore cacheStore output >> refreshResultOverview >> updateStatusFromOutput >> activateTab "Ergebnis")
+   on UI.click buttonaddpoly (\_ -> handleaddpolyclick input polyStore selectedStore polyListOutput polyListMessage >> updateStatusFromPolyListMessage)
+   on UI.click buttonadd (\_ -> handleaddclick polyStore selectedStore resultStore historyStore cacheStore output >> refreshResultOverview >> updateStatusFromOutput >> activateTab "Ergebnis")
+   on UI.click buttonsub (\_ -> handlesubclick polyStore selectedStore resultStore historyStore cacheStore output >> refreshResultOverview >> updateStatusFromOutput >> activateTab "Ergebnis")
+   on UI.click buttonmult (\_ -> handlemultclick polyStore selectedStore resultStore historyStore cacheStore output >> refreshResultOverview >> updateStatusFromOutput >> activateTab "Ergebnis")
+   on UI.click buttonderivation (\_ -> handlederivationclick polyStore selectedStore resultStore historyStore cacheStore output >> refreshResultOverview >> updateStatusFromOutput >> activateTab "Ergebnis")
+   on UI.click buttonevaluate (\_ -> handleevaluateclick polyStore selectedStore inputX resultStore historyStore cacheStore output >> refreshResultOverview >> updateStatusFromOutput >> activateTab "Ergebnis")
+   on UI.click buttondiv (\_ -> handledivclick polyStore selectedStore resultStore historyStore cacheStore output >> refreshResultOverview >> updateStatusFromOutput >> activateTab "Ergebnis")
+   on UI.click buttonrandompoly (\_ -> handlerandompolyclick resultStore polyStore selectedStore polyListOutput output >> refreshResultOverview >> updateStatusFromOutput >> activateTab "Ergebnis")
+   on UI.click buttonparallel (\_ -> handleparallelclick polyStore inputX output >> updateStatusFromOutput >> activateTab "Ergebnis")
+   on UI.click clearSelectionButton (\_ -> handleclearselectionclick polyStore selectedStore polyListOutput polyListMessage >> updateStatusFromPolyListMessage)
+   on UI.click removePolyButton (\_ -> handleremovepolyclick polyStore selectedStore polyListOutput polyListMessage >> updateStatusFromPolyListMessage)
 
    {- ActionListener auf die Darstellung-Bbuttons: -}
 
-   on UI.click buttonshowresult (\_ -> activateTab "Ergebnis" >> handleshowresultclick resultStore output >> refreshResultOverview)
-   on UI.click buttonshowlatex (\_ -> activateTab "LaTeX" >> handlelatexclick resultStore output >> refreshResultOverview)
-   on UI.click buttontree (\_ -> activateTab "Baum" >> handletreeclick resultStore output >> refreshResultOverview)
-   on UI.click buttonanalysis (\_ -> activateTab "Analyse" >> handleanalysisclick resultStore output >> refreshResultOverview)
-   on UI.click buttonsteps (\_ -> activateTab "Schritte" >> handlestepsclick resultStore output >> refreshResultOverview)
-   on UI.click buttondetails (\_ -> activateTab "Details" >> handledetailsclick resultStore output >> refreshResultOverview)
-   on UI.click buttongraph (\_ -> activateTab "Graph" >> handlegraphclick resultStore output >> refreshResultOverview)
-   on UI.click buttonhistory (\_ -> activateTab "Historie" >> handlehistoryclick historyStore output)   
+   on UI.click buttonshowresult (\_ -> activateTab "Ergebnis" >> handleshowresultclick resultStore output >> refreshResultOverview >> updateStatusFromOutput)
+   on UI.click buttonshowlatex (\_ -> activateTab "LaTeX" >> handlelatexclick resultStore output >> refreshResultOverview >> updateStatusFromOutput)
+   on UI.click buttontree (\_ -> activateTab "Baum" >> handletreeclick resultStore output >> refreshResultOverview >> updateStatusFromOutput)
+   on UI.click buttonanalysis (\_ -> activateTab "Analyse" >> handleanalysisclick resultStore output >> refreshResultOverview >> updateStatusFromOutput)
+   on UI.click buttonsteps (\_ -> activateTab "Schritte" >> handlestepsclick resultStore output >> refreshResultOverview >> updateStatusFromOutput)
+   on UI.click buttondetails (\_ -> activateTab "Details" >> handledetailsclick resultStore output >> refreshResultOverview >> updateStatusFromOutput)
+   on UI.click buttongraph (\_ -> activateTab "Graph" >> handlegraphclick resultStore output >> refreshResultOverview >> updateStatusFromOutput)
+   on UI.click buttonhistory (\_ -> activateTab "Historie" >> handlehistoryclick historyStore output >> updateStatusFromOutput)   
 
 {- Polynomlisten-Hilfsfunktionen -}
 
 {- 
 
 Diese Funktion aktualisiert die sichtbare Polynomliste in der GUI.
-Sie liest die gespeicherten Polynome aus polyStore und die aktuell ausgewählten Polynome aus selectedStore.
+Sie liest die gespeicherten Polynome aus polyStore und die aktuell ausgewählten Polynome aus selectedStore und zeigt sie in polyListOutput an.
 
-Wenn keine Polynome gespeichert sind, wird ein einfacher Hinweis in der Liste angezeigt.
-Wenn Polynome gespeichert sind, wird für jedes Polynom eine eigene Zeile mit Checkbox erzeugt.
+library ist die gesamte Polynomliste, die wir aus polyStore auslesen.
+selectedNames ist die Liste der Namen der aktuell ausgewählten Polynome, die wir aus selectedStore auslesen.
+
+Wir prüfen library auf zwei Fälle:
+
+1. Fall: Wenn keine Polynome gespeichert sind, wird ein einfacher Hinweis in der Liste angezeigt.
+2. Fall: Wenn Polynome gespeichert sind, wird für jedes Polynom eine eigene Zeile mit Checkbox erzeugt.
 
 Dadurch ist die Polynomliste nicht nur eine Textausgabe, sondern ein interaktiver Bereich, über den man gezielt Polynome auswählen kann.
 
@@ -459,6 +502,12 @@ refreshPolyList polyStore selectedStore polyListOutput = do
 {-
 
 Diese Funktion erzeugt eine einzelne Zeile für die Polynomliste.
+
+Sie bekommt selectedStore, selectedNames und ein einzelnes gespeichertes Polynom (name, poly) übergeben.
+
+selectedStore ist ein IORef, in dem die Namen der aktuell ausgewählten Polynome gespeichert sind.
+selectedNames ist eine Liste der Namen der aktuell ausgewählten Polynome, die wir aus selectedStore auslesen.
+
 Eine Zeile besteht aus einer Checkbox, dem Namen des Polynoms und der mathematischen Darstellung des Polynoms.
 
 Wenn die Checkbox angeklickt wird, wird der Name des Polynoms in selectedStore gespeichert oder wieder entfernt.
@@ -522,9 +571,18 @@ handleclearselectionclick polyStore selectedStore polyListOutput polyListMessage
 
 {-
 
-Diese Funktion entfernt alle ausgewählten Polynome aus der Polynomliste.
-Wenn nichts ausgewählt wurde, wird eine Fehlermeldung unter der Polynomliste angezeigt.
-Wenn Polynome ausgewählt wurden, werden sie aus polyStore entfernt und die Auswahl wird anschließend geleert.
+Diese Funktion wird aufgerufen, wenn "Polynom entfernen" geklickt wird.
+Sie entfernt alle ausgewählten Polynome aus der Polynomliste.
+
+Dazu bekommt sie polyStore, selectedStore, polyListOutput und polyListMessage übergeben.
+
+polyStore ist ein IORef, in dem die gesamte Polynomliste gespeichert ist, selectedStore ist ein IORef, 
+in dem die Namen der aktuell ausgewählten Polynome gespeichert sind, polyListOutput ist das Element, in dem die Polynomliste angezeigt wird und polyListMessage ist das Element, in dem Fehlermeldungen angezeigt werden können.
+
+Wir prüfen selectedNames auf zwei Fälle:
+
+1. Fall: Wenn nichts ausgewählt wurde, wird eine Fehlermeldung unter der Polynomliste angezeigt.
+2. Fall: Wenn Polynome ausgewählt wurden, werden sie aus polyStore entfernt und die Auswahl wird anschließend geleert.
 
 -}
 

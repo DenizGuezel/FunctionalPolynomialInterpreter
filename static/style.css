@@ -395,6 +395,19 @@ input {
   font-weight: 700;
 }
 
+.status-error {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #dc2626;
+  color: white;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 10px;
+  font-weight: 700;
+}
+
 .status-dot {
   width: 9px;
   height: 9px;
