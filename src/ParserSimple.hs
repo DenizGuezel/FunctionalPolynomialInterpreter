@@ -134,6 +134,23 @@ splitBySemicolon s = let (before, after) = break (== ';') s
 
 {- 
 
+Diese Hauptfunktion soll einen String, der eine Zahl beschreibt, in einen Rational parsen.
+Sie bekommt als Eingabe z.B "3" oder "3/4" und gibt als Ausgabe Maybe Rational zurück, das entweder Nothing (wenn der String keine gültige Zahl ist)
+oder Just r (wenn der String eine gültige Zahl ist) enthält.
+
+Wir sagen, dass der input String entweder eine ganze Zahl (Integer) oder einen Bruch (Fraction) darstellen kann.
+
+Wenn der String eine ganze Zahl darstellt, wird er in einen Integer geparst und dann in einen Rational umgewandelt.
+Wenn der String einen Bruch darstellt, wird er in einen Rational geparst.
+
+-}
+
+parseRationalInput :: String -> Maybe Rational
+parseRationalInput input = case readMaybe input :: Maybe Integer of
+    Just n -> Just (fromInteger n) 
+    Nothing -> parseFraction input 
+{- 
+
 Diese Hilfsfunktion soll einen String, der einen Bruch beschreibt, in einen Rational parsen.
 Sie bekommt als Eingabe z.B "3/4" und gibt als Ausgabe Maybe Rational zurück, das entweder Nothing (wenn der String kein gültiger Bruch ist) 
 oder Just r (wenn der String ein gültiger Bruch ist) enthält.
