@@ -224,4 +224,28 @@ showParallelResultsText x results =
    "Parallele Auswertung bei x = " ++ prettyRational x ++ ":\n" 
    ++ unlines [name ++ ": " ++ prettyRational value | (name, value) <- results]
 
+{-
+
+Diese Funktion stellt die parallele Auswertung zusammen mit einem Vergleich zur sequentiellen Auswertung dar.
+
+sequentialResults sind die Ergebnisse aus der normalen map-Version.
+parallelResults sind die Ergebnisse aus der parMap-Version.
+sameResult sagt, ob beide Ergebnislisten gleich sind.
+
+Dadurch sieht man in der GUI nicht nur das Ergebnis, sondern auch, dass die parallele Version fachlich dasselbe liefert.
+
+-}
+
+showParallelComparisonText :: Rational -> [(String, Rational)] -> [(String, Rational)] -> Bool -> String
+showParallelComparisonText x sequentialResults parallelResults sameResult =
+   "Parallele Auswertung bei x = " ++ prettyRational x ++ ":\n"
+   ++ unlines [name ++ ": " ++ prettyRational value | (name, value) <- parallelResults]
+   ++ "\nVergleich mit sequentieller Auswertung:\n"
+   ++ unlines [name ++ ": " ++ prettyRational value | (name, value) <- sequentialResults]
+   ++ "\nKorrektheitscheck: "
+   ++ (if sameResult then "parallel und sequentiell liefern dasselbe Ergebnis." else "parallel und sequentiell unterscheiden sich.")
+   ++ "\n\nKonzept:\n"
+   ++ "Jedes Polynom wird unabhängig an derselben Stelle x ausgewertet.\n"
+   ++ "Deshalb kann die Liste der Polynome mit parMap rdeepseq parallel verarbeitet werden."
+
 

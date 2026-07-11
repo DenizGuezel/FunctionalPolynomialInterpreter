@@ -1399,10 +1399,10 @@ handleparallelclick polyStore input resultStore output = do
             case library of
                 [] -> setOutputError output "Fehler: Es wurde noch kein Polynom gespeichert."
                 _ -> do
-                   let results = evaluateNamedManyParallel x library
-                   liftIO $ writeIORef resultStore (ParallelResult x results)
+                   let (sequentialResults, parallelResults, sameResult) = compareSequentialAndParallel x library
+                   liftIO $ writeIORef resultStore (ParallelResult x parallelResults)
                    void $ element input # set value ""
-                   setOutputSuccess output (showParallelResultsText x results)
+                   setOutputSuccess output (showParallelComparisonText x sequentialResults parallelResults sameResult)
                   
 {- Darstellungshandler -}
 
