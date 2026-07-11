@@ -1,7 +1,7 @@
 module Graph where
 
 import Poly
-import Format (prettyRational) 
+import Format (Pretty(..))
 
 {- Dieses Modul dient dazu, einen Graphen zu visualisieren, sie enthält die ganze Logik. -}
 
@@ -64,8 +64,8 @@ ist und nicht allgemein für die Formatierung von Daten verwendet wird.
 
 -}
 
-formatPoint :: (Rational, Rational) -> String
-formatPoint (x, y) = prettyRational x ++ " | " ++ prettyRational y
+formatPoint :: (Pretty a, Pretty b) => (a, b) -> String
+formatPoint (x, y) = pretty x ++ " | " ++ pretty y
 
 {- 
 
@@ -79,7 +79,7 @@ ist und nicht allgemein für die Formatierung von Daten verwendet wird.
 
 -}
 
-formatTable :: [(Rational, Rational)] -> String
+formatTable :: (Pretty a, Pretty b) => [(a, b)] -> String
 formatTable points = "x | y\n" ++ "-----\n" ++ unlines (map formatPoint points)
 
 {- Hauptfunktion, die den Graphen in der GUi anzeigt -}

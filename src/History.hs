@@ -1,6 +1,7 @@
 module History where
 
-import Poly 
+import Poly
+import Format (Pretty(..))
 
 {- In dieses Modul werden die Historie der Berechnungen gespeichert und verwaltet, damit vergangene Berechnungen angezeigt werden können.  -}
 
@@ -48,6 +49,27 @@ data HistoryEntry
    | HistoryValue String Rational
    | HistoryDiv String Poly Poly
    deriving (Show, Eq)
+{-
+
+Diese Instanz sagt, wie ein HistoryEntry mit der allgemeinen Pretty-Typklasse dargestellt wird.
+
+Dadurch muss die Anzeige der Historie nicht mehr jedes Ergebnis komplett selbst formatieren.
+Stattdessen entscheidet der jeweilige HistoryEntry, wie er als lesbarer Text dargestellt wird.
+
+Beispiele:
+HistoryPoly "p1" poly      -> "p1: 3x² + 2x"
+HistoryValue "p1(2)" 10    -> "p1(2): 10"
+HistoryDiv "p1 / p2" q r   -> "p1 / p2: Quotient = ..., Rest = ..."
+
+-}
+
+instance Pretty HistoryEntry where
+   pretty (HistoryPoly name poly) =
+      name ++ ": " ++ pretty poly
+   pretty (HistoryValue name value) =
+      name ++ ": " ++ pretty value
+   pretty (HistoryDiv name quotient rest) =
+      name ++ ": Quotient = " ++ pretty quotient ++ ", Rest = " ++ pretty rest
 
 {- 
 

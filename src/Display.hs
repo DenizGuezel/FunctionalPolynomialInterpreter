@@ -18,15 +18,27 @@ Das Modul baut also nur die fertigen Strings zusammen und hält die Anzeige-Logi
 
 {- Ergebnis-Darstellung -}
 
+{-
+
+Diese Funktion stellt ein Ergebnis generisch dar.
+
+Der Typ Pretty a => bedeutet:
+Die Funktion funktioniert für jeden Typ a, solange dieser Typ eine Pretty-Instanz besitzt.
+Dadurch können Polynome, rationale Werte oder andere darstellbare Ergebnisse über dieselbe Funktion ausgegeben werden.
+
+-}
+
+showPrettyResultText :: Pretty a => String -> a -> String
+showPrettyResultText name value = "Ergebnis von " ++ name ++ ": " ++ pretty value
 {- Diese Funktion stellt das Ergebnis für ein Polynom dar. -}
 
 showResultText :: String -> Poly -> String
-showResultText name poly = "Ergebnis von " ++ name ++ ": " ++ pretty poly
+showResultText = showPrettyResultText
 
 {- Diese Funktion stellt das Ergebnis für einen Wert dar.-}
 
 showValueText :: String -> Rational -> String
-showValueText name value = "Ergebnis von " ++ name ++ ": " ++ pretty value
+showValueText = showPrettyResultText
 
 {- Diese Funktion stellt das Ergebnis für eine Division dar. -}
 
@@ -174,23 +186,19 @@ showGraphDivText name quotient rest =
 
 {- Diese Hauptfunktion stellt die ganze Historie der Ergebnisse als einen schön formartierten String dar. -}
 
-showHistoryText :: History HistoryEntry-> String
-showHistoryText history =
+showPrettyHistory :: Pretty a => History a -> String
+showPrettyHistory history =
    case historyToList history of
       [] -> "Historie ist leer."
-      entries -> "Historie:\n" ++ unlines (zipWith formatEntry [1..] entries)
+      entries -> "Historie:\n" ++ unlines (zipWith formatPrettyEntry [1..] entries)
+
+showHistoryText :: History HistoryEntry -> String
+showHistoryText = showPrettyHistory
 
 {- Diese Hilfsfunktion formatiert einen Eintrag, je nach HistoryEntry-Typ in der Historie in einen schön formartierten String. -}
 
-formatEntry :: Int -> HistoryEntry -> String
-formatEntry n (HistoryPoly name poly) =
-   show n ++ ". " ++ name ++ ": " ++ pretty poly
-formatEntry n (HistoryValue name value) =
-   show n ++ ". " ++ name ++ ": " ++ pretty value
-formatEntry n (HistoryDiv name quotient rest) =
-   show n ++ ". " ++ name
-   ++ ": Quotient = " ++ pretty quotient
-   ++ ", Rest = " ++ pretty rest
+formatPrettyEntry :: Pretty a => Int -> a -> String
+formatPrettyEntry n entry = show n ++ ". " ++ pretty entry
 
 {- Library-Darstellung -}
 
