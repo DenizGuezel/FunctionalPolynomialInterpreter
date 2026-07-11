@@ -72,3 +72,18 @@ z.B bei library =[ ("p1", poly1), ("p2", poly2), ("p3", poly3)] nimmt fst das er
 
 listPolys :: PolyLibrary -> [PolyName]
 listPolys library = map fst library
+
+
+{-
+
+Diese Funktion holt aus der gesamten Polynomliste genau die Polynome heraus, die aktuell ausgewählt sind.
+selectedNames enthält nur die Namen der ausgewählten Polynome.
+Die Funktion filtert dann die PolyLibrary nach diesen Namen.
+
+Das Ergebnis benutzen die Operationen wie Addieren, Subtrahieren, Multiplizieren, Dividieren, Ableiten und Auswerten.
+
+-}
+
+selectedPolys :: PolyLibrary -> [String] -> PolyLibrary
+selectedPolys library selectedNames =
+   filter (\(name, _) -> name `elem` selectedNames) library

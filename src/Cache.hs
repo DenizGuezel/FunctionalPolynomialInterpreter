@@ -35,6 +35,26 @@ data Operation
     | Div Poly Poly
    deriving (Show, Eq)
 
+
+{-
+
+Dieser Datentyp wird für den Cache benutzt.
+Anders als GuiResult speichert CachedResult keinen Anzeigenamen wie "p1 + p2".
+
+Der Cache soll nur das mathematische Ergebnis wiederverwenden.
+Der aktuelle Name der Operation wird danach in der GUI neu ergänzt.
+
+Das ist sauberer, weil ein gecachtes Ergebnis nicht mehr an alte GUI-Namen gebunden ist.
+
+-}
+
+data CachedResult
+   = CachedPoly Poly
+   | CachedValue Rational
+   | CachedDiv Poly Poly
+   deriving (Show, Eq)
+
+
 {- 
 
 Dieser Datentyp repräsentiert den Cache, der verschiedene Operationen als Paar mit einem String speichert. 
