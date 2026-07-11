@@ -79,6 +79,7 @@ library
         Random
         Cache
         Parallel
+        Template
 
     -- Modules included in this library but not exported.
     -- other-modules:
@@ -91,7 +92,8 @@ library
         base ^>=4.18.3.0,
         random,
         threepenny-gui,
-        parallel
+        parallel,
+        template-haskell
 
     -- Directories containing source files.
     hs-source-dirs:   src

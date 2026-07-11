@@ -1,4 +1,4 @@
-﻿{-# LANGUAGE FlexibleInstances #-}
+﻿{-# LANGUAGE FlexibleInstances #-} -- Ist notwendig, damit wir unsere Instanzeh flexibler verwenden können, da Haskell sonst streng damit umgeht.
 
 module Format where
 
