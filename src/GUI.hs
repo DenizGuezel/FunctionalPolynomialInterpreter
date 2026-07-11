@@ -38,6 +38,7 @@ data GuiResult
    | PolyResult String Poly
    | ValueResult String Rational
    | DivResult String Poly Poly
+   | ParallelResult Rational [(String, Rational)]
    deriving (Show, Eq)
 
 {-
@@ -107,6 +108,11 @@ resultOverviewHtml (DivResult name quotient rest) =
    ++ "<div><span>Eingabe</span><strong>" ++ name ++ "</strong></div>"
    ++ "<div><span>Ausgabe</span><strong>Q = " ++ toPrettyMathPoly quotient ++ "</strong></div>"
    ++ "<div><span>Wert</span><strong>R = " ++ toPrettyMathPoly rest ++ "</strong></div>"
+resultOverviewHtml (ParallelResult x results) =
+   "<div><span>Operation</span><strong>Parallel</strong></div>"
+   ++ "<div><span>Eingabe</span><strong>x = " ++ prettyRational x ++ "</strong></div>"
+   ++ "<div><span>Ausgabe</span><strong>" ++ show (length results) ++ " Werte</strong></div>"
+   ++ "<div><span>Wert</span><strong>-</strong></div>"
 
 {- 
 
@@ -126,6 +132,7 @@ guiResultText NoResult = "Fehler: Es wurde noch kein Ergebnis berechnet."
 guiResultText (PolyResult name poly) = showResultText name poly
 guiResultText (ValueResult name value) = showValueText name value
 guiResultText (DivResult name quotient rest) = showDivResultText name quotient rest
+guiResultText (ParallelResult x results) = showParallelResultsText x results
 
 {-
 
@@ -625,7 +632,8 @@ setup window = do
       activateTab "Ergebnis"
 
    on UI.click buttonparallel $ \_ -> do
-      actionResult <- handleparallelclick polyStore inputX output
+      actionResult <- handleparallelclick polyStore inputX resultStore output
+      refreshResultOverview
       finishResultAction actionResult
       activateTab "Ergebnis"
 
@@ -958,6 +966,7 @@ handleaddpolyclick input polyStore selectedStore polyListOutput polyListMessage 
          let newLibrary = savePoly name poly library
          liftIO $ writeIORef polyStore newLibrary
          refreshPolyList polyStore selectedStore polyListOutput
+         void $ element input # set value ""
          clearPolyListSuccess polyListMessage "OK: Polynomliste aktualisiert."
 
 {- 
@@ -1236,6 +1245,7 @@ handleevaluateclick polyStore selectedStore input resultStore historyStore cache
                   Just cachedResult -> do
                      let guiResult = cachedToGuiResult (name1 ++ "(" ++ show x ++ ")") cachedResult
                      liftIO $ writeIORef resultStore guiResult
+                     void $ element input # set value ""
                      setOutputSuccess output ("Aus Cache geladen:\n" ++ guiResultText guiResult)
 
                   Nothing -> do
@@ -1249,6 +1259,7 @@ handleevaluateclick polyStore selectedStore input resultStore historyStore cache
                         (addHistory (HistoryValue (name1 ++ "(" ++ show x ++ ")") resultValue))
                      liftIO $ modifyIORef cacheStore
                         (insertCache operation cachedResult)
+                     void $ element input # set value ""
 
                      setOutputSuccess output ("Neu berechnet:\n" ++ resultText)
 
@@ -1374,8 +1385,8 @@ Fall 2.2.2 (Andernfalls): Es sind ein oder mehrere Polynome gespeichert, dann wi
 
 -}
 
-handleparallelclick :: IORef PolyLibrary -> Element -> Element -> UI GuiActionResult
-handleparallelclick polyStore input output = do
+handleparallelclick :: IORef PolyLibrary -> Element -> IORef GuiResult -> Element -> UI GuiActionResult
+handleparallelclick polyStore input resultStore output = do
    library <- liftIO $ readIORef polyStore
    xStr <- get value input
    case xStr of
@@ -1386,11 +1397,13 @@ handleparallelclick polyStore input output = do
             setOutputError output "Fehler: Bitte geben Sie eine gültige Zahl für x ein."
          Just x -> do
             case library of
-               [] -> setOutputError output "Fehler: Es wurde noch kein Polynom gespeichert."
-               _ -> do
-                  let results = evaluateNamedManyParallel x library
-                  setOutputSuccess output (showParallelResultsText x results)
-
+                [] -> setOutputError output "Fehler: Es wurde noch kein Polynom gespeichert."
+                _ -> do
+                   let results = evaluateNamedManyParallel x library
+                   liftIO $ writeIORef resultStore (ParallelResult x results)
+                   void $ element input # set value ""
+                   setOutputSuccess output (showParallelResultsText x results)
+                  
 {- Darstellungshandler -}
 
 {- 
@@ -1421,6 +1434,10 @@ handlelatexclick resultStore output = do
          setOutputSuccess output
             ("LaTeX von " ++ name ++ ": Quotient = "
              ++ toLaTeX quotient ++ ", Rest = " ++ toLaTeX rest)
+      ParallelResult x results ->
+         setOutputSuccess output
+            ("LaTeX von paralleler Auswertung bei x = " ++ toLaTeX x ++ ":\n"
+             ++ unlines [name ++ " = " ++ toLaTeX value | (name, value) <- results])
 
 {- 
 
@@ -1443,6 +1460,8 @@ handleshowresultclick resultStore output = do
       DivResult name quotient rest ->
          setOutputSuccess output
             (showDivResultText name quotient rest)
+      ParallelResult x results ->
+         setOutputSuccess output (showParallelResultsText x results)
 
 {- 
 
@@ -1470,6 +1489,11 @@ handletreeclick resultStore output = do
          setOutputSuccess output (showValueTreeText name value)
       DivResult name quotient rest -> do
          setOutputSuccess output (showDivTreeText name quotient rest)
+      ParallelResult x results ->
+         setOutputSuccess output
+            ("Baumdarstellung der parallelen Auswertung bei x = "
+             ++ prettyRational x ++ ":\n"
+             ++ unlines [name ++ " -> " ++ prettyTree (TConst value) | (name, value) <- results])
 
 {- 
 
@@ -1497,6 +1521,12 @@ handleanalysisclick resultStore output = do
          setOutputSuccess output (showValueAnalysisText name value)
       DivResult name quotient rest -> do
          setOutputSuccess output (showDivAnalysisText name quotient rest)
+      ParallelResult x results ->
+         setOutputSuccess output
+            ("Analyse der parallelen Auswertung bei x = "
+             ++ prettyRational x ++ ":\n"
+             ++ "Anzahl ausgewerteter Polynome: " ++ show (length results) ++ "\n"
+             ++ unlines [name ++ ": Wert = " ++ prettyRational value | (name, value) <- results])
 
 
 {- 
@@ -1574,6 +1604,12 @@ handlestepsclick resultStore output = do
          let steps = makeTraversalSteps traversal
          startTraversalAnimation tree steps output
          return (GuiSuccess "OK: Berechnung erfolgreich.")
+      ParallelResult x results ->
+         setOutputSuccess output
+            ("Schritte der parallelen Auswertung bei x = "
+             ++ prettyRational x ++ ":\n"
+             ++ "Die Polynome wurden unabhängig voneinander parallel ausgewertet.\n"
+             ++ unlines [name ++ " -> " ++ prettyRational value | (name, value) <- results])
 
 {-
 
@@ -1602,6 +1638,12 @@ handledetailsclick resultStore output = do
          setOutputSuccess output (showValueDetailsText name value)
       DivResult name quotient rest ->
          setOutputSuccess output (showDivDetailsText name quotient rest)
+      ParallelResult x results ->
+         setOutputSuccess output
+            ("Details der parallelen Auswertung:\n"
+             ++ "x-Wert: " ++ prettyRational x ++ "\n"
+             ++ "Anzahl Polynome: " ++ show (length results) ++ "\n"
+             ++ showParallelResultsText x results)
 
 {- 
 
@@ -1628,6 +1670,12 @@ handlegraphclick resultStore output = do
          setOutputHtmlSuccess output (showValueGraphText name value)
       DivResult name quotient rest -> do
          setOutputHtmlSuccess output (showGraphDivText name quotient rest)
+      ParallelResult x results ->
+         setOutputSuccess output
+            ("Die parallele Auswertung liefert einzelne Werte bei x = "
+             ++ prettyRational x
+             ++ " und keinen eigenen Funktionsgraphen.\n"
+             ++ showParallelResultsText x results)
 
 {- 
 
