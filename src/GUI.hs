@@ -17,6 +17,7 @@ import Library
 import Random
 import Cache
 import Parallel
+import Examples
 
 {- Hier kommt die GUI-Logik rein, welche die Interaktion mit dem Benutzer steuert z.B mit Buttons. Die GUI benutzt die anderen Module, um die Interaktion zu ermöglichen. -}
 
@@ -298,7 +299,12 @@ setup window = do
       # set UI.html "<span class='button-symbol'>⚡</span><span>Parallel</span>"
       # set UI.class_ "operation-button"
 
+   buttonloadexamples <- UI.button
+      # set UI.html "<span class='button-symbol'>Ex</span><span>Beispiele laden</span>"
+      # set UI.class_ "operation-button"
+
    {- Darstellung-Buttons -}
+
    buttonshowresult <- UI.button
       # set UI.html "<span class='button-symbol'>i</span><span>Ergebnis</span>"
       # set UI.class_ "view-button"
@@ -365,6 +371,7 @@ setup window = do
          , element inputX
          , element buttonaddpoly
          , element buttonrandompoly
+         , element buttonloadexamples
          , element formatHint
          ]
 
@@ -636,6 +643,11 @@ setup window = do
       refreshResultOverview
       finishResultAction actionResult
       activateTab "Ergebnis"
+
+   on UI.click buttonloadexamples $ \_ -> do
+      actionResult <- handleloadexamplesclick polyStore selectedStore resultStore polyListOutput polyListMessage
+      refreshResultOverview
+      finishListAction actionResult
 
    on UI.click clearSelectionButton $ \_ -> do
       actionResult <- handleclearselectionclick polyStore selectedStore polyListOutput polyListMessage
@@ -1403,7 +1415,41 @@ handleparallelclick polyStore input resultStore output = do
                    liftIO $ writeIORef resultStore (ParallelResult x parallelResults)
                    void $ element input # set value ""
                    setOutputSuccess output (showParallelComparisonText x sequentialResults parallelResults sameResult)
-                  
+
+{-
+
+Diese Funktion wird aufgerufen, wenn der Button "Beispiele laden" geklickt wird.
+
+Die Beispielpolynome kommen aus Examples.hs.
+Dort werden sie mit Template Haskell zur Compile-Zeit erzeugt.
+
+In der GUI sieht der Benutzer davon eine normale Polynomliste.
+Der fachliche Punkt ist aber:
+Die Polynome wurden nicht zur Laufzeit aus einem String geparst, sondern bereits beim Kompilieren aus einer kompakten Beschreibung erzeugt.
+
+polyStore speichert die gesamte Polynomliste.
+selectedStore speichert die aktuell ausgewählten Polynome.
+resultStore wird geleert, weil durch das Laden neuer Beispiele ein altes Ergebnis nicht mehr zur aktuellen Polynomliste passen muss.
+polyListOutput ist der sichtbare Bereich der Polynomliste.
+polyListMessage zeigt die Erfolgsmeldung unter der Polynomliste an.
+
+Wenn bereits Beispielpolynome mit denselben Namen vorhanden sind, werden sie ersetzt.
+Andere Polynome, die der Benutzer selbst hinzugefügt hat, bleiben erhalten.
+
+-}
+
+handleloadexamplesclick :: IORef PolyLibrary -> IORef [String] -> IORef GuiResult -> Element -> Element -> UI GuiActionResult
+handleloadexamplesclick polyStore selectedStore resultStore polyListOutput polyListMessage = do
+   library <- liftIO $ readIORef polyStore
+   let exampleNames = map fst exampleLibrary
+   let userLibrary = filter (\(name, _) -> name `notElem` exampleNames) library
+   let newLibrary = exampleLibrary ++ userLibrary
+   liftIO $ writeIORef polyStore newLibrary
+   liftIO $ writeIORef selectedStore []
+   liftIO $ writeIORef resultStore NoResult
+   refreshPolyList polyStore selectedStore polyListOutput
+   setPolyListSuccess polyListMessage "Template-Haskell-Beispiele wurden geladen."
+             
 {- Darstellungshandler -}
 
 {- 

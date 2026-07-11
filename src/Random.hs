@@ -20,8 +20,8 @@ Die Funktion gibt ein Monom zurück, das aus dem zufällig gewählten Koeffizien
 randomMonom :: IO Monom
 randomMonom = do
    coeff <- randomRIO (-5 :: Int, 5)
-   exp <- randomRIO (0 :: Int, 5)
-   return (M (fromIntegral coeff) exp)
+   expo <- randomRIO (0 :: Int, 5)
+   return (M (fromIntegral coeff) expo)
 
 {- 
 
