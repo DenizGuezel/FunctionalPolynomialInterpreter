@@ -1,6 +1,8 @@
-﻿module Format where
+﻿{-# LANGUAGE FlexibleInstances #-}
 
-import Data.Ratio (denominator, numerator)
+module Format where
+
+import Data.Ratio (Ratio, denominator, numerator)
 import Poly
 
 {- 
@@ -13,6 +15,36 @@ während im Modul Display die fertigen Strings zusammengebaut werden, die dann i
 
 {- Zahlenformate / Polynomformate -}
 
+{-
+
+Diese Typklasse beschreibt alle Datentypen, die in der GUI in einer lesbaren mathematischen Form dargestellt werden können.
+
+Der Vorteil ist, dass Funktionen nicht mehr genau wissen müssen, ob sie gerade ein Polynom, ein Monom oder eine rationale Zahl bekommen.
+Sie können einfach pretty aufrufen und der passende Datentyp entscheidet über seine eigene Darstellung.
+
+Beispiele:
+pretty (3 % 1)                         -> "3"
+pretty (M (2 % 1) 2)                   -> "2x²"
+pretty (P [M (3 % 1) 2, M (1 % 1) 0])  -> "3x² + 1"
+
+-}
+
+class Pretty a where
+   pretty :: a -> String
+
+{-
+
+Diese Hilfsfunktion kombiniert einen Namen mit einem beliebigen Wert, der eine Pretty-Instanz besitzt.
+Dadurch kann man Ausgaben wie "p1: 3x² + 2x" oder "Wert: 5" generisch bauen.
+
+Der wichtige Teil ist der Typ Pretty a =>.
+Er bedeutet: Diese Funktion funktioniert für jeden Typ a, solange dieser Typ mit pretty dargestellt werden kann.
+
+-}
+
+prettyNamed :: Pretty a => String -> a -> String
+prettyNamed name value = name ++ ": " ++ pretty value
+
 {- 
 
 Diese Hilfsfunktion wandelt eine rationale Zahl in eine lesbare Form um.
@@ -24,9 +56,12 @@ ansonsten wird der Zähler und der Nenner durch einen Bruchstrich getrennt zurü
 -}
 
 prettyRational :: Rational -> String
-prettyRational r
-   | denominator r == 1 = show (numerator r)
-   | otherwise = show (numerator r) ++ "/" ++ show (denominator r)
+prettyRational = pretty
+
+instance (Integral a, Show a) => Pretty (Ratio a) where
+   pretty r
+      | denominator r == 1 = show (numerator r)
+      | otherwise = show (numerator r) ++ "/" ++ show (denominator r)
 
 {- 
 
@@ -70,6 +105,9 @@ Genau so geht es weiter, bis die kleinste Einheit, nämlich die Koeffizienten un
 
 toPrettyMathPoly :: Poly -> String
 toPrettyMathPoly p = prettyPoly (normalize p)
+
+instance Pretty Poly where
+   pretty = toPrettyMathPoly
 
 {- 
 
@@ -143,6 +181,9 @@ prettyMonom (M k e)
       "x" ++ prettyExponent e
    | otherwise =
       prettyRational k ++ "x" ++ prettyExponent e
+
+instance Pretty Monom where
+   pretty = prettyMonom
 
 
 {- Baumformate -}

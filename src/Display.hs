@@ -8,7 +8,6 @@ import Tree (ExprTree(..), polyToExprTree, prettyTree, prettyTreeMarked)
 import Graph
 import History (History(..), HistoryEntry(..), historyToList)
 import Library (PolyLibrary)
-import qualified Control.Applicative as Wert
 
 {- 
 
@@ -22,18 +21,18 @@ Das Modul baut also nur die fertigen Strings zusammen und hält die Anzeige-Logi
 {- Diese Funktion stellt das Ergebnis für ein Polynom dar. -}
 
 showResultText :: String -> Poly -> String
-showResultText name poly = "Ergebnis von " ++ name ++ ": " ++ toPrettyMathPoly poly
+showResultText name poly = "Ergebnis von " ++ name ++ ": " ++ pretty poly
 
 {- Diese Funktion stellt das Ergebnis für einen Wert dar.-}
 
 showValueText :: String -> Rational -> String
-showValueText name value = "Ergebnis von " ++ name ++ ": " ++ prettyRational value
+showValueText name value = "Ergebnis von " ++ name ++ ": " ++ pretty value
 
 {- Diese Funktion stellt das Ergebnis für eine Division dar. -}
 
 showDivResultText :: String -> Poly -> Poly -> String
 showDivResultText name quotient rest =
-   "Ergebnis von " ++ name ++ ": Quotient = " ++ toPrettyMathPoly quotient ++ ", Rest = " ++ toPrettyMathPoly rest
+   "Ergebnis von " ++ name ++ ": Quotient = " ++ pretty quotient ++ ", Rest = " ++ pretty rest
 
 {- Baum-Darstellung -}
 
@@ -97,7 +96,7 @@ showPolyRepresentations name poly =
    let normalizedPoly = normalize poly
        tree = polyToExprTree normalizedPoly
    in name ++ ":\n"
-      ++ "Mathematisch: " ++ prettyPoly normalizedPoly ++ "\n"
+      ++ "Mathematisch: " ++ pretty normalizedPoly ++ "\n"
       ++ "Monomliste: " ++ showMonomListNormalized normalizedPoly ++ "\n"
       ++ "Interne Haskell-Darstellung: " ++ show normalizedPoly ++ "\n"
       ++ "LaTeX: " ++ polyToLaTeX normalizedPoly ++ "\n"
@@ -110,7 +109,7 @@ showPolyRepresentations name poly =
 showValueDetailsText :: String -> Rational -> String
 showValueDetailsText name value =
    "Darstellungen von " ++ name ++ ":\n"
-   ++ "Wert: " ++ prettyRational value ++ "\n"
+   ++ "Wert: " ++ pretty value ++ "\n"
    ++ "Haskell-Darstellung: " ++ show value ++ "\n"
    ++ "LaTeX: " ++ toLaTeX value ++ "\n"
    ++ "Baum:\n" ++ prettyTree (TConst value)
@@ -164,7 +163,7 @@ showGraphText name poly = "<h3>Graph von " ++ name ++ ":</h3>\n" ++ graphView po
 
 showValueGraphText :: String -> Rational -> String
 showValueGraphText name value =
-   "Fehler: " ++ name ++ " ist ein einzelner Wert (" ++ prettyRational value ++ ") und hat keinen Funktionsgraphen."
+   "Fehler: " ++ name ++ " ist ein einzelner Wert (" ++ pretty value ++ ") und hat keinen Funktionsgraphen."
 
 {- Diese Funktion stellt die Graph-Darstellung einer Division mit Quotient und Rest dar. -}
 showGraphDivText :: String -> Poly -> Poly -> String
@@ -185,20 +184,20 @@ showHistoryText history =
 
 formatEntry :: Int -> HistoryEntry -> String
 formatEntry n (HistoryPoly name poly) =
-   show n ++ ". " ++ name ++ ": " ++ toPrettyMathPoly poly
+   show n ++ ". " ++ name ++ ": " ++ pretty poly
 formatEntry n (HistoryValue name value) =
-   show n ++ ". " ++ name ++ ": " ++ prettyRational value
+   show n ++ ". " ++ name ++ ": " ++ pretty value
 formatEntry n (HistoryDiv name quotient rest) =
    show n ++ ". " ++ name
-   ++ ": Quotient = " ++ toPrettyMathPoly quotient
-   ++ ", Rest = " ++ toPrettyMathPoly rest
+   ++ ": Quotient = " ++ pretty quotient
+   ++ ", Rest = " ++ pretty rest
 
 {- Library-Darstellung -}
 
 {- Diese Funktion stellt jeden Eintrag aus der PolyLibrary als einen String im Fromat: <polynomname> = <polynom> dar. -}
 showPolyLibraryText :: PolyLibrary -> String
 showPolyLibraryText [] = "Noch keine Polynome vorhanden."
-showPolyLibraryText library = unlines [name ++ " = " ++ toPrettyMathPoly poly | (name, poly) <- library]
+showPolyLibraryText library = unlines [name ++ " = " ++ pretty poly | (name, poly) <- library]
 
 {- Random-Darstellung -}
 
@@ -214,15 +213,15 @@ Division und Auswertung entstehen erst, wenn der Benutzer die entsprechenden But
 -}
 
 showRandomPolyText :: String -> Poly -> String
-showRandomPolyText name poly = "Zufallspolynom " ++ name ++ ": " ++ toPrettyMathPoly poly
+showRandomPolyText name poly = "Zufallspolynom " ++ name ++ ": " ++ pretty poly
 
 {- Parallel-Darstellung -}
 
 {- Diese Funktion stellt die Ergebnisse einer parallelen Auswertung als String dar. -}
 showParallelResultsText :: Rational -> [(String, Rational)] -> String
 showParallelResultsText x results = 
-   "Parallele Auswertung bei x = " ++ prettyRational x ++ ":\n" 
-   ++ unlines [name ++ ": " ++ prettyRational value | (name, value) <- results]
+   "Parallele Auswertung bei x = " ++ pretty x ++ ":\n" 
+   ++ unlines [name ++ ": " ++ pretty value | (name, value) <- results]
 
 {-
 
@@ -238,14 +237,12 @@ Dadurch sieht man in der GUI nicht nur das Ergebnis, sondern auch, dass die para
 
 showParallelComparisonText :: Rational -> [(String, Rational)] -> [(String, Rational)] -> Bool -> String
 showParallelComparisonText x sequentialResults parallelResults sameResult =
-   "Parallele Auswertung bei x = " ++ prettyRational x ++ ":\n"
-   ++ unlines [name ++ ": " ++ prettyRational value | (name, value) <- parallelResults]
+   "Parallele Auswertung bei x = " ++ pretty x ++ ":\n"
+   ++ unlines [name ++ ": " ++ pretty value | (name, value) <- parallelResults]
    ++ "\nVergleich mit sequentieller Auswertung:\n"
-   ++ unlines [name ++ ": " ++ prettyRational value | (name, value) <- sequentialResults]
+   ++ unlines [name ++ ": " ++ pretty value | (name, value) <- sequentialResults]
    ++ "\nKorrektheitscheck: "
    ++ (if sameResult then "parallel und sequentiell liefern dasselbe Ergebnis." else "parallel und sequentiell unterscheiden sich.")
    ++ "\n\nKonzept:\n"
    ++ "Jedes Polynom wird unabhängig an derselben Stelle x ausgewertet.\n"
    ++ "Deshalb kann die Liste der Polynome mit parMap rdeepseq parallel verarbeitet werden."
-
-

@@ -37,7 +37,7 @@ Mithilfe von pattern matching wird das Monom in seine Bestandteile zerlegt, näm
 monomToExprTree :: Monom -> ExprTree
 monomToExprTree (M k 0) = TConst k
 monomToExprTree (M 1 e) = TVar e
-monomToExprTree (M 0 e) = TConst 0
+monomToExprTree (M 0 _) = TConst 0
 monomToExprTree (M k e) = TMul (TConst k) (TVar e)
 
 {-
@@ -58,8 +58,8 @@ polyToExprTree (P (m:ms)) = TAdd (monomToExprTree m) (polyToExprTree (P ms))
 {- Diese Hilfsfunktion holt je nach Knotentyp die Kindknoten eines Ausdrucksbaums. -}
 
 treeChildren :: ExprTree -> [ExprTree]
-treeChildren (TConst k) = []
-treeChildren (TVar e) = []
+treeChildren (TConst _) = []
+treeChildren (TVar _) = []
 treeChildren (TAdd left right) = [left, right]
 treeChildren (TMul left right) = [left, right]
 
@@ -68,8 +68,8 @@ treeChildren (TMul left right) = [left, right]
 treeLabel :: ExprTree -> String
 treeLabel (TConst k) = prettyRational k
 treeLabel (TVar e) = prettyVariable e
-treeLabel (TAdd left right) = "+"
-treeLabel (TMul left right) = "*"
+treeLabel (TAdd _ _) = "+"
+treeLabel (TMul _ _) = "*"
 
 
 {- 
@@ -84,6 +84,19 @@ treeChildren bestimmt, welche Kindknoten ein Ausdrucksbaum besitzt.
 
 prettyTree :: ExprTree -> String
 prettyTree = prettyTreeWith treeLabel treeChildren
+
+{-
+
+Diese Instanz sagt, wie ein ExprTree mit der allgemeinen Pretty-Typklasse dargestellt wird.
+
+Der Ausdrucksbaum bleibt weiterhin im Modul Tree definiert.
+Die allgemeine Idee von pretty kommt aber aus Format.hs.
+Dadurch kann man später in anderen Modulen einfach pretty tree schreiben, ohne die konkrete Baumfunktion kennen zu müssen.
+
+-}
+
+instance Pretty ExprTree where
+   pretty = prettyTree
 
 {- 
 
