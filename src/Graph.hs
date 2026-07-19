@@ -160,18 +160,39 @@ formatPoint (x, y) = pretty x ++ " | " ++ pretty y
 
 {- 
 
+Diese Hilfsfunktion f?llt einen String links mit Leerzeichen auf.
+
+Das brauchen wir f?r die Wertetabelle, damit positive und negative Zahlen sauber untereinander stehen.
+Wenn der String bereits lang genug ist, wird er unver?ndert zur?ckgegeben.
+
+-}
+
+padLeft :: Int -> String -> String
+padLeft width textValue = replicate (width - length textValue) ' ' ++ textValue
+
+{- 
+
 Diese Funktion formatiert eine Liste von Punkten als Tabelle, die in der GUI angezeigt werden kann.
-Sie bekommt als Eingabe eine Liste von Tupeln, die die Punkte darstellen, und gibt als Ausgabe einen String zurück, der die Tabelle darstellt.
+Sie bekommt als Eingabe eine Liste von Tupeln, die die Punkte darstellen, und gibt als Ausgabe einen String zur?ck, der die Tabelle darstellt.
 
-Sie benutzt die Hilfsfunktion formatPoint, um jeden Punkt in der Liste zu formatieren und fügt dann die Kopfzeile "x | y" und eine Trennlinie hinzu.
+Sie formatiert zuerst alle x- und y-Werte als Strings.
+Danach berechnet sie die n?tige Spaltenbreite und f?llt k?rzere Werte mit Leerzeichen auf.
+Dadurch verrutschen die Werte in der GUI nicht, auch wenn negative und positive Zahlen gemischt sind.
 
-Sie bleibt in Graph.hs und nicht in Format.hs, da sie spezifisch für die Darstellung von Punkten in der GUI 
-ist und nicht allgemein für die Formatierung von Daten verwendet wird.
+Sie bleibt in Graph.hs und nicht in Format.hs, da sie spezifisch f?r die Darstellung von Punkten in der GUI 
+ist und nicht allgemein f?r die Formatierung von Daten verwendet wird.
 
 -}
 
 formatTable :: (Pretty a, Pretty b) => [(a, b)] -> String
-formatTable points = "x | y\n" ++ "-----\n" ++ unlines (map formatPoint points)
+formatTable points =
+   let formattedPoints = [(pretty x, pretty y) | (x, y) <- points]
+       xWidth = maximum (length "x" : map (length . fst) formattedPoints)
+       yWidth = maximum (length "y" : map (length . snd) formattedPoints)
+       header = padLeft xWidth "x" ++ " | " ++ padLeft yWidth "y"
+       separator = replicate (xWidth + 3 + yWidth) '-'
+       formatRow (xText, yText) = padLeft xWidth xText ++ " | " ++ padLeft yWidth yText
+   in header ++ "\n" ++ separator ++ "\n" ++ unlines (map formatRow formattedPoints)
 
 {-
 
