@@ -36,9 +36,9 @@ DivResult String Poly Poly: Das Ergebnis ist eine Division von zwei Polynomen, z
 
 data GuiResult
    = NoResult
-   | PolyResult String Poly
-   | ValueResult String Rational
-   | DivResult String Poly Poly
+   | PolyResult String String Poly
+   | ValueResult String String Rational
+   | DivResult String String Poly Poly
    | ParallelResult Rational [(String, Rational)]
    deriving (Show, Eq)
 
@@ -68,10 +68,10 @@ Je nachdem, ob das CachedResult ein Polynom, ein Wert oder eine Division ist, wi
 
 -}
 
-cachedToGuiResult :: String -> CachedResult -> GuiResult
-cachedToGuiResult name (CachedPoly poly) = PolyResult name poly
-cachedToGuiResult name (CachedValue value) = ValueResult name value
-cachedToGuiResult name (CachedDiv quotient rest) = DivResult name quotient rest
+cachedToGuiResult :: String -> String -> CachedResult -> GuiResult
+cachedToGuiResult operation inputText (CachedPoly poly) = PolyResult operation inputText poly
+cachedToGuiResult operation inputText (CachedValue value) = ValueResult operation inputText value
+cachedToGuiResult operation inputText (CachedDiv quotient rest) = DivResult operation inputText quotient rest
 
 {- Diese Funktion gibt den Text zurück, der angezeigt wird, wenn kein gültiges Ergebnis vorhanden ist. -}
 
@@ -94,19 +94,19 @@ resultOverviewHtml NoResult =
    ++ "<div><span>Eingabe</span><strong>-</strong></div>"
    ++ "<div><span>Ausgabe</span><strong>-</strong></div>"
    ++ "<div><span>Wert</span><strong>-</strong></div>"
-resultOverviewHtml (PolyResult name poly) =
-   "<div><span>Operation</span><strong>" ++ name ++ "</strong></div>"
-   ++ "<div><span>Eingabe</span><strong>" ++ name ++ "</strong></div>"
+resultOverviewHtml (PolyResult operation inputText poly) =
+   "<div><span>Operation</span><strong>" ++ operation ++ "</strong></div>"
+   ++ "<div><span>Eingabe</span><strong>" ++ inputText ++ "</strong></div>"
    ++ "<div><span>Ausgabe</span><strong>" ++ toPrettyMathPoly poly ++ "</strong></div>"
    ++ "<div><span>Wert</span><strong>-</strong></div>"
-resultOverviewHtml (ValueResult name value) =
-   "<div><span>Operation</span><strong>Auswerten</strong></div>"
-   ++ "<div><span>Eingabe</span><strong>" ++ name ++ "</strong></div>"
+resultOverviewHtml (ValueResult operation inputText value) =
+   "<div><span>Operation</span><strong>" ++ operation ++ "</strong></div>"
+   ++ "<div><span>Eingabe</span><strong>" ++ inputText ++ "</strong></div>"
    ++ "<div><span>Ausgabe</span><strong>-</strong></div>"
    ++ "<div><span>Wert</span><strong>" ++ prettyRational value ++ "</strong></div>"
-resultOverviewHtml (DivResult name quotient rest) =
-   "<div><span>Operation</span><strong>" ++ name ++ "</strong></div>"
-   ++ "<div><span>Eingabe</span><strong>" ++ name ++ "</strong></div>"
+resultOverviewHtml (DivResult operation inputText quotient rest) =
+   "<div><span>Operation</span><strong>" ++ operation ++ "</strong></div>"
+   ++ "<div><span>Eingabe</span><strong>" ++ inputText ++ "</strong></div>"
    ++ "<div><span>Ausgabe</span><strong>Q = " ++ toPrettyMathPoly quotient ++ "</strong></div>"
    ++ "<div><span>Wert</span><strong>R = " ++ toPrettyMathPoly rest ++ "</strong></div>"
 resultOverviewHtml (ParallelResult x results) =
@@ -130,9 +130,9 @@ Je nachdem , ob das GuiResult ein Polynom, ein Wert oder eine Division ist, wird
 
 guiResultText :: GuiResult -> String
 guiResultText NoResult = "Fehler: Es wurde noch kein Ergebnis berechnet."
-guiResultText (PolyResult name poly) = showResultText name poly
-guiResultText (ValueResult name value) = showValueText name value
-guiResultText (DivResult name quotient rest) = showDivResultText name quotient rest
+guiResultText (PolyResult _ name poly) = showResultText name poly
+guiResultText (ValueResult _ name value) = showValueText name value
+guiResultText (DivResult _ name quotient rest) = showDivResultText name quotient rest
 guiResultText (ParallelResult x results) = showParallelResultsText x results
 
 {-
@@ -237,7 +237,7 @@ setup window = do
       ]
 
    lambdaLogo <- UI.div
-      # set UI.text "λ"
+      # set UI.html "&lambda;"
       # set UI.class_ "lambda-logo"
 
    headline <- UI.h1
@@ -260,11 +260,11 @@ setup window = do
       # set UI.class_ "operation-button"
 
    buttonnegat <- UI.button
-      # set UI.html "<span class='button-symbol'>−p</span><span>Negieren</span>"
+      # set UI.html "<span class='button-symbol'>&minus;p</span><span>Negieren</span>"
       # set UI.class_ "operation-button"
 
    buttonaddpoly <- UI.button
-      # set UI.html "<span class='button-symbol'>+</span><span>Polynom hinzufügen</span>"
+      # set UI.html "<span class='button-symbol'>+</span><span>Polynom hinzuf&uuml;gen</span>"
       # set UI.class_ "operation-button"
 
    buttonadd <- UI.button
@@ -272,11 +272,11 @@ setup window = do
       # set UI.class_ "operation-button"
 
    buttonsub <- UI.button
-      # set UI.html "<span class='button-symbol'>−</span><span>Subtrahieren</span>"
+      # set UI.html "<span class='button-symbol'>&minus;</span><span>Subtrahieren</span>"
       # set UI.class_ "operation-button"
 
    buttonmult <- UI.button
-      # set UI.html "<span class='button-symbol'>×</span><span>Multiplizieren</span>"
+      # set UI.html "<span class='button-symbol'>&times;</span><span>Multiplizieren</span>"
       # set UI.class_ "operation-button"
 
    buttonderivation <- UI.button
@@ -288,15 +288,15 @@ setup window = do
       # set UI.class_ "operation-button"
 
    buttondiv <- UI.button
-      # set UI.html "<span class='button-symbol'>÷</span><span>Dividieren</span>"
+      # set UI.html "<span class='button-symbol'>&divide;</span><span>Dividieren</span>"
       # set UI.class_ "operation-button"
 
    buttonrandompoly <- UI.button
-      # set UI.html "<span class='button-symbol'>🎲</span><span>Zufallspolynom</span>"
+      # set UI.html "<span class='button-symbol'>&#127922;</span><span>Zufallspolynom</span>"
       # set UI.class_ "operation-button"
 
    buttonparallel <- UI.button
-      # set UI.html "<span class='button-symbol'>⚡</span><span>Parallel</span>"
+      # set UI.html "<span class='button-symbol'>&#9889;</span><span>Parallel</span>"
       # set UI.class_ "operation-button"
 
    buttonloadexamples <- UI.button
@@ -314,27 +314,27 @@ setup window = do
       # set UI.class_ "view-button"
 
    buttontree <- UI.button
-      # set UI.html "<span class='button-symbol'>🌳</span><span>Baum</span>"
+      # set UI.html "<span class='button-symbol'>&#127795;</span><span>Baum</span>"
       # set UI.class_ "view-button"
 
    buttonanalysis <- UI.button
-      # set UI.html "<span class='button-symbol'>📊</span><span>Analyse</span>"
+      # set UI.html "<span class='button-symbol'>&#128202;</span><span>Analyse</span>"
       # set UI.class_ "view-button"
 
    buttonsteps <- UI.button
-      # set UI.html "<span class='button-symbol'>☰</span><span>Schritte</span>"
+      # set UI.html "<span class='button-symbol'>&#9776;</span><span>Schritte</span>"
       # set UI.class_ "view-button"
 
    buttondetails <- UI.button
-      # set UI.html "<span class='button-symbol'>🔍</span><span>Details</span>"
+      # set UI.html "<span class='button-symbol'>&#128269;</span><span>Details</span>"
       # set UI.class_ "view-button"
 
    buttongraph <- UI.button
-      # set UI.html "<span class='button-symbol'>📈</span><span>Graph</span>"
+      # set UI.html "<span class='button-symbol'>&#128200;</span><span>Graph</span>"
       # set UI.class_ "view-button"
 
    buttonhistory <- UI.button
-      # set UI.html "<span class='button-symbol'>🕒</span><span>Historie</span>"
+      # set UI.html "<span class='button-symbol'>&#128338;</span><span>Historie</span>"
       # set UI.class_ "view-button"
 
    {- Speicher -}
@@ -379,10 +379,10 @@ setup window = do
 
    libraryTitle <- UI.h2 # set UI.text "Polynomliste"
    clearSelectionButton <- UI.button
-      # set UI.html "<span class='small-button-symbol'>♙</span><span>Auswahl löschen</span>"
+      # set UI.html "<span class='small-button-symbol'>&#9817;</span><span>Auswahl l&ouml;schen</span>"
       # set UI.class_ "secondary-button"
    removePolyButton <- UI.button
-      # set UI.html "<span class='small-button-symbol'>⌫</span><span>Polynom entfernen</span>"
+      # set UI.html "<span class='small-button-symbol'>&#9003;</span><span>Polynom entfernen</span>"
       # set UI.class_ "secondary-button"
    libraryActions <- UI.div
       # set UI.class_ "library-actions"
@@ -493,18 +493,19 @@ setup window = do
 
    _statusBar <- UI.div
       # set UI.class_ "status-bar"
-      # set UI.html "<div><span class='status-ok'>✓</span> OK: Berechnung erfolgreich.</div><div>Haskell Kernel: aktiv <span class='status-dot'></span></div>"
+      # set UI.html "<div><span class='status-ok'>&#10003;</span> OK: Berechnung erfolgreich.</div><div>Haskell Kernel: aktiv <span class='status-dot'></span></div>"
 
    {- Dynamische Statusleiste -}
 
    statusIcon <- UI.span
       # set UI.class_ "status-ok"
-      # set UI.text "✓"
+      # set UI.html "&#10003;"
 
    statusText <- UI.span
       # set UI.text "Bereit."
 
    statusLeft <- UI.div
+      # set UI.class_ "status-left"
       #+ [element statusIcon, element statusText]
 
    statusRight <- UI.div
@@ -536,10 +537,10 @@ setup window = do
          result <- liftIO $ readIORef resultStore
          void $ element resultOverview # set UI.html (resultOverviewHtml result)
    let setStatusOk message = do
-         void $ element statusIcon # set UI.class_ "status-ok" # set UI.text "✓"
+         void $ element statusIcon # set UI.class_ "status-ok" # set UI.html "&#10003;"
          void $ element statusText # set UI.text message
    let setStatusError message = do
-         void $ element statusIcon # set UI.class_ "status-error" # set UI.text "×"
+         void $ element statusIcon # set UI.class_ "status-error" # set UI.html "&times;"
          void $ element statusText # set UI.text message
    {-
 
@@ -876,14 +877,14 @@ handlenormalizeclick polyStore selectedStore resultStore historyStore cacheStore
          let operation = Normalize poly
          case lookupCache operation cache of
             Just cachedResult -> do
-               let guiResult = cachedToGuiResult name cachedResult
+               let guiResult = cachedToGuiResult "Normalisieren" name cachedResult
                liftIO $ writeIORef resultStore guiResult
                setOutputSuccess output ("Aus Cache geladen:\n" ++ guiResultText guiResult)
             Nothing -> do
                let resultPoly = normalize poly
                let resultText = "Ergebnis: " ++ toPrettyMathPoly resultPoly
                let cachedResult = CachedPoly resultPoly
-               let guiResult = cachedToGuiResult name cachedResult
+               let guiResult = cachedToGuiResult "Normalisieren" name cachedResult
                liftIO $ writeIORef resultStore guiResult
                liftIO $ modifyIORef historyStore
                   (addHistory (HistoryPoly name resultPoly))
@@ -922,14 +923,14 @@ handlenegatclick polyStore selectedStore resultStore historyStore cacheStore out
          let operation = Negate poly
          case lookupCache operation cache of
             Just cachedResult -> do
-               let guiResult = cachedToGuiResult name cachedResult
+               let guiResult = cachedToGuiResult "Negieren" name cachedResult
                liftIO $ writeIORef resultStore guiResult
                setOutputSuccess output ("Aus Cache geladen:\n" ++ guiResultText guiResult)
             Nothing -> do
                let resultPoly = negat poly
                let resultText = "Ergebnis: " ++ toPrettyMathPoly resultPoly
                let cachedResult = CachedPoly resultPoly
-               let guiResult = cachedToGuiResult name cachedResult
+               let guiResult = cachedToGuiResult "Negieren" name cachedResult
                liftIO $ writeIORef resultStore guiResult
                liftIO $ modifyIORef historyStore
                   (addHistory (HistoryPoly name resultPoly))
@@ -1023,7 +1024,7 @@ handleaddclick polyStore selectedStore resultStore historyStore cacheStore outpu
 
          case lookupCache operation cache of
             Just cachedResult -> do
-               let guiResult = cachedToGuiResult (name1 ++ " + " ++ name2) cachedResult
+               let guiResult = cachedToGuiResult "Addieren" (name1 ++ " + " ++ name2) cachedResult
                liftIO $ writeIORef resultStore guiResult
                setOutputSuccess output ("Aus Cache geladen:\n" ++ guiResultText guiResult)
 
@@ -1032,7 +1033,7 @@ handleaddclick polyStore selectedStore resultStore historyStore cacheStore outpu
                let resultText = "Ergebnis: " ++ toPrettyMathPoly resultPoly
 
                let cachedResult = CachedPoly resultPoly
-               let guiResult = cachedToGuiResult (name1 ++ " + " ++ name2) cachedResult
+               let guiResult = cachedToGuiResult "Addieren" (name1 ++ " + " ++ name2) cachedResult
                liftIO $ writeIORef resultStore guiResult
                liftIO $ modifyIORef historyStore
                   (addHistory (HistoryPoly (name1 ++ " + " ++ name2) resultPoly))
@@ -1072,7 +1073,7 @@ handlesubclick polyStore selectedStore resultStore historyStore cacheStore outpu
 
          case lookupCache operation cache of
             Just cachedResult -> do
-               let guiResult = cachedToGuiResult (name1 ++ " - " ++ name2) cachedResult
+               let guiResult = cachedToGuiResult "Subtrahieren" (name1 ++ " - " ++ name2) cachedResult
                liftIO $ writeIORef resultStore guiResult
                setOutputSuccess output ("Aus Cache geladen:\n" ++ guiResultText guiResult)
 
@@ -1081,7 +1082,7 @@ handlesubclick polyStore selectedStore resultStore historyStore cacheStore outpu
                let resultText = "Ergebnis: " ++ toPrettyMathPoly resultPoly
 
                let cachedResult = CachedPoly resultPoly
-               let guiResult = cachedToGuiResult (name1 ++ " - " ++ name2) cachedResult
+               let guiResult = cachedToGuiResult "Subtrahieren" (name1 ++ " - " ++ name2) cachedResult
                liftIO $ writeIORef resultStore guiResult
                liftIO $ modifyIORef historyStore
                   (addHistory (HistoryPoly (name1 ++ " - " ++ name2) resultPoly))
@@ -1121,7 +1122,7 @@ handlemultclick polyStore selectedStore resultStore historyStore cacheStore outp
 
          case lookupCache operation cache of
             Just cachedResult -> do
-               let guiResult = cachedToGuiResult (name1 ++ " * " ++ name2) cachedResult
+               let guiResult = cachedToGuiResult "Multiplizieren" (name1 ++ " * " ++ name2) cachedResult
                liftIO $ writeIORef resultStore guiResult
                setOutputSuccess output ("Aus Cache geladen:\n" ++ guiResultText guiResult)
 
@@ -1130,7 +1131,7 @@ handlemultclick polyStore selectedStore resultStore historyStore cacheStore outp
                let resultText = "Ergebnis: " ++ toPrettyMathPoly resultPoly
 
                let cachedResult = CachedPoly resultPoly
-               let guiResult = cachedToGuiResult (name1 ++ " * " ++ name2) cachedResult
+               let guiResult = cachedToGuiResult "Multiplizieren" (name1 ++ " * " ++ name2) cachedResult
                liftIO $ writeIORef resultStore guiResult
                liftIO $ modifyIORef historyStore
                   (addHistory (HistoryPoly (name1 ++ " * " ++ name2) resultPoly))
@@ -1182,14 +1183,14 @@ handlederivationclick polyStore selectedStore resultStore historyStore cacheStor
          let operation = Derive poly1
          case lookupCache operation cache of
             Just cachedResult -> do
-               let guiResult = cachedToGuiResult (name1 ++ "'") cachedResult
+               let guiResult = cachedToGuiResult "Ableiten" (name1 ++ "'") cachedResult
                liftIO $ writeIORef resultStore guiResult
                setOutputSuccess output ("Aus Cache geladen:\n" ++ guiResultText guiResult)
             Nothing -> do
                let resultPoly = derivation poly1
                let resultText = "Ergebnis: " ++ toPrettyMathPoly resultPoly
                let cachedResult = CachedPoly resultPoly
-               let guiResult = cachedToGuiResult (name1 ++ "'") cachedResult
+               let guiResult = cachedToGuiResult "Ableiten" (name1 ++ "'") cachedResult
                liftIO $ writeIORef resultStore guiResult
                liftIO $ modifyIORef historyStore
                   (addHistory (HistoryPoly "Ableiten" resultPoly))
@@ -1255,7 +1256,7 @@ handleevaluateclick polyStore selectedStore input resultStore historyStore cache
 
                case lookupCache operation cache of
                   Just cachedResult -> do
-                     let guiResult = cachedToGuiResult (name1 ++ "(" ++ show x ++ ")") cachedResult
+                     let guiResult = cachedToGuiResult "Auswerten" (name1 ++ "(" ++ show x ++ ")") cachedResult
                      liftIO $ writeIORef resultStore guiResult
                      void $ element input # set value ""
                      setOutputSuccess output ("Aus Cache geladen:\n" ++ guiResultText guiResult)
@@ -1265,7 +1266,7 @@ handleevaluateclick polyStore selectedStore input resultStore historyStore cache
                      let resultText = "Ergebnis: " ++ prettyRational resultValue
 
                      let cachedResult = CachedValue resultValue
-                     let guiResult = cachedToGuiResult (name1 ++ "(" ++ show x ++ ")") cachedResult
+                     let guiResult = cachedToGuiResult "Auswerten" (name1 ++ "(" ++ show x ++ ")") cachedResult
                      liftIO $ writeIORef resultStore guiResult
                      liftIO $ modifyIORef historyStore
                         (addHistory (HistoryValue (name1 ++ "(" ++ show x ++ ")") resultValue))
@@ -1311,7 +1312,7 @@ handledivclick polyStore selectedStore resultStore historyStore cacheStore outpu
 
          case lookupCache operation cache of
             Just cachedResult -> do
-               let guiResult = cachedToGuiResult (name1 ++ " / " ++ name2) cachedResult
+               let guiResult = cachedToGuiResult "Dividieren" (name1 ++ " / " ++ name2) cachedResult
                liftIO $ writeIORef resultStore guiResult
                setOutputSuccess output ("Aus Cache geladen:\n" ++ guiResultText guiResult)
 
@@ -1323,7 +1324,7 @@ handledivclick polyStore selectedStore resultStore historyStore cacheStore outpu
                      ++ ", Rest: " ++ toPrettyMathPoly rest
 
                let cachedResult = CachedDiv quotient rest
-               let guiResult = cachedToGuiResult (name1 ++ " / " ++ name2) cachedResult
+               let guiResult = cachedToGuiResult "Dividieren" (name1 ++ " / " ++ name2) cachedResult
                liftIO $ writeIORef resultStore guiResult
                liftIO $ modifyIORef historyStore
                   (addHistory (HistoryDiv (name1 ++ " / " ++ name2) quotient rest))
@@ -1369,7 +1370,7 @@ handlerandompolyclick resultStore polyStore selectedStore polyListOutput output 
    let name = "r" ++ show (length library + 1)
    let newLibrary = savePoly name poly library
    liftIO $ writeIORef polyStore newLibrary
-   liftIO $ writeIORef resultStore (PolyResult name poly)
+   liftIO $ writeIORef resultStore (PolyResult "Zufallspolynom" name poly)
    refreshPolyList polyStore selectedStore polyListOutput
    setOutputSuccess output (showRandomPolyText name poly)
    
@@ -1470,13 +1471,13 @@ handlelatexclick resultStore output = do
    case result of
       NoResult ->
          setOutputError output "Fehler: Es wurde noch kein Ergebnis berechnet."
-      PolyResult name poly ->
+      PolyResult _ name poly ->
          setOutputSuccess output
             ("LaTeX von " ++ name ++ ": " ++ toLaTeX poly)
-      ValueResult name value ->
+      ValueResult _ name value ->
          setOutputSuccess output
             ("LaTeX von " ++ name ++ ": " ++ toLaTeX value)
-      DivResult name quotient rest ->
+      DivResult _ name quotient rest ->
          setOutputSuccess output
             ("LaTeX von " ++ name ++ ": Quotient = "
              ++ toLaTeX quotient ++ ", Rest = " ++ toLaTeX rest)
@@ -1501,9 +1502,9 @@ handleshowresultclick resultStore output = do
    case result of
       NoResult ->
          setOutputError output "Fehler: Es wurde noch kein Ergebnis berechnet."
-      PolyResult name poly -> setOutputSuccess output (showResultText name poly)
-      ValueResult name value -> setOutputSuccess output (showValueText name value)
-      DivResult name quotient rest ->
+      PolyResult _ name poly -> setOutputSuccess output (showResultText name poly)
+      ValueResult _ name value -> setOutputSuccess output (showValueText name value)
+      DivResult _ name quotient rest ->
          setOutputSuccess output
             (showDivResultText name quotient rest)
       ParallelResult x results ->
@@ -1529,11 +1530,11 @@ handletreeclick resultStore output = do
    result <- liftIO $ readIORef resultStore
    case result of
       NoResult -> setOutputError output "Fehler: Es wurde noch kein Ergebnis berechnet."
-      PolyResult name poly -> do
+      PolyResult _ name poly -> do
          setOutputSuccess output (showTreeText name poly)
-      ValueResult name value -> do
+      ValueResult _ name value -> do
          setOutputSuccess output (showValueTreeText name value)
-      DivResult name quotient rest -> do
+      DivResult _ name quotient rest -> do
          setOutputSuccess output (showDivTreeText name quotient rest)
       ParallelResult x results ->
          setOutputSuccess output
@@ -1561,11 +1562,11 @@ handleanalysisclick resultStore output = do
    result <- liftIO $ readIORef resultStore
    case result of
       NoResult -> setOutputError output "Fehler: Es wurde noch kein Ergebnis berechnet."
-      PolyResult name poly -> do
+      PolyResult _ name poly -> do
          setOutputSuccess output (showAnalysisText name poly)
-      ValueResult name value -> do
+      ValueResult _ name value -> do
          setOutputSuccess output (showValueAnalysisText name value)
-      DivResult name quotient rest -> do
+      DivResult _ name quotient rest -> do
          setOutputSuccess output (showDivAnalysisText name quotient rest)
       ParallelResult x results ->
          setOutputSuccess output
@@ -1632,19 +1633,19 @@ handlestepsclick resultStore output = do
    case result of
       NoResult ->
          setOutputError output "Fehler: Es wurde noch kein Ergebnis berechnet."
-      PolyResult name poly -> do
+      PolyResult _ name poly -> do
          let tree = polyToExprTree poly
          let traversal = preOrder tree
          let steps = makeTraversalSteps traversal
          startTraversalAnimation tree steps output
          return (GuiSuccess "OK: Berechnung erfolgreich.")
-      ValueResult name value -> do
+      ValueResult _ name value -> do
          let tree = TConst value
          let traversal = preOrder tree
          let steps = makeTraversalSteps traversal
          startTraversalAnimation tree steps output
          return (GuiSuccess "OK: Berechnung erfolgreich.")
-      DivResult name quotient rest -> do
+      DivResult _ name quotient rest -> do
          let tree = polyToExprTree quotient
          let traversal = preOrder tree
          let steps = makeTraversalSteps traversal
@@ -1678,11 +1679,11 @@ handledetailsclick resultStore output = do
    case result of
       NoResult ->
          setOutputError output "Fehler: Es wurde noch kein Ergebnis berechnet."
-      PolyResult name poly ->
+      PolyResult _ name poly ->
          setOutputSuccess output (showDetailsText name poly)
-      ValueResult name value ->
+      ValueResult _ name value ->
          setOutputSuccess output (showValueDetailsText name value)
-      DivResult name quotient rest ->
+      DivResult _ name quotient rest ->
          setOutputSuccess output (showDivDetailsText name quotient rest)
       ParallelResult x results ->
          setOutputSuccess output
@@ -1710,11 +1711,11 @@ handlegraphclick resultStore output = do
    case result of
       NoResult ->
          setOutputError output "Fehler: Es wurde noch kein Ergebnis berechnet."
-      PolyResult name poly -> do
+      PolyResult _ name poly -> do
          setOutputHtmlSuccess output (showGraphText name poly)
-      ValueResult name value -> do
+      ValueResult _ name value -> do
          setOutputHtmlSuccess output (showValueGraphText name value)
-      DivResult name quotient rest -> do
+      DivResult _ name quotient rest -> do
          setOutputHtmlSuccess output (showGraphDivText name quotient rest)
       ParallelResult x results ->
          setOutputSuccess output

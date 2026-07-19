@@ -4,9 +4,9 @@ import Format
 
 {- 
 
-Hier kommt nicht die echte GUI-Animation rein, sondern die Logik fÃ¼r die Animationsschritte.
+Hier kommt nicht die echte GUI-Animation rein, sondern die Logik f?r die Animationsschritte.
 
-Die GUI braucht spÃ¤ter einzelne Schritte, damit sie bei jedem Timer-Tick anzeigen kann,
+Die GUI braucht sp?ter einzelne Schritte, damit sie bei jedem Timer-Tick anzeigen kann,
 welcher Knoten gerade besucht wird.
 
 Deshalb bauen wir aus einer normalen Traversierungsliste eine Liste von TraversalStep.
