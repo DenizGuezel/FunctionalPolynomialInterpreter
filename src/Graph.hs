@@ -148,8 +148,8 @@ defaultTablePoints poly = visiblePointsFrom defaultTablePointCount defaultTableS
 
 Diese Hilfsfunktion formatiert einen Punkt als String. Bsp: formatPoint (1, 2) = "1 | 2" 
 
-Sie bleibt in Graph.hs und nicht in Format.hs, da sie spezifisch für die Darstellung von Punkten in der GUI 
-ist und nicht allgemein für die Formatierung von Daten verwendet wird.
+Sie bleibt in Graph.hs und nicht in Format.hs, da sie spezifisch für die Darstellung von Punkten in der GUI ist
+und nicht allgemein für die Formatierung von Daten verwendet wird.
 
 Durch Pretty a => und Pretty b => kann diese Funktion Punkte aus unterschiedlichen darstellbaren Typen formatieren.
 
@@ -160,10 +160,10 @@ formatPoint (x, y) = pretty x ++ " | " ++ pretty y
 
 {- 
 
-Diese Hilfsfunktion f?llt einen String links mit Leerzeichen auf.
+Diese Hilfsfunktion füllt einen String links mit Leerzeichen auf.
 
-Das brauchen wir f?r die Wertetabelle, damit positive und negative Zahlen sauber untereinander stehen.
-Wenn der String bereits lang genug ist, wird er unver?ndert zur?ckgegeben.
+Das brauchen wir für die Wertetabelle, damit positive und negative Zahlen sauber untereinander stehen.
+Wenn der String bereits lang genug ist, wird er unverändert zurückgegeben.
 
 -}
 
@@ -173,14 +173,14 @@ padLeft width textValue = replicate (width - length textValue) ' ' ++ textValue
 {- 
 
 Diese Funktion formatiert eine Liste von Punkten als Tabelle, die in der GUI angezeigt werden kann.
-Sie bekommt als Eingabe eine Liste von Tupeln, die die Punkte darstellen, und gibt als Ausgabe einen String zur?ck, der die Tabelle darstellt.
+Sie bekommt als Eingabe eine Liste von Tupeln, die die Punkte darstellen, und gibt als Ausgabe einen String zurück, der die Tabelle darstellt.
 
 Sie formatiert zuerst alle x- und y-Werte als Strings.
-Danach berechnet sie die n?tige Spaltenbreite und f?llt k?rzere Werte mit Leerzeichen auf.
+Danach berechnet sie die nötige Spaltenbreite und füllt kürzere Werte mit Leerzeichen auf.
 Dadurch verrutschen die Werte in der GUI nicht, auch wenn negative und positive Zahlen gemischt sind.
 
-Sie bleibt in Graph.hs und nicht in Format.hs, da sie spezifisch f?r die Darstellung von Punkten in der GUI 
-ist und nicht allgemein f?r die Formatierung von Daten verwendet wird.
+Sie bleibt in Graph.hs und nicht in Format.hs, da sie spezifisch für die Darstellung von Punkten in der GUI ist
+und nicht allgemein für die Formatierung von Daten verwendet wird.
 
 -}
 

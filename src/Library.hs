@@ -54,7 +54,7 @@ Wenn nein, wird das erste Paar beibehalten und die Funktion wird rekursiv auf di
 -}
 
 deletePoly :: PolyName -> PolyLibrary -> PolyLibrary
-deletePoly name [] = []
+deletePoly _ [] = []
 deletePoly name ((n, p):xs)
    | name == n = xs
    | otherwise = (n, p) : deletePoly name xs 
@@ -72,6 +72,39 @@ z.B bei library =[ ("p1", poly1), ("p2", poly2), ("p3", poly3)] nimmt fst das er
 
 listPolys :: PolyLibrary -> [PolyName]
 listPolys library = map fst library
+
+{-
+
+Diese Hilfsfunktion erzeugt den nächsten freien Namen für ein Polynom.
+
+prefix ist der Anfang des Namens, also z.B. "p" oder "r".
+Die Funktion prüft dann p1, p2, p3 usw. und nimmt den ersten Namen,
+der noch nicht in der Polynomliste vorkommt.
+
+Dadurch überschreibt die GUI kein vorhandenes Polynom mehr, wenn vorher ein Polynom gelöscht wurde.
+
+-}
+
+nextNameWithPrefix :: String -> PolyLibrary -> PolyName
+nextNameWithPrefix prefix library = firstFreeName 1
+   where
+      names = listPolys library
+      firstFreeName :: Int -> PolyName
+      firstFreeName n =
+         let candidate = prefix ++ show n
+         in if candidate `elem` names
+            then firstFreeName (n + 1)
+            else candidate
+
+{- Diese Funktion erzeugt den nächsten freien Namen für normal hinzugefügte Polynome. -}
+
+nextPolyName :: PolyLibrary -> PolyName
+nextPolyName = nextNameWithPrefix "p"
+
+{- Diese Funktion erzeugt den nächsten freien Namen für zufällige Polynome. -}
+
+nextRandomName :: PolyLibrary -> PolyName
+nextRandomName = nextNameWithPrefix "r"
 
 
 {-

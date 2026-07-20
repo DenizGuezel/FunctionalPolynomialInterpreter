@@ -14,6 +14,12 @@ import Format (prettyRational, toPrettyMathPoly)
 import Display
 import History 
 import Library
+   ( PolyLibrary
+   , savePoly
+   , selectedPolys
+   , nextPolyName
+   , nextRandomName
+   )
 import Random
 import Cache
 import Parallel
@@ -70,7 +76,7 @@ Je nachdem, ob das CachedResult ein Polynom, ein Wert oder eine Division ist, wi
 
 cachedToGuiResult :: String -> String -> CachedResult -> GuiResult
 cachedToGuiResult operation inputText (CachedPoly poly) = PolyResult operation inputText poly
-cachedToGuiResult operation inputText (CachedValue value) = ValueResult operation inputText value
+cachedToGuiResult operation inputText (CachedValue resultValue) = ValueResult operation inputText resultValue
 cachedToGuiResult operation inputText (CachedDiv quotient rest) = DivResult operation inputText quotient rest
 
 {- Diese Funktion gibt den Text zurück, der angezeigt wird, wenn kein gültiges Ergebnis vorhanden ist. -}
@@ -99,11 +105,11 @@ resultOverviewHtml (PolyResult operation inputText poly) =
    ++ "<div><span>Eingabe</span><strong>" ++ inputText ++ "</strong></div>"
    ++ "<div><span>Ausgabe</span><strong>" ++ toPrettyMathPoly poly ++ "</strong></div>"
    ++ "<div><span>Wert</span><strong>-</strong></div>"
-resultOverviewHtml (ValueResult operation inputText value) =
+resultOverviewHtml (ValueResult operation inputText resultValue) =
    "<div><span>Operation</span><strong>" ++ operation ++ "</strong></div>"
    ++ "<div><span>Eingabe</span><strong>" ++ inputText ++ "</strong></div>"
    ++ "<div><span>Ausgabe</span><strong>-</strong></div>"
-   ++ "<div><span>Wert</span><strong>" ++ prettyRational value ++ "</strong></div>"
+   ++ "<div><span>Wert</span><strong>" ++ prettyRational resultValue ++ "</strong></div>"
 resultOverviewHtml (DivResult operation inputText quotient rest) =
    "<div><span>Operation</span><strong>" ++ operation ++ "</strong></div>"
    ++ "<div><span>Eingabe</span><strong>" ++ inputText ++ "</strong></div>"
@@ -131,7 +137,7 @@ Je nachdem , ob das GuiResult ein Polynom, ein Wert oder eine Division ist, wird
 guiResultText :: GuiResult -> String
 guiResultText NoResult = "Fehler: Es wurde noch kein Ergebnis berechnet."
 guiResultText (PolyResult _ name poly) = showResultText name poly
-guiResultText (ValueResult _ name value) = showValueText name value
+guiResultText (ValueResult _ name resultValue) = showValueText name resultValue
 guiResultText (DivResult _ name quotient rest) = showDivResultText name quotient rest
 guiResultText (ParallelResult x results) = showParallelResultsText x results
 
@@ -770,7 +776,7 @@ polyListRow selectedStore selectedNames (name, poly) = do
       # set UI.class_ "poly-value"
       # set UI.text (toPrettyMathPoly poly)
 
-   row <- UI.div
+   listRow <- UI.div
       # set UI.class_ "poly-row"
       #+ [element checkbox, element nameElement, element polyElement]
 
@@ -781,7 +787,7 @@ polyListRow selectedStore selectedNames (name, poly) = do
             then if name `elem` selected then selected else name : selected
             else filter (/= name) selected
 
-   return row
+   return listRow
 
 {-
 
@@ -975,7 +981,7 @@ handleaddpolyclick input polyStore selectedStore polyListOutput polyListMessage 
          setPolyListError polyListMessage ("Fehler: " ++ err)
       Right poly -> do
          library <- liftIO $ readIORef polyStore
-         let name = "p" ++ show (length library + 1)
+         let name = nextPolyName library
          let newLibrary = savePoly name poly library
          liftIO $ writeIORef polyStore newLibrary
          refreshPolyList polyStore selectedStore polyListOutput
@@ -1307,31 +1313,34 @@ handledivclick polyStore selectedStore resultStore historyStore cacheStore outpu
    let selectedLibrary = selectedPolys library selectedNames
    case selectedLibrary of
       [(name1, poly1), (name2, poly2)] -> do
-         cache <- liftIO $ readIORef cacheStore
-         let operation = Div poly1 poly2
+         if normalize poly2 == P []
+            then setOutputError output "Fehler: Division durch das Nullpolynom ist nicht erlaubt."
+            else do
+               cache <- liftIO $ readIORef cacheStore
+               let operation = Div poly1 poly2
 
-         case lookupCache operation cache of
-            Just cachedResult -> do
-               let guiResult = cachedToGuiResult "Dividieren" (name1 ++ " / " ++ name2) cachedResult
-               liftIO $ writeIORef resultStore guiResult
-               setOutputSuccess output ("Aus Cache geladen:\n" ++ guiResultText guiResult)
+               case lookupCache operation cache of
+                  Just cachedResult -> do
+                     let guiResult = cachedToGuiResult "Dividieren" (name1 ++ " / " ++ name2) cachedResult
+                     liftIO $ writeIORef resultStore guiResult
+                     setOutputSuccess output ("Aus Cache geladen:\n" ++ guiResultText guiResult)
 
-            Nothing -> do
-               let (quotient, rest) = (/%) poly1 poly2
-               let resultText =
-                     "Ergebnis: " ++ name1 ++ " / " ++ name2
-                     ++ " = " ++ toPrettyMathPoly quotient
-                     ++ ", Rest: " ++ toPrettyMathPoly rest
+                  Nothing -> do
+                     let (quotient, rest) = (/%) poly1 poly2
+                     let resultText =
+                           "Ergebnis: " ++ name1 ++ " / " ++ name2
+                           ++ " = " ++ toPrettyMathPoly quotient
+                           ++ ", Rest: " ++ toPrettyMathPoly rest
 
-               let cachedResult = CachedDiv quotient rest
-               let guiResult = cachedToGuiResult "Dividieren" (name1 ++ " / " ++ name2) cachedResult
-               liftIO $ writeIORef resultStore guiResult
-               liftIO $ modifyIORef historyStore
-                  (addHistory (HistoryDiv (name1 ++ " / " ++ name2) quotient rest))
-               liftIO $ modifyIORef cacheStore
-                  (insertCache operation cachedResult)
+                     let cachedResult = CachedDiv quotient rest
+                     let guiResult = cachedToGuiResult "Dividieren" (name1 ++ " / " ++ name2) cachedResult
+                     liftIO $ writeIORef resultStore guiResult
+                     liftIO $ modifyIORef historyStore
+                        (addHistory (HistoryDiv (name1 ++ " / " ++ name2) quotient rest))
+                     liftIO $ modifyIORef cacheStore
+                        (insertCache operation cachedResult)
 
-               setOutputSuccess output ("Neu berechnet:\n" ++ resultText)
+                     setOutputSuccess output ("Neu berechnet:\n" ++ resultText)
 
       [] ->
          setOutputError output "Fehler: Dividieren benötigt zwei ausgewählte Polynome. Bitte wählen Sie genau zwei Polynome aus."
@@ -1367,7 +1376,7 @@ handlerandompolyclick :: IORef GuiResult -> IORef PolyLibrary -> IORef [String] 
 handlerandompolyclick resultStore polyStore selectedStore polyListOutput output = do
    library <- liftIO $ readIORef polyStore
    poly <- liftIO randomPoly
-   let name = "r" ++ show (length library + 1)
+   let name = nextRandomName library
    let newLibrary = savePoly name poly library
    liftIO $ writeIORef polyStore newLibrary
    liftIO $ writeIORef resultStore (PolyResult "Zufallspolynom" name poly)
@@ -1474,9 +1483,9 @@ handlelatexclick resultStore output = do
       PolyResult _ name poly ->
          setOutputSuccess output
             ("LaTeX von " ++ name ++ ": " ++ toLaTeX poly)
-      ValueResult _ name value ->
+      ValueResult _ name resultValue ->
          setOutputSuccess output
-            ("LaTeX von " ++ name ++ ": " ++ toLaTeX value)
+            ("LaTeX von " ++ name ++ ": " ++ toLaTeX resultValue)
       DivResult _ name quotient rest ->
          setOutputSuccess output
             ("LaTeX von " ++ name ++ ": Quotient = "
@@ -1484,7 +1493,7 @@ handlelatexclick resultStore output = do
       ParallelResult x results ->
          setOutputSuccess output
             ("LaTeX von paralleler Auswertung bei x = " ++ toLaTeX x ++ ":\n"
-             ++ unlines [name ++ " = " ++ toLaTeX value | (name, value) <- results])
+             ++ unlines [resultName ++ " = " ++ toLaTeX resultValue | (resultName, resultValue) <- results])
 
 {- 
 
@@ -1503,7 +1512,7 @@ handleshowresultclick resultStore output = do
       NoResult ->
          setOutputError output "Fehler: Es wurde noch kein Ergebnis berechnet."
       PolyResult _ name poly -> setOutputSuccess output (showResultText name poly)
-      ValueResult _ name value -> setOutputSuccess output (showValueText name value)
+      ValueResult _ name resultValue -> setOutputSuccess output (showValueText name resultValue)
       DivResult _ name quotient rest ->
          setOutputSuccess output
             (showDivResultText name quotient rest)
@@ -1532,15 +1541,15 @@ handletreeclick resultStore output = do
       NoResult -> setOutputError output "Fehler: Es wurde noch kein Ergebnis berechnet."
       PolyResult _ name poly -> do
          setOutputSuccess output (showTreeText name poly)
-      ValueResult _ name value -> do
-         setOutputSuccess output (showValueTreeText name value)
+      ValueResult _ name resultValue -> do
+         setOutputSuccess output (showValueTreeText name resultValue)
       DivResult _ name quotient rest -> do
          setOutputSuccess output (showDivTreeText name quotient rest)
       ParallelResult x results ->
          setOutputSuccess output
             ("Baumdarstellung der parallelen Auswertung bei x = "
              ++ prettyRational x ++ ":\n"
-             ++ unlines [name ++ " -> " ++ prettyTree (TConst value) | (name, value) <- results])
+             ++ unlines [resultName ++ " -> " ++ prettyTree (TConst resultValue) | (resultName, resultValue) <- results])
 
 {- 
 
@@ -1564,8 +1573,8 @@ handleanalysisclick resultStore output = do
       NoResult -> setOutputError output "Fehler: Es wurde noch kein Ergebnis berechnet."
       PolyResult _ name poly -> do
          setOutputSuccess output (showAnalysisText name poly)
-      ValueResult _ name value -> do
-         setOutputSuccess output (showValueAnalysisText name value)
+      ValueResult _ name resultValue -> do
+         setOutputSuccess output (showValueAnalysisText name resultValue)
       DivResult _ name quotient rest -> do
          setOutputSuccess output (showDivAnalysisText name quotient rest)
       ParallelResult x results ->
@@ -1573,7 +1582,7 @@ handleanalysisclick resultStore output = do
             ("Analyse der parallelen Auswertung bei x = "
              ++ prettyRational x ++ ":\n"
              ++ "Anzahl ausgewerteter Polynome: " ++ show (length results) ++ "\n"
-             ++ unlines [name ++ ": Wert = " ++ prettyRational value | (name, value) <- results])
+             ++ unlines [resultName ++ ": Wert = " ++ prettyRational resultValue | (resultName, resultValue) <- results])
 
 
 {- 
@@ -1633,19 +1642,19 @@ handlestepsclick resultStore output = do
    case result of
       NoResult ->
          setOutputError output "Fehler: Es wurde noch kein Ergebnis berechnet."
-      PolyResult _ name poly -> do
+      PolyResult _ _ poly -> do
          let tree = polyToExprTree poly
          let traversal = preOrder tree
          let steps = makeTraversalSteps traversal
          startTraversalAnimation tree steps output
          return (GuiSuccess "OK: Berechnung erfolgreich.")
-      ValueResult _ name value -> do
-         let tree = TConst value
+      ValueResult _ _ resultValue -> do
+         let tree = TConst resultValue
          let traversal = preOrder tree
          let steps = makeTraversalSteps traversal
          startTraversalAnimation tree steps output
          return (GuiSuccess "OK: Berechnung erfolgreich.")
-      DivResult _ name quotient rest -> do
+      DivResult _ _ quotient _ -> do
          let tree = polyToExprTree quotient
          let traversal = preOrder tree
          let steps = makeTraversalSteps traversal
@@ -1656,7 +1665,7 @@ handlestepsclick resultStore output = do
             ("Schritte der parallelen Auswertung bei x = "
              ++ prettyRational x ++ ":\n"
              ++ "Die Polynome wurden unabhängig voneinander parallel ausgewertet.\n"
-             ++ unlines [name ++ " -> " ++ prettyRational value | (name, value) <- results])
+             ++ unlines [resultName ++ " -> " ++ prettyRational resultValue | (resultName, resultValue) <- results])
 
 {-
 
@@ -1681,8 +1690,8 @@ handledetailsclick resultStore output = do
          setOutputError output "Fehler: Es wurde noch kein Ergebnis berechnet."
       PolyResult _ name poly ->
          setOutputSuccess output (showDetailsText name poly)
-      ValueResult _ name value ->
-         setOutputSuccess output (showValueDetailsText name value)
+      ValueResult _ name resultValue ->
+         setOutputSuccess output (showValueDetailsText name resultValue)
       DivResult _ name quotient rest ->
          setOutputSuccess output (showDivDetailsText name quotient rest)
       ParallelResult x results ->
@@ -1713,8 +1722,8 @@ handlegraphclick resultStore output = do
          setOutputError output "Fehler: Es wurde noch kein Ergebnis berechnet."
       PolyResult _ name poly -> do
          setOutputHtmlSuccess output (showGraphText name poly)
-      ValueResult _ name value -> do
-         setOutputHtmlSuccess output (showValueGraphText name value)
+      ValueResult _ name resultValue -> do
+         setOutputHtmlSuccess output (showValueGraphText name resultValue)
       DivResult _ name quotient rest -> do
          setOutputHtmlSuccess output (showGraphDivText name quotient rest)
       ParallelResult x results ->

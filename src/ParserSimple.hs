@@ -75,7 +75,7 @@ dass genau zwei Zahlen erwartet wurden, aber mehr gefunden wurden.
 parseMonomSimple :: String -> Either String Monom
 parseMonomSimple input =  case words input of 
     [] -> Left "Fehler: Zerlegte Liste ist leer, es wurden keine Zahlen gefunden."
-    [coeff, exponent] -> case (parseNumbers coeff exponent) of
+    [coeff, exponentText] -> case (parseNumbers coeff exponentText) of
         Left err -> Left err
         Right monom -> Right monom
     other -> Left ("Fehler: Ein Monom muss genau aus Koeffizient und Exponent bestehen. Gefunden wurde: " ++ show other)    
@@ -97,10 +97,12 @@ Fall 3: Wenn der Einleseversuch für den Exponenten fehlschlägt (Nothing), für
 -}
 
 parseNumbers :: String -> String -> Either String Monom
-parseNumbers coeff exponent = case (readMaybe coeff :: Maybe Integer, readMaybe exponent :: Maybe Int) of
-    (Just c, Just e) -> Right (M (fromInteger c % 1) e)
+parseNumbers coeff exponentText = case (readMaybe coeff :: Maybe Integer, readMaybe exponentText :: Maybe Int) of
+    (Just c, Just e)
+        | e < 0 -> Left ("Fehler: Exponent '" ++ exponentText ++ "' darf nicht negativ sein.")
+        | otherwise -> Right (M (fromInteger c % 1) e)
     (Nothing, _) -> Left ("Fehler: Koeffizient '" ++ coeff ++ "' ist keine gültige Zahl.")
-    (_, Nothing) -> Left ("Fehler: Exponent '" ++ exponent ++ "' ist keine gültige ganze Zahl.") 
+    (_, Nothing) -> Left ("Fehler: Exponent '" ++ exponentText ++ "' ist keine gültige ganze Zahl.")
 
 
 {- 

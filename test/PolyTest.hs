@@ -189,6 +189,10 @@ tests =
         parseMonomSimple "3 abc" @?=
           Left "Fehler: Exponent 'abc' ist keine gültige ganze Zahl."
 
+    , testCase "gibt Fehler bei negativem Exponenten" $
+        parseMonomSimple "3 -1" @?=
+          Left "Fehler: Exponent '-1' darf nicht negativ sein."
+
     , testCase "gibt Fehler bei zu vielen Eingabeteilen" $
         parseMonomSimple "3 2 1" @?=
           Left "Fehler: Ein Monom muss genau aus Koeffizient und Exponent bestehen. Gefunden wurde: [\"3\",\"2\",\"1\"]"

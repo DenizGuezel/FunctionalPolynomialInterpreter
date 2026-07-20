@@ -110,7 +110,23 @@ executable FunctionalPolynomialInterpreter
     main-is:          AppMain.hs
 
     -- Modules included in this executable, other than Main.
-    -- other-modules:
+    other-modules:
+        Poly
+        ParserSimple
+        Format
+        Display
+        Tree
+        GUI
+        Analysis
+        Animation
+        Graph
+        History
+        Library
+        Random
+        Cache
+        Parallel
+        Template
+        Examples
 
     -- LANGUAGE extensions used by modules in this package.
     -- other-extensions:
