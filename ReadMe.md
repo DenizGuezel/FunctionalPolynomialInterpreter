@@ -86,7 +86,7 @@ Template.hs und Examples.hs enthalten die Template-Haskell-Beispiele.
 
 GUI.hs verbindet die Funktionen mit der Threepenny-GUI.
 
-Eine ausführlichere Beschreibung der Module kommt später noch in den Ordner docs.
+Eine ausführlichere Beschreibung der Module kommt später in dem Bericht.
 
 ## Vorlesungsthemen
 
@@ -122,7 +122,7 @@ Falls es unter Windows Probleme mit langen Pfaden gibt, kann ein eigener Build-O
 
 cabal run FunctionalPolynomialInterpreter --builddir=D:\HochschuleRheinMain\4.Semester\FP\cabal-build-fpi
 
-Nach dem Start öffnet sich die GUI im Browser.
+Nach dem Start läuft es auf http://127.0.0.1:8023/ und ist unter einem Browser aufrufbar.
 
 ## Tests
 

@@ -7,6 +7,7 @@ import qualified CacheTest
 import qualified GraphTest
 import qualified HistoryTest
 import qualified ParallelTest
+import qualified TreeTest
 
 import Test.Tasty
 import Test.Tasty.HUnit
@@ -32,6 +33,7 @@ main = defaultMain $
     , GraphTest.tests
     , HistoryTest.tests
     , ParallelTest.tests
+    , TreeTest.tests
     ]
 
 {-

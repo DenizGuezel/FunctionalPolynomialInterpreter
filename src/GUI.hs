@@ -1076,12 +1076,13 @@ handlesubclick polyStore selectedStore resultStore historyStore cacheStore outpu
       [(name1, poly1), (name2, poly2)] -> do
          cache <- liftIO $ readIORef cacheStore
          let operation = Sub poly1 poly2
+         let orderText = "Reihenfolge: " ++ name1 ++ " - " ++ name2
 
          case lookupCache operation cache of
             Just cachedResult -> do
                let guiResult = cachedToGuiResult "Subtrahieren" (name1 ++ " - " ++ name2) cachedResult
                liftIO $ writeIORef resultStore guiResult
-               setOutputSuccess output ("Aus Cache geladen:\n" ++ guiResultText guiResult)
+               setOutputSuccess output ("Aus Cache geladen:\n" ++ orderText ++ "\n" ++ guiResultText guiResult)
 
             Nothing -> do
                let resultPoly = sub poly1 poly2
@@ -1095,7 +1096,7 @@ handlesubclick polyStore selectedStore resultStore historyStore cacheStore outpu
                liftIO $ modifyIORef cacheStore
                   (insertCache operation cachedResult)
 
-               setOutputSuccess output ("Neu berechnet:\n" ++ resultText)
+               setOutputSuccess output ("Neu berechnet:\n" ++ orderText ++ "\n" ++ resultText)
 
       [] ->
          setOutputError output "Fehler: Subtrahieren benötigt zwei ausgewählte Polynome. Bitte wählen Sie genau zwei Polynome aus."
@@ -1318,12 +1319,13 @@ handledivclick polyStore selectedStore resultStore historyStore cacheStore outpu
             else do
                cache <- liftIO $ readIORef cacheStore
                let operation = Div poly1 poly2
+               let orderText = "Reihenfolge: " ++ name1 ++ " / " ++ name2
 
                case lookupCache operation cache of
                   Just cachedResult -> do
                      let guiResult = cachedToGuiResult "Dividieren" (name1 ++ " / " ++ name2) cachedResult
                      liftIO $ writeIORef resultStore guiResult
-                     setOutputSuccess output ("Aus Cache geladen:\n" ++ guiResultText guiResult)
+                     setOutputSuccess output ("Aus Cache geladen:\n" ++ orderText ++ "\n" ++ guiResultText guiResult)
 
                   Nothing -> do
                      let (quotient, rest) = (/%) poly1 poly2
@@ -1340,7 +1342,7 @@ handledivclick polyStore selectedStore resultStore historyStore cacheStore outpu
                      liftIO $ modifyIORef cacheStore
                         (insertCache operation cachedResult)
 
-                     setOutputSuccess output ("Neu berechnet:\n" ++ resultText)
+                     setOutputSuccess output ("Neu berechnet:\n" ++ orderText ++ "\n" ++ resultText)
 
       [] ->
          setOutputError output "Fehler: Dividieren benötigt zwei ausgewählte Polynome. Bitte wählen Sie genau zwei Polynome aus."

@@ -158,6 +158,7 @@ test-suite FunctionalPolynomialInterpreter-test
         GraphTest
         HistoryTest
         ParallelTest
+        TreeTest
 
     -- LANGUAGE extensions used by modules in this package.
     -- other-extensions:
