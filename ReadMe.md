@@ -39,6 +39,21 @@ Aktuell kann das Programm:
 - mehrere Polynome parallel auswerten
 - feste Beispielpolynome laden
 
+## Beispielansichten
+
+Gesamtansicht der GUI:
+
+![Gesamtansicht der GUI](docs/screenshots/GUI_Gesamtbild.png)
+![Gesamtansicht der GUI](docs/screenshots/GUI_Gesamtbild2.png)
+
+Baumansicht:
+
+![Baumansicht](docs/screenshots/Baumansicht.png)
+
+Graphansicht:
+
+![Graphansicht](docs/screenshots/Graphansicht.png)
+
 ## Eingabe
 
 Ein Monom besteht immer aus Koeffizient und Exponent:
@@ -134,7 +149,7 @@ Oder mit dem extra Build-Ordner:
 
 cabal test --builddir=D:\HochschuleRheinMain\4.Semester\FP\cabal-build-fpi
 
-Aktuell laufen 84 Tests erfolgreich.
+Aktuell laufen 95 Tests erfolgreich.
 
 Getestet werden unter anderem:
 
@@ -145,6 +160,7 @@ Getestet werden unter anderem:
 - Graph und Wertetabelle
 - History
 - Parallelisierung
+- Tree
 
 ## Beispielablauf
 
@@ -184,6 +200,7 @@ Weitere Testmodule sind:
 - GraphTest.hs
 - HistoryTest.hs
 - ParallelTest.hs
+- TreeTest.hs
 
 ## Lizenz
 
