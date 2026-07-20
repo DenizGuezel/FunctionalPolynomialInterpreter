@@ -2,6 +2,11 @@ module Main where
 
 import Poly
 import qualified ParserTest
+import qualified LibraryTest
+import qualified CacheTest
+import qualified GraphTest
+import qualified HistoryTest
+import qualified ParallelTest
 
 import Test.Tasty
 import Test.Tasty.HUnit
@@ -22,6 +27,11 @@ main = defaultMain $
   testGroup "Functional Polynomial Interpreter Tests"
     [ tests
     , ParserTest.tests
+    , LibraryTest.tests
+    , CacheTest.tests
+    , GraphTest.tests
+    , HistoryTest.tests
+    , ParallelTest.tests
     ]
 
 {-
