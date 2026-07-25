@@ -4,9 +4,9 @@ import Format
 
 {- 
 
-Hier kommt nicht die echte GUI-Animation rein, sondern die Logik f?r die Animationsschritte.
+Hier kommt nicht die echte GUI-Animation rein, sondern die Logik für die Animationsschritte.
 
-Die GUI braucht sp?ter einzelne Schritte, damit sie bei jedem Timer-Tick anzeigen kann,
+Die GUI braucht später einzelne Schritte, damit sie bei jedem Timer-Tick anzeigen kann,
 welcher Knoten gerade besucht wird.
 
 Deshalb bauen wir aus einer normalen Traversierungsliste eine Liste von TraversalStep.
@@ -17,9 +17,9 @@ Deshalb bauen wir aus einer normalen Traversierungsliste eine Liste von Traversa
 
 Datentyp, der einen einzelnen Schritt in der Animation beschreibt.
 
-Der erste Wert ist die Schrittnummer (z.b. 1. Schritt, 2. Schritt, 3. Schritt).
-Der zweite Wert ist der aktuelle Knoten (z.b. "A", "B", "C").
-Der dritte Wert ist die Liste der bereits besuchten Knoten (z.b. ["A", "B"]).
+Der erste Wert ist die Schrittnummer (z.B. 1. Schritt, 2. Schritt, 3. Schritt).
+Der zweite Wert ist der aktuelle Knoten (z.B. "A", "B", "C").
+Der dritte Wert ist die Liste der bereits besuchten Knoten (z.B. ["A", "B"]).
 
 -}
 
@@ -43,7 +43,7 @@ Rekursive Hilfsfunktion, die die Traversierungsliste durchgeht und aus jedem Ein
 Der erste Parameter ist die Traversierungsliste, der zweite Parameter ist die Liste der bereits besuchten Knoten und der dritte Parameter ist die aktuelle Schrittnummer.
 
 Wenn die Traversierungsliste leer ist, wird eine leere Liste zurückgegeben.
-Wenn die Traversierungsliste nicht leer ist, wird ein TraversalSetep gebaut, der die aktuelle Schrittnummer, den aktuellen Knoten x und die Liste der bereits besuchten Knoten visited enthält. 
+Wenn die Traversierungsliste nicht leer ist, wird ein TraversalStep gebaut, der die aktuelle Schrittnummer, den aktuellen Knoten x und die Liste der bereits besuchten Knoten visited enthält.
 Danach wird die Funktion rekursiv auf die Restliste aufgerufen, wobei der aktuelle Knoten x zu der Liste der bereits besuchten Knoten hinzugefügt wird und die Schrittnummer um 1 erhöht wird.
 
 -}
@@ -52,7 +52,7 @@ makeTraversalStepsRec :: [String] -> [String] -> Int -> [TraversalStep]
 makeTraversalStepsRec [] _ _ = []
 makeTraversalStepsRec (x:xs) visited stepnumber = TraversalStep stepnumber x visited : makeTraversalStepsRec xs (visited ++ [x]) (stepnumber + 1) 
 
-{- Diese Funktion dient zu der Anzeige der Animationsschritte in der GUI -}
+{- Diese Funktion dient zur Anzeige der Animationsschritte in der GUI. -}
 
 showTraversalStep :: TraversalStep -> String
 showTraversalStep (TraversalStep _ current visited) =

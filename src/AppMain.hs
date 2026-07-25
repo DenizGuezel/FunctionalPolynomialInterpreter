@@ -17,18 +17,18 @@ main = runGUI
 
 {-
 
-Dies dient hier nicht zu echten automatischen Tests, sondern ist unser Ziel hier nur eine kleine Konsolendemo zu visualisieren.
+Dies dient hier nicht zu echten automatischen Tests, sondern soll nur eine kleine Konsolendemo visualisieren.
 
 Wir schreiben eine runConsoleDemo-Funktion, die Etwas ausführt, sobald man "runConsoleDemo" im ghci eintippt.
 In diesem Fall ist es sinnvoll, um bestimmte Polynomfunktionen aus Poly.hs auszuführen.
 
 putStrLn ist wie System.out.println("Hallo"), es geht nur für Strings.
-print ist wie System.out.println("Hallo"), es geht für alles, was eine Show-Instanz hat, also z.B deriving (Show, ...)
+print ist wie System.out.println("Hallo"), es geht für alles, was eine Show-Instanz hat, also z.B. deriving (Show, ...)
 
-Consolen-Demo wird gestartet mit:
+Konsolendemo wird gestartet mit:
 cabal repl exe:FunctionalPolynomialInterpreter --builddir=D:\HochschuleRheinMain\4.Semester\FP\cabal-build-fpi
 Dann im ghci:
-runConsolenDemo
+runConsoleDemo
 
 -}
 

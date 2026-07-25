@@ -9,7 +9,7 @@ import Format
 
 Datentyp für den Ausdrucksbaum
 TConst: Konstante (Koeffizient), z.B. ist TConst (3 % 1) ein Ausdrucksbaum, der die Konstante 3 repräsentiert. 
-TVar: Variable (Variable x + Exponent), z.B ist TVar 2 ein Ausdrucksbaum, der die Variable x^2 repräsentiert.
+TVar: Variable (Variable x + Exponent), z.B. ist TVar 2 ein Ausdrucksbaum, der die Variable x^2 repräsentiert.
 TAdd: Addition, z.B. ist TAdd (TVar 2) (TConst (3 % 1)) ein Ausdrucksbaum, der die Addition von x^2 und 3 repräsentiert.
 TMul: Multiplikation, z.B. ist TMul (TVar 2) (TConst (3 % 1)) ein Ausdrucksbaum, der die Multiplikation von x^2 und 3 repräsentiert.
 
@@ -30,7 +30,7 @@ data ExprTree
 Diese Funktion soll ein Monom in einen Ausdrucksbaum umwandeln.
 Sie bekommt als Eingabe ein Monom, z.B. M 3 2 und gibt als Ausgabe einen Ausdrucksbaum zurück, z.B. TMul (TConst (3 % 1)) (TVar 2).
 
-Mithilfe von pattern matching wird das Monom in seine Bestandteile zerlegt, nämlich den Koeffizienten k und den Exponenten e.
+Mithilfe von Pattern Matching wird das Monom in seine Bestandteile zerlegt, nämlich den Koeffizienten k und den Exponenten e.
 
 -}
 
@@ -46,7 +46,7 @@ Diese Funktion soll ein Polynom in einen Ausdrucksbaum umwandeln.
 Sie bekommt als Eingabe ein Polynom, z.B. P [M 3 2, M 2 1, M 1 0] und gibt als Ausgabe einen Ausdrucksbaum zurück, 
 z.B. TAdd (TAdd (TMul (TConst (3 % 1)) (TVar 2)) (TMul (TConst (2 % 1)) (TVar 1))) (TConst (1 % 1)).
 
-Ebenfalls mithilfe von Pattern matching wird das Polynom in seine Bestandteile zerlegt, nämlich die Liste der Monome.
+Ebenfalls mithilfe von Pattern Matching wird das Polynom in seine Bestandteile zerlegt, nämlich die Liste der Monome.
 
 -}
 

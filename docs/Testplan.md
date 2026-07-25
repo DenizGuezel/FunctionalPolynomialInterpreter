@@ -5,7 +5,7 @@ Diese Liste ist für einen kurzen manuellen Durchgang durch die GUI gedacht.
 ## Eingabe und Polynomliste
 
 - Anwendung starten.
-- z.B Polynom 3 2; 2 1; 1 0 hinzufügen.
+- z.B. Polynom 3 2; 2 1; 1 0 hinzufügen.
 - Prüfen, ob es in der Polynomliste erscheint.
 - Noch ein Polynom hinzufügen, z.B. 1 1; -4 0.
 - Ein Polynom auswählen und Auswahl löschen testen.

@@ -1,4 +1,4 @@
-﻿{-# LANGUAGE FlexibleInstances #-} -- Ist notwendig, damit wir unsere Instanzeh flexibler verwenden können, da Haskell sonst streng damit umgeht.
+{-# LANGUAGE FlexibleInstances #-} -- Ist notwendig, damit wir unsere Instanzen flexibler verwenden können, da Haskell sonst streng damit umgeht.
 
 module Format where
 
@@ -50,8 +50,8 @@ prettyNamed name value = name ++ ": " ++ pretty value
 Diese Hilfsfunktion wandelt eine rationale Zahl in eine lesbare Form um.
 demoniator ist der Nenner der rationalen Zahl, numerator ist der Zähler.
 
-Wenn der Nenner 1 ist, wird nur der Zähler als String zurückgegeben (z.B 3 % 1 wird als "3" dargestellt, da 3 % 1 = 3/1 = 3 ist), 
-ansonsten wird der Zähler und der Nenner durch einen Bruchstrich getrennt zurückgegeben (z.B 3 % 2 wird als "3/2" dargestellt, da 3 % 2 = 3/2 ist).
+Wenn der Nenner 1 ist, wird nur der Zähler als String zurückgegeben (z.B. 3 % 1 wird als "3" dargestellt, da 3 % 1 = 3/1 = 3 ist),
+ansonsten wird der Zähler und der Nenner durch einen Bruchstrich getrennt zurückgegeben (z.B. 3 % 2 wird als "3/2" dargestellt, da 3 % 2 = 3/2 ist).
 
 -}
 
@@ -66,8 +66,8 @@ instance (Integral a, Show a) => Pretty (Ratio a) where
 
 {- 
 
-Diese Hilfsfunktion stellt eine Varibale (z.B x^2) mithilfe von prettyExponent in einer lesbaren Form dar.
-z.B wird die Eingabe 2 als "x²" dargestellt.
+Diese Hilfsfunktion stellt eine Variable (z.B. x^2) mithilfe von prettyExponent in einer lesbaren Form dar.
+z.B. wird die Eingabe 2 als "x²" dargestellt.
 
 -}
 
@@ -138,7 +138,7 @@ Diese Hilfsfunktion soll einen Monom in eine mathematische Form bringen, die fü
 Sie bekommt als Eingabe ein Monom, z.B. M 2 1 und gibt als Ausgabe einen String zurück, z.B. "2x".
 
 Diese Hilfsmethode betrachtet ebenfalls das Vorzeichen des Koeffizienten und gibt das Monom mit einem "+" oder "-" zurück, 
-je nachdem ob der Koeffizient positiv oder negativ ist.
+je nachdem, ob der Koeffizient positiv oder negativ ist.
 
 -}
 

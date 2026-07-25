@@ -10,7 +10,7 @@ import Format (Pretty(..))
 Dieser Datentyp repräsentiert die Historie der Berechnungen. Er kann entweder leer sein / bzw. keinen Eintrag haben (Empty) 
 oder einen Eintrag (Entry) enthalten, der ein Ergebnis und die restliche Historie enthält.
 
-z.B Wenn wir eine Historie mit zwei Einträgen haben, sieht das so aus:
+z.B. wenn wir eine Historie mit zwei Einträgen haben, sieht das so aus:
 Entry (PolyResult "f" (P [M 1 0, M 2 1])) 
  (Entry (ValueResult "g" 3) Empty)
 
@@ -34,9 +34,9 @@ data History a =
 Dieser Datentyp repräsentiert die verschiedenen Arten von Ergebnissen, die in der Historie gespeichert werden können.
 Es gibt drei Arten von Ergebnissen: PolyResult, ValueResult und DivResult.
 
-History ist ein Speicher für Einträge (HisztoryEntry), die Ergebnisse von Berechnungen darstellen.
+History ist ein Speicher für Einträge (HistoryEntry), die Ergebnisse von Berechnungen darstellen.
 
-z.B HistoryPoly "f" (P [M 1 0, M 2 1]) repräsentiert ein Ergebnis, das ein Polynom ist.
+z.B. HistoryPoly "f" (P [M 1 0, M 2 1]) repräsentiert ein Ergebnis, das ein Polynom ist.
 HistoryValue "g" 3 repräsentiert ein Ergebnis, das ein einzelner Wert ist.
 HistoryDiv "h" (P [M 1 0]) (P [M 2 0]) repräsentiert ein Ergebnis, das eine Division mit Quotient und Rest ist.
 
@@ -85,11 +85,11 @@ formatParallelHistory ((name, value):xs) =
 {- 
 
 Diese Funktion fügt einen neuen Eintrag in die Historie ein.
-Sie nimmt als Eingabe z.B ein bereits berechnetes Ergebnis (z.B. PolyResult, ValueResult oder DivResult) und 
+Sie nimmt als Eingabe z.B. ein bereits berechnetes Ergebnis (z.B. PolyResult, ValueResult oder DivResult) und
 die aktuelle Historie (kann Empty sein oder ein/mehrere Einträge enthalten) und gibt eine neue Historie zurück, die den neuen Eintrag enthält.
 
-Wir brauchen nicht nochmal etxra zu überprüfen, ob wir den input auf eine nicht leere Historie anwenden, da wir das Empty sowieso 
-immer am Ende der Historie haben und wir den neuen Eintrag immer an den Anfang der Historie setzen, sodass wir die Historie immer erweitern können.
+Wir brauchen nicht nochmal extra zu überprüfen, ob wir den input auf eine nicht leere Historie anwenden, da wir Empty sowieso
+immer am Ende der Historie haben und den neuen Eintrag immer an den Anfang der Historie setzen. Dadurch können wir die Historie immer erweitern.
 
 -}
 
@@ -100,14 +100,14 @@ addHistory input history = Entry input history
 
 Diese Funktion gibt die History als Liste zurück.
 Sie nimmt als Eingabe eine Historie und gibt eine Liste von Einträgen zurück, die in der Historie enthalten sind.
-Also es folgt, dass der gleiche Datentyp, der in der History verwendet wird, also z.B. PolyResult, dann als gleiche 
-Datentypliste zurückgegeben wird (hier dann [PolyResult]).
+Also es folgt, dass derselbe Datentyp, der in der History verwendet wird, auch als Liste zurückgegeben wird.
+Wenn die History z.B. History HistoryEntry enthält, kommt am Ende eine Liste [HistoryEntry] zurück.
 
 Wenn die Historie leer ist, wird eine leere Liste zurückgegeben.
-Ansonsten (Wenn mindestens eine Histore vorhanden ist) wird der erste Eintrag der Historie in die Liste aufgenommen und die Funktion 
+Ansonsten, wenn mindestens ein Eintrag vorhanden ist, wird der erste Eintrag der Historie in die Liste aufgenommen und die Funktion
 wird rekursiv auf die restliche Historie angewendet, um die restlichen Einträge in die Liste aufzunehmen.
 
-mit ":" hängen wir den ersten Eintrag (erster) der Historie an die Liste der restlichen Einträge (resthistorie) an, um eine neue Liste zu erstellen.
+Mit ":" hängen wir den ersten Eintrag (erster) der Historie an die Liste der restlichen Einträge (resthistorie) an, um eine neue Liste zu erstellen.
 
 -}
 
@@ -126,7 +126,7 @@ Wenn die Historie leer ist, wird Nothing zurückgegeben.
 Wenn die Historie nicht leer ist, wird der erste Eintrag der Historie zurückgegeben, da wir die Historie immer an 
 den Anfang erweitern und somit der erste Eintrag der letzte hinzugefügte Eintrag ist.
 
-z.B gibt latestHistory bei einer History mit zwei Einträgen: 
+z.B. gibt latestHistory bei einer History mit zwei Einträgen:
 Entry (PolyResult "f" (P [M 1 0, M 2 1])) 
 (Entry (ValueResult "g" 3) Empty) = Just (PolyResult "f" (P [M 1 0, M 2 1])) 
 
@@ -144,7 +144,7 @@ Sie nimmt als Eingabe eine Historie und gibt eine neue Historie zurück, die den
 Wenn die Historie leer ist, wird eine leere Historie zurückgegeben.
 Wenn die Historie nicht leer ist, wird der erste Eintrag der Historie entfernt und die Funktion gibt die restliche Historie zurück.
 
-z.B bei einer Historie mit zwei Einträgen: undoHistory (Entry (PolyResult "f" (P [M 1 0, M 2 1])) 
+z.B. bei einer Historie mit zwei Einträgen: undoHistory (Entry (PolyResult "f" (P [M 1 0, M 2 1]))
 (Entry (ValueResult "g" 3) Empty)) = Entry (ValueResult "g" 3) Empty
 
 -}

@@ -1,5 +1,5 @@
 
-module Poly where {- Modulbennung, damit Sie importierbar ist im Nachhinein, z.B import Poly-}
+module Poly where {- Modulbenennung, damit es im Nachhinein importierbar ist, z.B. import Poly -}
 
 {- Imports -}
 import Data.Ratio
@@ -8,9 +8,9 @@ import Data.List
 {-
 
 Ein Monom ist ein einzelner Term, z.b 3x^2 oder 5x
-Das Rational ist hier der Koeffizient (z.B 3 oder 5) und das Int der Exponent (also z.b ^2)
+Das Rational ist hier der Koeffizient (z.B. 3 oder 5) und das Int der Exponent (also z.B. ^2)
 Bei dem Rational ist hier das Einsetzen einer Ganzzahl auch möglich, Haskell interpretiert das automatisch.
-Ein Bruch wäre z.B 3 % 5 = 3/5 tel 
+Ein Bruch wäre z.B. 3 % 5 = 3/5.
 
 deriving (Show, Eq) erzeugt automatisch Standardfunktionen.
 Show: Damit kann Haskell den Datentyp als Text anzeigen. Beispiel: M 3 2 wird in GHCi angezeigt als: M 3 2
@@ -38,7 +38,7 @@ newtype kann nur einen Konstruktor, auch nur einen Parameter haben, und auch gen
 
 -}
 
-newtype Poly = P [Monom] 
+newtype Poly = P [Monom]
  deriving (Show,Eq)
 
 {-
@@ -48,9 +48,9 @@ Dieser Infixoperator erstellt ein Polynom mit genau einem Monom
 
 -}
 
-infix 8 #^ 
+infix 8 #^
 (#^) :: Rational -> Int -> Poly
-a #^  b = P [M a b] 
+a #^  b = P [M a b]
 
 
 {-
@@ -59,21 +59,21 @@ Bsp Anwendung der Infixoperation: 3#^2 macht ganz einfach P [M 3 2]
 
 -}
 
-polyEx :: Poly 
+polyEx :: Poly
 polyEx = 3#^2
 
- 
+
 {-
 
 Diese Funktion soll ein Polynomaddition realisieren, sprich: (p1 + p2) (x) = p1(x) + p2(x)
-Dabei soll das Ergebnispolynom normalisiert sein. 
+Dabei soll das Ergebnispolynom normalisiert sein.
 
 Wir dürfen nicht einfach normalize (p1+p2) schreiben, da p1+p2 = add p1 p2 oben definiert ist.
 Das würde eine Endlosschleife sein, da es sich immer selbst wieder aufrufen würde.
 
 Wir können anstatt add p1 p2, lieber add (P xs1) (P xs2) schreiben, um an die Monomlisten ranzukommen.
 
-mathmematisch geht es so, da: (2x² + 2x + 2) + (4x + 4) wird zuerst zu: 2x² + 2x + 2 + 4x + 4
+mathematisch geht es so, da: (2x² + 2x + 2) + (4x + 4) wird zuerst zu: 2x² + 2x + 2 + 4x + 4
 Das ist mathematisch völlig korrekt. Erst DANACH vereinfacht man 2x + 4x = 6x zu 2 + 4 = 6 , Ergebnis: 2x² + 6x + 6
 
 Das macht das Programm auch: Schritt 1 — Listen zusammenfügen: xs1 ++ xs2 macht: [M 2 2, M 2 1, M 2 0, M 4 1, M 4 0]
@@ -334,7 +334,7 @@ negatRec (P ((M k e) : xs)) = let P rest = negatRec (P xs) in P ((M (-k) e):rest
 Diese Funktion soll eine Subtraktion zweier Polynome durchführen-
 
 Hier können wir einfach die Funktion add benutezn, um zwei Polynome zu addieren, es gilt aber:
-Das 2te Polynom muss negiert sein, damit es quasi als ein -(P xs2) interpretiert wird. Es wird erfüllt: 
+Das 2te Polynom muss negiert sein, damit es quasi als ein -(P xs2) interpretiert wird. Es wird erfüllt:
 
 P xs1 + (- P xs2) = P xs1 - P xs2
 
@@ -349,13 +349,13 @@ sub (P xs1) (P xs2) = add (P xs1) (negatRec (P xs2))
 
 Diese Funktion soll zwei Polynome miteinander multiplizieren.
 
-Die Polynome werden zuerst ausgepackt in der Form (P xs1) und (P xs2), 
+Die Polynome werden zuerst ausgepackt in der Form (P xs1) und (P xs2),
 denn wenn wir beispielsweise P [M 2 1, M 3 0] haben ist xs1 = [M 2 1, M 3 0]
 
 Wir wenden List-Comprehension an. Es wird jedes Monom durchgangen aus dem ersten Polynom bei dem die Koeffizienten ungleich 0 sind, der Name von jedem i-ten Monom in dem
 ersten Polynom ist M k1 e1. Dasselbe für den zweiten Polynom mit M k2 e2.
 
-Es entsteht ein neues Polynom, wobei bei dem i-ten Monom der Koeffizient wie folgt entsteht: Koeffizient des aktuellen Monoms von 
+Es entsteht ein neues Polynom, wobei bei dem i-ten Monom der Koeffizient wie folgt entsteht: Koeffizient des aktuellen Monoms von
 dem ersten Polynom multipliziert mit dem Koeffizienten des aktuellen Monoms der zweiten Liste.
 
 Für den i-ten Exponenten des i-ten Monoms des neuen Polynoms gilt folgendes: i-ter Exponent des i-ten Monoms von dem ersten Polynom addiert
@@ -393,16 +393,16 @@ Diese Funktion führt eine Auswertung für ein Polynom durch.
 Der Infixoperator § steht für die Auswertung da.
 
 Hier wird List Comprehension angewendet, welche die allgemeine Notation [Ausdruck | Generator]
-besitzt. z.B bedeuted [x * 2 | x <- [1,2,3]] dass x jeden Wert aus der Liste [1,2,3] animmt und somit 
+besitzt. z.B. bedeutet [x * 2 | x <- [1,2,3]], dass x jeden Wert aus der Liste [1,2,3] annimmt und somit
 dass [1*2,2*2,3*2] = [2,4,6] rauskommt.
 
-M k e bedeuted k*x^e
+M k e bedeutet k*x^e
 
 (P xs) ist das Liste die als Polynom interpretiert wird und x ist der Wert, welcher in der Formel eingesetzt wird.
 
 Für jedes Monom M k e aus der Liste xs wird k*(x^e) berechnet. Anschließend werden alle Ergebnisse mit sum addiert.
 
-z.B rechnet evaluate (P [M 3 2, M 2 1, M 1 0]) 3
+z.B. rechnet evaluate (P [M 3 2, M 2 1, M 1 0]) 3
 3·3² + 2·3 + 1 = 3·9 + 6 + 1 = 27 + 6 + 1 = 34 aus
 
 -}
@@ -411,7 +411,7 @@ evaluate :: Poly -> Rational -> Rational
 evaluate (P xs) x = sum [k * (x ^ e) | M k e <- xs]
 
 infix 9 §
-(§) :: Poly -> Rational -> Rational 
+(§) :: Poly -> Rational -> Rational
 (§) = evaluate
 
 {-
@@ -574,15 +574,15 @@ Das Problem ist aber, dass mult am Ende wieder normalize aufruft.
 Bei der Polynomdivision passiert dieser Schritt sehr oft, also würde
 normalize dadurch unnötig oft ausgeführt werden, deshalb gibt es hier multMonom.
 
-multMonom bekommt ein Monom M k e und ein Polynom P xs 
+multMonom bekommt ein Monom M k e und ein Polynom P xs
 
 Wir durchlaufen die Monomliste aus dem übergebenem Monomparameter und erstellen davon immer ein i-tes Monom M k2 e2.
-Wir bauen mit der List-Comprehension ein neues Polynom zusammen. 
+Wir bauen mit der List-Comprehension ein neues Polynom zusammen.
 
-Für jedes i-te Monom in dem neuen Polynom gilt für den i-ten Koeffizienten: Koeffizient aus dem übergebenen Parameter-Monom multipliziert mit 
+Für jedes i-te Monom in dem neuen Polynom gilt für den i-ten Koeffizienten: Koeffizient aus dem übergebenen Parameter-Monom multipliziert mit
 dem i-ten Koeffizienten aus der Monomliste des Parameter-Polynoms.
 
-Für jedes i-te Monom in dem neuen Polynom gilt für den i-ten Exponenten: Exponent aus dem Parameter-Monom wird addiert mit dem i-ten Exponenten aus 
+Für jedes i-te Monom in dem neuen Polynom gilt für den i-ten Exponenten: Exponent aus dem Parameter-Monom wird addiert mit dem i-ten Exponenten aus
 der Monomliste des Parameter-Polynoms.
 
 Da hier nur ein einzelnes Monom mit einem bereits normalisierten
@@ -608,17 +608,17 @@ Diese Funktion soll ganze Polynome mit +, -, * und Zahlenliteralen funktionsfäh
 Mit instance Num Poly where sagen wir, dass Poly zur Typklasse Num gehören soll, die Wirkung davon ist, dass ein Poly
 als eine Zahl interpretiert wird und wir darauf die Standard-Zahlenoperationen verwenden können.
 
-fromInteger 0 = P [] sagt aus, was passieren soll wenn Haskell die Zahl 0 als Polynom braucht. Es entsteht ein leeres Polynom. 
-fromInteger x = P [M (fromInteger x % 1) 0] stellt die Schreibweise als Polynom dar, für beliebig andere Zahlen, z.B wenn für x die 5 eingesetzt wird,
+fromInteger 0 = P [] sagt aus, was passieren soll wenn Haskell die Zahl 0 als Polynom braucht. Es entsteht ein leeres Polynom.
+fromInteger x = P [M (fromInteger x % 1) 0] stellt die Schreibweise als Polynom dar, für beliebig andere Zahlen, z.B. wenn für x die 5 eingesetzt wird,
 dann wird ein Polynom in dieser Schreibweise zurückgegeben: P [M (5 % 1) 0]
 
-Wenn wir (-p1= schreiben, intepretiert Haskell das unäre Minus als negate, und sobald wir negate p, also (-p) schreiben, wird unsere selsbtdefinierte
+Wenn wir (-p1= schreiben, interpretiert Haskell das unäre Minus als negate, und sobald wir negate p, also (-p) schreiben, wird unsere selbstdefinierte
 negat Funktion aufgerufen.
 
-wenn wir ganze Polynome miteinander addieren wollen, also z.B (P [M 2 2, M 2 1]) + (P [M 4 2, M 4 1]) schreiben, wird durch die instance-Methode das + als unsere
+wenn wir ganze Polynome miteinander addieren wollen, also z.B. (P [M 2 2, M 2 1]) + (P [M 4 2, M 4 1]) schreiben, wird durch die instance-Methode das + als unsere
 selbstdefinierte add Funktion interpretiert, sprich es wird add (P [M 2 2, M 2 1]) (P [M 4 2, M 4 1]) aufgerufen.
 
-Für die anderen Operationen ist dies der Gleiche Ablauf.
+Für die anderen Operationen ist dies der gleiche Ablauf.
 
 -}
 
@@ -635,7 +635,7 @@ instance Num Poly where
   p1 + p2 = add p1 p2
 
   (-) :: Poly -> Poly -> Poly
-  p1 - p2 = sub p1 p2 
+  p1 - p2 = sub p1 p2
 
   (*) :: Poly -> Poly -> Poly
   p1 * p2 = mult p1 p2
@@ -698,13 +698,13 @@ Diese Instanz beschreibt, wie ein Monom als LaTeX ausgegeben wird.
 
 Ein Monom hat die Form M k e, wobei k der Koeffizient ist und e der Exponent.
 
-Dies wird mit Pattern Matching gelöst, falls ein Monom mit einem 0-Exponenten als 
+Dies wird mit Pattern Matching gelöst, falls ein Monom mit einem 0-Exponenten als
 Parameter eingegeben wird, bleibt nur der Koeffizient übrig, da x^0 = 1 ist.
 
 Wenn ein Monom als Parameter eingegeben wird, wo der Exponent 1 ist, dann unterscheiden wir in 3 Fälle:
-Falls der Koeffizient 1 ist wird nur x geschrieben und nicht x^1. z.B M 1 2 wird mathematisch als x^2 interpretiert.
-Falls der Koeffizie -1 ist, wird logischerweise dann -x geschrieben. z.B M (-1) 2 wird mathematisch als (-x)^2 interpretiert.
-In allen anderen Fällen wird der Koeffizient vor das x geschrieben. z.B 3 2 wird mathematisch als 3x^2 interpretiert.
+Falls der Koeffizient 1 ist, wird nur x geschrieben und nicht x^1. z.B. M 1 2 wird mathematisch als x^2 interpretiert.
+Falls der Koeffizient -1 ist, wird logischerweise dann -x geschrieben. z.B. M (-1) 2 wird mathematisch als -x^2 interpretiert.
+In allen anderen Fällen wird der Koeffizient vor das x geschrieben. z.B. M 3 2 wird mathematisch als 3x^2 interpretiert.
 
 -}
 
@@ -730,7 +730,7 @@ Das Polynom wird zuerst normalisiert.
 
 Danach wird polyToLaTeX aufgerufen, welches die eigentliche Ausgabe als String übernimmt.
 
-Bsp: toLaTeX (P [M 2 1, M 3 2, M 4 1]) toLaTeX (P [M 2 1, M 3 2, M 4 1]), 
+Bsp: toLaTeX (P [M 2 1, M 3 2, M 4 1]) toLaTeX (P [M 2 1, M 3 2, M 4 1]),
 zuerst passiert: normalize (P [M 2 1, M 3 2, M 4 1])
 Das wird zu: P [M 3 2, M 6 1], weil mathmatisch  2x + 4x = 6x ergibt und nach Exponenten sortiert wird.
 Danach macht wird aufgerufen: polyToLaTeX (P [M 3 2, M 6 1]) und als Ergebnis kommt "3*x^{2}+6*x"
@@ -761,7 +761,7 @@ fügt alle Strings zusammen.
 Bsp: polyToLaTeX (P [M 3 2, M 2 1, M (-5) 0])
 1. Aufruf: toLaTeX (M 3 2) ++ concatMap monomWithSign [M 2 1, M (-5) 0]
 Der erste Monom ergibt "3*x^{2}" , danach wird die Restliste weiter bearbeitet: concatMap monomWithSign [M 2 1, M (-5) 0]
-ergibt: "+2*x-5" und aufgrund dem ++ wird dies zusammengefügt: "3*x^{2}" ++ "+2*x-5" ergibt "3*x^{2}+2*x-5". Mathematisch sieht es so aus: 3x² + 2x - 5
+ergibt: "+2*x-5" und durch das ++ wird dies zusammengefügt: "3*x^{2}" ++ "+2*x-5" ergibt "3*x^{2}+2*x-5". Mathematisch sieht es so aus: 3x² + 2x - 5
 
 -}
 
@@ -781,14 +781,14 @@ Wenn der Koeffizient positiv ist, wird ein "+" davor gesetzt.
 Wenn der Koeffizient negativ ist (andernfalls), wird kein extra Zeichen gesetzt,
 weil das Minus schon durch toLaTeX im Koeffizienten enthalten ist.
 
-Mit (M k e) wird das Monom direkt ausgepackt, k ist dabei der Koeffizient 
+Mit (M k e) wird das Monom direkt ausgepackt, k ist dabei der Koeffizient
 und e ist dabei der Exponent.
 
-Falls der Koeffizient von dem eingegebenen Parameter-Monom positiv ist, dann wird 
-für dem Koeffizienten ein + angehangen, Bsp: monomWithSign (M 3 2) wobei k = 3 ist, also kommt raus: "+3*x^{2}"
+Falls der Koeffizient von dem eingegebenen Parameter-Monom positiv ist, dann wird
+vor dem Koeffizienten ein + angehängt, Bsp: monomWithSign (M 3 2) wobei k = 3 ist, also kommt raus: "+3*x^{2}"
 
 Andernfalls, also wenn der Koeffizient von dem eingegeben Parameter-Monom negativ ist, wird das Monom mit
-ohne ein Plus daregstellt, also ganz einfach dargestellt, was als k < 0 eingegeben wurde.
+ohne ein Plus dargestellt, also ganz einfach dargestellt, was als k < 0 eingegeben wurde.
 Bsp: bei monomWithSign (M (-3) 2) passiert: toLaTeX (M (-3) 2) und das ergibt: "-3*x^{2}"
 
 -}

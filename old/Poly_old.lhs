@@ -21,14 +21,14 @@ Alte Poly-Datei !
 > import Data.List
 > import Type.Reflection.Unsafe (someTypeRepFingerprint)
 > import qualified Control.Applicative as Liste
-  
 
 
 
-Ein Monom ist ein einzelner Term, z.b 3x^2 oder 5x
-Das Rational ist hier der Koeffizient (z.B 3 oder 5) und das Int der Exponent (also z.b ^2)
+
+Ein Monom ist ein einzelner Term, z.B. 3x^2 oder 5x
+Das Rational ist hier der Koeffizient (z.B. 3 oder 5) und das Int der Exponent (also z.B. ^2)
 Bei dem Rational ist hier das Einsetzen einer Ganzzahl auch möglich, Haskell interpretiert das automatisch.
-Ein Bruch wäre z.B 3 % 5 = 3/5 tel 
+Ein Bruch wäre z.B. 3 % 5 = 3/5.
 
 deriving (Show, Eq) erzeugt automatisch Standardfunktionen.
 Show: Damit kann Haskell den Datentyp als Text anzeigen. Beispiel: M 3 2 wird in GHCi angezeigt als: M 3 2
@@ -44,22 +44,22 @@ data kann mehrere Konstruktoren, auch Parameter, haben und mehrere Werte speiche
 
 
 
-Der neu definierte Datentyp Poly ist eine Liste von Monomen, also z.b im Code wäre es als Bsp sowas:
+Der neu definierte Datentyp Poly ist eine Liste von Monomen, also z.B. im Code wäre es als Bsp sowas:
 P [M 2 3, M 3 4, M 2 1], mathematisch würde es so aussehen: [2x^3, 3x^4,2x^1]
 P ist der Konstruktor, was einen richtiges Poly erzeugt (siehe eine Zeile davor Bsp.). Ohne das P, also nur [M 2 3, M 3 4, M 2 1]
 wäre es lediglich eine Monomliste, aber mit P sagen wir nochmal, dass diese Liste als Polynom behandelt werden soll
 
 newtype kann nur einen Konstruktor, auch nur einen Parameter haben, und auch genau nur einen Wert speichern.
 
-> newtype Poly = P [Monom] 
+> newtype Poly = P [Monom]
 >   deriving (Show,Eq)
 
 
 
 
 
-> infix 8 #^ 
-> a #^  b = P [M a b] 
+> infix 8 #^
+> a #^  b = P [M a b]
 
 
 
@@ -114,7 +114,7 @@ newtype kann nur einen Konstruktor, auch nur einen Parameter haben, und auch gen
 
 
 
-Hier wird definiert, dass M k e = k*x^e bedeuted
+Hier wird definiert, dass M k e = k*x^e bedeutet
 
 >   toLaTeX (M k e)
 >     |k==1 = "x^{"++show e++"}"
@@ -136,12 +136,12 @@ Hier wird definiert, dass M k e = k*x^e bedeuted
 
 
 Hier wird List Comprehension angewendet, welche die allgemeine Notation [Ausdruck | Generator]
-besitzt. z.B bedeuted [x * 2 | x <- [1,2,3]] dass x jeden Wert aus der Liste [1,2,3] animmt und somit 
+besitzt. z.B. bedeutet [x * 2 | x <- [1,2,3]] dass x jeden Wert aus der Liste [1,2,3] annimmt und somit
 dass [1*2,2*2,3*2] = [2,4,6] rauskommt.
 
-M k e bedeuted k*x^e
+M k e bedeutet k*x^e
 
-(P xs) ist das Liste die als Polynom interpretiert wird und x ist der Wert, welcher in der Formel eingesetzt wird.
+(P xs) ist die Liste, die als Polynom interpretiert wird und x ist der Wert, welcher in der Formel eingesetzt wird.
 
 Für jedes Monom M k e aus der Liste xs wird k*(x^e) berechnet. Anschließend werden alle Ergebnisse mit sum addiert.
 
@@ -151,34 +151,34 @@ Für jedes Monom M k e aus der Liste xs wird k*(x^e) berechnet. Anschließend we
 
 
 
-Anstatt P (xs) kann man auch P (x:y:xs) schreiben, x ist das Erste Monom in der Liste und y das Zweite. 
+Anstatt P (xs) kann man auch P (x:y:xs) schreiben, x ist das erste Monom in der Liste und y das zweite.
 Da man einzelne Monoms auch als M Rational Int M k e , bzw. (M k e), schreiben kann, geht auch P ((M k1 e1):(M k2 e2):xs)
 
 Falls ein Polynom mit keinem Monom angegeben wird, wird ein leeres Polynom zurückgegeben.
 Falls ein Polynom mit genau einem Monom angegeben wird, wird das Polynom mit dem Monom zurück gegeben, zb normalize (P [M 2 3]) = wird einfach 2x^3 zurückgegeben.
 
 Ansonsten (Wenn ein Polynom mit mehreren Monomen als Parameter eingegeben wird):
-Als Erstes wird geprüft ob der Erste Monom den Koeffizient 0 hat, wenn ja fließt der erste Monom nicht in die Berechnung ein und es wird mit dem zweiten Monom 
-und dem Rest rekursiv weiter gerechnet, da ein Monom mit Koeffizient 0 immer = 0 ist.
+Als Erstes wird geprüft ob das erste Monom den Koeffizienten 0 hat, wenn ja fließt das erste Monom nicht in die Berechnung ein und es wird mit dem zweiten Monom
+und dem Rest rekursiv weitergerechnet, da ein Monom mit Koeffizient 0 immer = 0 ist.
 
-z.B 0x^2 + 2x + 2 = 2x + 2
-Als Zweites wird geprüft ob der Zweite Monom den Koeffizient 0 hat, wenn ja dann fließt der zweite Monom nicht in die Berechnung ein und es wird mit dem ersten Monom 
-und dem Rest außer dem zweiten Monom rekursiv weiter gerechnet.
-z.B 0x^2 + 2x + 2 = 2x + 2
+z.B. 0x^2 + 2x + 2 = 2x + 2
+Als Zweites wird geprüft ob das zweite Monom den Koeffizienten 0 hat, wenn ja dann fließt das zweite Monom nicht in die Berechnung ein und es wird mit dem ersten Monom
+und dem Rest außer dem zweiten Monom rekursiv weitergerechnet.
+z.B. 0x^2 + 2x + 2 = 2x + 2
 
 Als Drittes wird geprüft ob der Exponent von dem ersten Monom gleich ist wie der Exponent vom zweiten Monom (es werden 2er Nachbar Paare verglichen),
-wenn ja, dann wird der werden die beiden Monome zu einem Monom zusammengefasst, in dem die Koeffizienten beider addiert werden. Es wird mit dem zusammengefasstem Monom und 
-dem Rest rekursiv weiter gerechnet. z.B 2x^2 + 2x + 4x + 2 = 2x^2 + 6x + 2
+wenn ja, dann werden die beiden Monome zu einem Monom zusammengefasst, in dem die Koeffizienten beider addiert werden. Es wird mit dem zusammengefassten Monom und
+dem Rest rekursiv weitergerechnet. z.B. 2x^2 + 2x + 4x + 2 = 2x^2 + 6x + 2
 
 Als Viertes Prüfen wir die Ordnung der Exponenten, der Größte soll ganz Vorne sein und ab da Absteigen bis zum Niedrigsten Exponenten.
-Wenn der Exponent des ersten Monums kleiner ist, als der Exponent des ZWeiten Monoms, dann werden die Monome ganz einfach getauscht und es wird rekursiv die Liste weiter geprüft. 
+Wenn der Exponent des ersten Monoms kleiner ist, als der Exponent des zweiten Monoms, dann werden die Monome ganz einfach getauscht und es wird rekursiv die Liste weiter geprüft.
 
-Ansonsten, wenn keine dieser Prüfungen auf das Polynom trifft, also die ersten zwei Monome okay sind, muss ja das nächste geprüft werden, also das zweite mit dem 3 um sicherzustellen, 
-dass der dritte Monom und so okay ist, und dann der Dritte mit dem Vierten und immer so weiter. Es muss der erste Monom (in der aktuellen Rekursionsebene) behalten werden, da eer sonst verloren geht und wir normalisieren den Rest weiter, 
-damit wir am Ende einen komplett normalisiertes Polynom haben.
+Ansonsten, wenn keine dieser Prüfungen auf das Polynom trifft, also die ersten zwei Monome okay sind, muss ja das nächste geprüft werden, also das zweite mit dem 3 um sicherzustellen,
+dass das dritte Monom und so okay ist, und dann das dritte mit dem vierten und immer so weiter. Es muss das erste Monom (in der aktuellen Rekursionsebene) behalten werden, da es sonst verloren geht und wir normalisieren den Rest weiter,
+damit wir am Ende ein komplett normalisiertes Polynom haben.
 Beispiel:
 [M 5 5, M 2 3, M 4 3]
-Die ersten zwei Monome sind okay, die Prüfungen der Ifs nicht auf Sie zutreffen.
+Die ersten zwei Monome sind okay, die Prüfungen der Ifs nicht auf sie zutreffen.
 Deshalb bleibt M 5 5 vorne erhalten.
 Der Rest [M 2 3, M 4 3] wird weiter normalisiert.
 Daraus wird [M 6 3], weil die Exponenten gleich sind.
@@ -191,22 +191,22 @@ aus let P rest = normalize (P ((M k2 e2):xs)) entsteht ein Poly, also P [Monom] 
 Wenn wir let rest = normalize (P ((M k2 e2):xs)), dann wäre rest einfach ein Poly und wir könnten es so nicht einsetzen
 
 Es gibt aber ein Problem, welches entstehen kann, wenn es dazu kommt, dass wir gleiche Exponenten haben und diese Zahl zusammenfassen müssen. Da ein Rational auch eine negative Zahl sein kann,
-wie zum Beispiel (-2) % 1 = -2, kann es sein, dass sich durch Addierung dieser Koeffzienten sich die aufheben, Veranschaulichung: M 2 2 + M (-2) 2 = 2x^2 + (-2x^2) = 0, also heben Sie sich dadurch auf.
+wie zum Beispiel (-2) % 1 = -2, kann es sein, dass sich durch Addierung dieser Koeffizienten sich die aufheben, Veranschaulichung: M 2 2 + M (-2) 2 = 2x^2 + (-2x^2) = 0, also heben Sie sich dadurch auf.
 Deshalb müssen wir noch zwei ifs unter dieser Prüfung tun. Das verschaltete If prüft, ob Monom 1 und Monom 2 sich wirklich aufheben, wenn ja werden diese Beiden nicht mehr betrachtet und es wird weiter mit den Restmonomen fortgefahren.
-Das verschachtelte else macht dann ganz normal die Zusammenfassung der Zwei Koffezienten von Monom 1 und Monom 2 zu einem Monomen, wie schon oben beschrieben.
+Das verschachtelte else macht dann ganz normal die Zusammenfassung der Zwei Koeffizienten von Monom 1 und Monom 2 zu einem Monom, wie schon oben beschrieben.
 
 > normalize :: Poly -> Poly
 > normalize (P []) = P []
 > normalize (P [m]) = P [m]
 > normalize (P ((M k1 e1):(M k2 e2):xs)) = if k1 == 0 then normalize (P ((M k2 e2):xs))
->                                          else if k2 == 0 then normalize (P ((M k1 e1):xs)) 
+>                                          else if k2 == 0 then normalize (P ((M k1 e1):xs))
 >                                          else if (e1 == e2) then
 >                                           if k1 + k2 == 0 then normalize (P xs)
->                                           else normalize (P ((M (k1+k2) e1):xs)) 
+>                                           else normalize (P ((M (k1+k2) e1):xs))
 >                                          else if (e1 < e2) then normalize (P ((M k2 e2):(M k1 e1):xs))
 >                                          else let P rest = normalize (P ((M k2 e2):xs))
->                                               in P ((M k1 e1):rest)    
-                                             
+>                                               in P ((M k1 e1):rest)
+
 
 
 
@@ -214,7 +214,7 @@ Diese Funktion soll ein Polynomaddition realisieren, sprich: (p1 + p2) (x) = p1(
 Dabei soll das Ergebnispolynom normalisiert sein. Wir dürfen nicht einfach normalize (p1+p2) schreiben, da p1+p2 = add p1 p2 oben definiert ist.
 Das würde eine Endlosschleife sein, da es sich immer selbst wieder aufrufen würde.
 Wir können anstatt add p1 p2, lieber add (P xs1) (P xs2) schreiben, um an die Monomlisten ranzukommen.
-mathmematisch geht es so, da: (2x² + 2x + 2) + (4x + 4) wird zuerst zu: 2x² + 2x + 2 + 4x + 4
+mathematisch geht es so, da: (2x² + 2x + 2) + (4x + 4) wird zuerst zu: 2x² + 2x + 2 + 4x + 4
 Das ist mathematisch völlig korrekt. Erst DANACH vereinfacht man 2x + 4x = 6x zu 2 + 4 = 6 , Ergebnis: 2x² + 6x + 6
 Das macht das Programm auch: Schritt 1 — Listen zusammenfügen: xs1 ++ xs2 macht: [M 2 2, M 2 1, M 2 0, M 4 1, M 4 0]
 Das bedeutet mathematisch 2x² + 2x + 2 + 4x + 4, Schritt 2 — normalize:
@@ -225,19 +225,19 @@ Dann erkennt normalize die gleichen Exponenten, Also: 2x + 4x = 6x und 2 + 4 = 6
 
 
 Das unäre "-" wird in Haskell zu von der Klasse num als negate interpretiert, und wenn ich hier -(P xs) schreibe,
-ruft Haskell negate (P xs) auf und es wurde unten in Zeile 259 definiert: negate p = negat p, also würde eine Endlosschleife entstehen, 
+ruft Haskell negate (P xs) auf und es wurde unten in Zeile 259 definiert: negate p = negat p, also würde eine Endlosschleife entstehen,
 wenn ich direkt negate oder "-" verwenden würde.
 
-Diese FUnktion soll ein Polynom in ein negatives Polynom verwandeln,
-z.B macht negat (P [M 2 2, M 2 1]) = - [M 2 2, M 2 1], also mathematisch 2x^2 + 2x zu -(2x^2 + 2x)
+Diese Funktion soll ein Polynom in ein negatives Polynom verwandeln,
+z.B. macht negat (P [M 2 2, M 2 1]) = - [M 2 2, M 2 1], also mathematisch 2x^2 + 2x zu -(2x^2 + 2x)
 
-Wenn ein leerey Polynom als Argument übergeben wird, dann wird ein leeres Polynom zurückgeben.
-Wenn ein Polynom mit einem Monom übergeben wird, wird ganz einfach das Polynom mit dem Monom zurückgegeben, der Koeffizient ist hierbei aber negiert! z.B bei negat (P [M 5 5]) = P [M (-5) 5]
-mathematisch sind es so aus: 2x^2 = -2x^2
+Wenn ein leeres Polynom als Argument übergeben wird, dann wird ein leeres Polynom zurückgegeben.
+Wenn ein Polynom mit einem Monom übergeben wird, wird ganz einfach das Polynom mit dem Monom zurückgegeben, der Koeffizient ist hierbei aber negiert! z.B. bei negat (P [M 5 5]) = P [M (-5) 5]
+mathematisch sieht es so aus: 2x^2 = -2x^2
 
-Wenn ein Polynomen mit mehr als ein Monom übergeben wird, erstellen wir einen Auspacker Poly let P rest = negat (normalize (P (xs))), wobei hier wie vorher ein P [Monom] entsteht
-und rest den [Monom] übernimmt, daher können wir es hinter (M (-k) e): ... einsetzen, es wird mit dem let definiert, dass die Restliste, also die restlichen Monome außer dem Ersten, durchgegagen
-werden sollen und negiert werden sollen. Es wird eingesetzt wo (in) das erste Monom negiert wird und dann die restliste mit dem definierten let durchgegangen wird. Es entsteht ein komplett negiertes Poly
+Wenn ein Polynom mit mehr als einem Monom übergeben wird, erstellen wir einen Auspacker Poly let P rest = negat (normalize (P (xs))), wobei hier wie vorher ein P [Monom] entsteht
+und rest den [Monom] übernimmt, daher können wir es hinter (M (-k) e): ... einsetzen, es wird mit dem let definiert, dass die Restliste, also die restlichen Monome außer dem Ersten, durchgegangen
+werden sollen und negiert werden sollen. Es wird eingesetzt wo (in) das erste Monom negiert wird und dann die Restliste mit dem definierten let durchgegangen wird. Es entsteht ein komplett negiertes Poly
 
 > negat ::  Poly -> Poly
 > negat (P []) = P []

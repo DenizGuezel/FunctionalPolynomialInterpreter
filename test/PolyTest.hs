@@ -46,7 +46,7 @@ testGroup ist eine Funktion, die eine Gruppe von Tests zusammenfasst (Liste von 
 testCase ist eine Funktion, die einen einzelnen Testfall beschreibt.
 
 vor dem $ steht der Name des Testfalls, nach dem $ steht der eigentliche Test, der ausgeführt wird.
-@?= ist ein Operator, der zwei Werte vergleicht und einen Test fehlschlagen lässt, wenn sie nicht gleich sind, also tatsächlichesErgebnis @?= erwartetesErgebnis.
+@?= ist ein Operator, der zwei Werte vergleicht und einen Test fehlschlagen lässt, wenn sie nicht gleich sind, also tatsächliches Ergebnis @?= erwartetes Ergebnis.
 
 
 -}

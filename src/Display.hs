@@ -168,7 +168,7 @@ showDetailsText name poly =
 {- 
 
 Diese Funktion soll die Darstellung einer MonomListe als String ermöglichen, 
-die dann in der GUI unter dem Reiter Detaiks angezeigt werden kann.
+die dann in der GUI unter dem Reiter Details angezeigt werden kann.
 
 Die Funktion wird auf bereits normalisierte Polynome angewendet, 
 um die Monomliste in einer standardisierten Form darzustellen.
@@ -201,7 +201,7 @@ showGraphDivText name quotient rest =
 
 {- Historie-Darstellung -}
 
-{- Diese Hauptfunktion stellt die ganze Historie der Ergebnisse als einen schön formartierten String dar. -}
+{- Diese Hauptfunktion stellt die ganze Historie der Ergebnisse als einen schön formatierten String dar. -}
 
 showPrettyHistory :: Pretty a => History a -> String
 showPrettyHistory history =
@@ -212,14 +212,14 @@ showPrettyHistory history =
 showHistoryText :: History HistoryEntry -> String
 showHistoryText = showPrettyHistory
 
-{- Diese Hilfsfunktion formatiert einen Eintrag, je nach HistoryEntry-Typ in der Historie in einen schön formartierten String. -}
+{- Diese Hilfsfunktion formatiert einen Eintrag je nach HistoryEntry-Typ in der Historie als einen schön formatierten String. -}
 
 formatPrettyEntry :: Pretty a => Int -> a -> String
 formatPrettyEntry n entry = show n ++ ". " ++ pretty entry
 
 {- Library-Darstellung -}
 
-{- Diese Funktion stellt jeden Eintrag aus der PolyLibrary als einen String im Fromat: <polynomname> = <polynom> dar. -}
+{- Diese Funktion stellt jeden Eintrag aus der PolyLibrary als einen String im Format: <polynomname> = <polynom> dar. -}
 showPolyLibraryText :: PolyLibrary -> String
 showPolyLibraryText [] = "Noch keine Polynome vorhanden."
 showPolyLibraryText library = unlines [name ++ " = " ++ pretty poly | (name, poly) <- library]
@@ -232,7 +232,7 @@ Diese Funktion stellt ein zufällig erzeugtes Polynom als String dar.
 Wir brauchen es nicht noch für ValueResult oder DivResult, da wir nur zufällige Polynome erzeugen wollen, 
 die wir dann in der GUI anzeigen.
 
-Der Zufallspolynom-Button in der GUI erzeugt keine Divisiom und keinen einzelnen Wert.
+Der Zufallspolynom-Button in der GUI erzeugt keine Division und keinen einzelnen Wert.
 Division und Auswertung entstehen erst, wenn der Benutzer die entsprechenden Buttons für die Operationen klickt.
 
 -}

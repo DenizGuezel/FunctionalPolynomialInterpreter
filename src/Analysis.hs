@@ -90,7 +90,7 @@ countNodesRec (TMul left right) count = countNodesRec left (countNodesRec right 
 
 Diese Funktion zählt die Anzahl der Blätter in einem Baum mithilfe der rekursiven Hilfsfunktion countLeavesRec.
 
-z.B für einen Baum der Form:
+z.B. für einen Baum der Form:
 
         a
        / \
@@ -133,7 +133,7 @@ countLeavesRec (TMul left right) count = countLeavesRec left (countLeavesRec rig
 
 Diese Funktion zählt die Anzahl der Operatoren in einem Baum mithilfe der rekursiven Hilfsfunktion countOperatorsRec.
 
-z.B für einen Baum der Form:
+z.B. für einen Baum der Form:
 
         a
        / \
@@ -179,7 +179,7 @@ countOperatorsRec (TMul left right) count = countOperatorsRec left (countOperato
 
 Diese Funktion zählt die Anzahl der Variablen in einem Baum mithilfe der rekursiven Hilfsfunktion countVariablesRec.
 
-z.B für einen Baum der Form:
+z.B. für einen Baum der Form:
 
         a
        / \

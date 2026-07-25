@@ -16,7 +16,7 @@ import qualified Control.Applicative()
 {- 
 
 Das ist unsere Hauptfunktion, welche einen String, der ein Polynom beschreibt, in ein Polynom (Poly) parsen soll.
-Die Funktion bekommt z.B als Eingabe: "3 2;5 1;7 0" und gibt als Ausgabe Either String Poly zurück, das entweder ein Fehler-String oder ein Polynom (Poly) ist.
+Die Funktion bekommt z.B. als Eingabe: "3 2;5 1;7 0" und gibt als Ausgabe Either String Poly zurück, das entweder ein Fehler-String oder ein Polynom (Poly) ist.
 
 Either ist ein Datentyp, der entweder einen Wert vom Typ Left a (für uns hier Fehlermeldung) oder Right b (hier ein Polynom) enthält und somit eine sichere Art ist, 
 entweder einen Fehler oder einen gültigen Wert zurückzugeben.
@@ -29,7 +29,7 @@ parsePolySimple s = parseMonomList (splitBySemicolon s)
 {- 
 
 Diese Funktion soll eine Liste von Strings, die Monome beschreiben, in ein Polynom parsen.
-Sie bekommt als Eingabe z.B ["3 2", "5 1", "7 0"] und gibt als Ausgabe Either String Poly zurück, das entweder ein Fehler-String oder ein Polynom (Poly) ist.
+Sie bekommt als Eingabe z.B. ["3 2", "5 1", "7 0"] und gibt als Ausgabe Either String Poly zurück, das entweder ein Fehler-String oder ein Polynom (Poly) ist.
 
 Falls eine leere Liste übergeben wird, bekommen wir ein Ergebnis vom Typ Either mit einem Polynom, das keine Monome enthält (P []).
 
@@ -37,10 +37,10 @@ Falls eine nicht Leere Liste übergeben wird, führen wir die Funktion parseMono
 Falls bei der Ausführung von parseMonomSimple ein Fehler auftritt, geben wir diesen Fehler zurück (Left err).
 Wenn kein Fehler auftritt, bekommen wir ein gültiges Monom (Right monom) und führen die Funktion parseMonomList rekursiv auf den Rest der Liste aus.
 
-Falls bei der Ausführung auf der Resliste ein Fehler auftritt, geben wir diesen Fehler zurück (Left err).
+Falls bei der Ausführung auf der Restliste ein Fehler auftritt, geben wir diesen Fehler zurück (Left err).
 Wenn kein Fehler auftritt (die Restliste erfolgreich geparst wurde), bekommen wir ein gültiges Polynom (Right (P monoms)) und fügen das Monom, das wir vorher geparst haben, zu der Liste der Monome hinzu und geben das Ergebnis als Polynom zurück (Right (normalize (P (monom:monoms)))).
 
-case führt eine Funktion aus, hier z.B parseMonomList x unf prüft mit of, welches Ergebnismuster in den unteren Zeilen zutrifft.
+case führt eine Funktion aus, hier z.B. parseMonomList x und prüft mit of, welches Ergebnismuster in den unteren Zeilen zutrifft.
 
 -}
 
@@ -55,10 +55,10 @@ parseMonomList (x:xs) = case parseMonomSimple x of
 {- 
 
 Diese Funktion soll einen String, der ein einzelnes Monom beschreibt, in ein Monom parsen.
-Sie bekommt als Eingabe z.B "3 2" und gibt als Ausgabe Either String Monom zurück, das entweder ein Fehler-String oder ein Monom ist.
+Sie bekommt als Eingabe z.B. "3 2" und gibt als Ausgabe Either String Monom zurück, das entweder ein Fehler-String oder ein Monom ist.
 
 Wir führen die Funktion words auf den Eingabe-String aus, um ihn in eine Liste von Strings zu zerlegen und prüfen welche der unteren Fälle zutreffen.
-words input zerlegt den übergebenen Parameter-String (z.B "3 2") in eine Liste von Strings (z.B ["3", "2"]).
+words input zerlegt den übergebenen Parameter-String (z.B. "3 2") in eine Liste von Strings (z.B. ["3", "2"]).
 
 Wenn die zerlegte Liste leer ist, geben wir einen Fehler zurück.
 
@@ -83,10 +83,10 @@ parseMonomSimple input =  case words input of
 {- 
 
 Diese Funktion soll zwei Strings, die den Koeffizienten und den Exponenten eines Monoms beschreiben, in ein Monom parsen.
-Sie bekommt als Eingabe z.B "3" und "2" und gibt als Ausgabe Either String Monom zurück, das entweder ein Fehler-String oder ein Monom ist.
+Sie bekommt als Eingabe z.B. "3" und "2" und gibt als Ausgabe Either String Monom zurück, das entweder ein Fehler-String oder ein Monom ist.
 
 Es wird versucht, den Koeffizienten-String und den Exponenten-String in die entsprechenden Typen (Rational und Int) zu parsen.
-Der Einleseverusch kann durch den Datentyp Maybe entweder erfolgreich sein (Just c, Just e) oder fehlschlagen (Nothing).
+Der Einleseversuch kann durch den Datentyp Maybe entweder erfolgreich sein (Just c, Just e) oder fehlschlagen (Nothing).
 
 Dieser case wird ausgeführt und es wird nach den 3 unteren Mustern geprüft, welche zutreffen.
 
@@ -108,16 +108,16 @@ parseNumbers coeff exponentText = case (readMaybe coeff :: Maybe Integer, readMa
 {- 
 
 Diese Funktion soll einen String, der mehrere Monome beschreibt, in eine Liste von Strings zerlegen, die jeweils ein Monom beschreiben.
-Sie bekommt als Eingabe z.B "3 2;5 1;7 0" und gibt als Ausgabe eine Liste von Strings zurück, die jeweils ein Monom beschreiben, z.B ["3 2", "5 1", "7 0"].
+Sie bekommt als Eingabe z.B. "3 2;5 1;7 0" und gibt als Ausgabe eine Liste von Strings zurück, die jeweils ein Monom beschreiben, z.B. ["3 2", "5 1", "7 0"].
 
-Wenn der Eingabe-String (es ist ein [char], deswegen matchen wir mit []) leer iszt, geben wir eine leere Liste zurück.
+Wenn der Eingabe-String (es ist ein [char], deswegen matchen wir mit []) leer ist, geben wir eine leere Liste zurück.
 
 Wenn ein gültiger String übergeben wird, gehen wir wie folgt weiter:
 
 Es wird zerlegt, indem der String an jedem Semikolon (;) aufgeteilt wird. 
 before ist der Teil des Strings vor dem Semikolon und after ist der Teil des Strings nach dem Semikolon.
 
-z.B haben wir den String "3 2;5 1;7 0", dann ist before = "3 2" und after = ";5 1;7 0".
+z.B. haben wir den String "3 2;5 1;7 0", dann ist before = "3 2" und after = ";5 1;7 0".
 
 Wir gucken uns jetzt den after-Teil an und prüfen diesen auf die zwei unteren Fälle.
 Fall 1: Wenn after leer ist, bedeutet das, dass es gar kein Semikolon im String gab, also geben wir eine Liste mit nur dem before-Teil zurück.
@@ -137,7 +137,7 @@ splitBySemicolon s = let (before, after) = break (== ';') s
 {- 
 
 Diese Hauptfunktion soll einen String, der eine Zahl beschreibt, in einen Rational parsen.
-Sie bekommt als Eingabe z.B "3" oder "3/4" und gibt als Ausgabe Maybe Rational zurück, das entweder Nothing (wenn der String keine gültige Zahl ist)
+Sie bekommt als Eingabe z.B. "3" oder "3/4" und gibt als Ausgabe Maybe Rational zurück, das entweder Nothing (wenn der String keine gültige Zahl ist)
 oder Just r (wenn der String eine gültige Zahl ist) enthält.
 
 Wir sagen, dass der input String entweder eine ganze Zahl (Integer) oder einen Bruch (Fraction) darstellen kann.
@@ -154,7 +154,7 @@ parseRationalInput input = case readMaybe input :: Maybe Integer of
 {- 
 
 Diese Hilfsfunktion soll einen String, der einen Bruch beschreibt, in einen Rational parsen.
-Sie bekommt als Eingabe z.B "3/4" und gibt als Ausgabe Maybe Rational zurück, das entweder Nothing (wenn der String kein gültiger Bruch ist) 
+Sie bekommt als Eingabe z.B. "3/4" und gibt als Ausgabe Maybe Rational zurück, das entweder Nothing (wenn der String kein gültiger Bruch ist)
 oder Just r (wenn der String ein gültiger Bruch ist) enthält.
 
 Dazu wird der String an dem Schrägstrich (/) aufgeteilt, um den Zähler und den Nenner zu extrahieren.

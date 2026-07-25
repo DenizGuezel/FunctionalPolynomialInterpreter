@@ -212,14 +212,14 @@ lazyEvaluationInfo pointCount start step =
    ++ "take " ++ show pointCount ++ " fordert nur die Punkte an, die wirklich angezeigt werden.\n"
    ++ "Startwert: " ++ pretty start ++ ", Schrittweite: " ++ pretty step
 
-{- Hauptfunktion, die den Graphen in der GUi anzeigt -}
+{- Hauptfunktion, die den Graphen in der GUI anzeigt. -}
 
 graphSvg :: Poly -> String
 graphSvg poly = pointsToSvg (defaultPoints poly)
 
 {- 
 
-Diese Hilfsfunktin formatiert eine Liste von Punkten als SVG-Elemente, die in der GUI angezeigt werden können.
+Diese Hilfsfunktion formatiert eine Liste von Punkten als SVG-Elemente, die in der GUI angezeigt werden können.
 die Funktion bekommt als Eingabe eine Liste von Tupeln, die die Punkte darstellen, und gibt als Ausgabe einen String zurück, der die SVG-Elemente darstellt.
 
 SVG-Elemente sind eine Art von Vektorgrafiken, die in HTML-Dokumenten verwendet werden können, um Grafiken darzustellen.

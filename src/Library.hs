@@ -2,7 +2,7 @@ module Library where
 
 import Poly
 
-{- Dieses Modul dient dazu, anders wie History, bewusst Polynome mit Namen zu speichern, damit der Benutzer sie später wiederverwenden kann. -}
+{- Dieses Modul dient dazu, anders als History, bewusst Polynome mit Namen zu speichern, damit der Benutzer sie später wiederverwenden kann. -}
 
 
 {- Neuer Datentyp für den Namen eines Polynoms, wir verwenden type, weil wir einen neuen Namen definieren für einen vorhandenen Datentyp -}
@@ -66,7 +66,7 @@ Sie nimmt als Eingabe eine PolyLibrary und gibt eine Liste von PolyName (Namen) 
 die alle Namen der gespeicherten Polynome enthält.
 
 fst ist eine Funktion aus dem Prelude, die das erste Element eines Paares zurückgibt, also den Namen des Polynoms.
-z.B bei library =[ ("p1", poly1), ("p2", poly2), ("p3", poly3)] nimmt fst das erste Element jedes Paares, also gibt ["p1", "p2", "p3"] zurück.
+z.B. bei library = [("p1", poly1), ("p2", poly2), ("p3", poly3)] nimmt fst das erste Element jedes Paares, also gibt ["p1", "p2", "p3"] zurück.
 
 -}
 

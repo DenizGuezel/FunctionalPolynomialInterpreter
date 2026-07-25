@@ -26,7 +26,7 @@ import Cache
 import Parallel
 import Examples
 
-{- Hier kommt die GUI-Logik rein, welche die Interaktion mit dem Benutzer steuert z.B mit Buttons. Die GUI benutzt die anderen Module, um die Interaktion zu ermöglichen. -}
+{- Hier kommt die GUI-Logik rein, welche die Interaktion mit dem Benutzer steuert, z.B. mit Buttons. Die GUI benutzt die anderen Module, um die Interaktion zu ermöglichen. -}
 
 {- 
 
@@ -217,7 +217,7 @@ Diese Funktion wird von Threepenny aufgerufen, um das Fenster aufzubauen.
 Sie bekommt ein Window übergeben, in dem sie die GUI-Elemente platzieren kann.
 
 Threepenny nutzt im Hintergrund HTML und CSS, z.B. um Buttons, Textfelder, etc. darzustellen.
-z.B ist UI.button ein Button gleich zu <button> </button> in HTML.
+z.B. ist UI.button ein Button, ähnlich wie <button> </button> in HTML.
 
 Mit void $ return window # set title "Polynom-Parser" setzen wir den Fenstertitel.
 
@@ -226,7 +226,7 @@ Mit input definieren wir ein Eingabefeld, in das der Benutzer ein Polynom eingeb
 Mit button definieren wir einen Button, der zum Parsen des Polynoms verwendet werden kann.
 Mit output definieren wir einen Bereich (div), in dem das Ergebnis des Parsens angezeigt werden kann.
 
-wir definieren jeweils vor dem <- den Namen des Elements, nach dem <- sagen wir erst, um welches Element es sich handelt (z.B U1.h1 ist in html <h1> </h1>), 
+wir definieren jeweils vor dem <- den Namen des Elements, nach dem <- sagen wir erst, um welches Element es sich handelt (z.B. UI.h1 ist in HTML <h1> </h1>),
 danach mit # können wir Eigenschaften des Elements setzen, z.B. den Text, der angezeigt werden soll.
 
 Mit getBody window bekommen wir den Body des Fensters, in dem wir die Elemente platzieren können.
@@ -549,7 +549,7 @@ setup window = do
 
    void $ getBody window #+ [element appShell, element dynamicStatusBar]
 
-   {- Logik für das umswitchen der Output-Tabs -}
+   {- Logik für das Wechseln der Output-Tabs -}
 
    let tabClass tab active = if tab == active then "active" else ""
    let activateTab active = do
@@ -688,7 +688,7 @@ setup window = do
       actionResult <- handleRemovePolyClick polyStore selectedStore resultStore polyListOutput polyListMessage
       finishListAction actionResult
 
-   {- ActionListener auf die Darstellung-Bbuttons: -}
+   {- ActionListener auf die Darstellung-Buttons: -}
 
    on UI.click buttonShowResult $ \_ -> do
       activateTab "Ergebnis"
@@ -885,7 +885,7 @@ Dabei verwenden wir PolyResult, weil normalize wieder ein Polynom zurückgibt.
 Am Ende wird das Ergebnis mit toPrettyMathPoly schön mathematisch in der GUI angezeigt.
 
 Mit void $ sagen wir, dass wir den Rückgabewert der Funktion ignorieren. Das machen wir weil 
-set UI.text einen Ui.Element zurückgibt, den wir hier aber nicht benötigen.
+set UI.text ein UI.Element zurückgibt, das wir hier aber nicht benötigen.
 
 -}
 
@@ -994,7 +994,7 @@ Danach wird die neue Liste wieder in polyStore gespeichert.
 
 Am Ende wird die sichtbare Polynomliste in der GUI aktualisiert.
 
-Es wird ein Polynom im folgenden Format zum hinzufügen eingegeben: "3 2; 2 1; 1 0" (Koeffizient Exponent; Koeffizient Exponent; Koeffizient Exponent)
+Es wird ein Polynom im folgenden Format zum Hinzufügen eingegeben: "3 2; 2 1; 1 0" (Koeffizient Exponent; Koeffizient Exponent; Koeffizient Exponent)
 Es wird ein Name automatisch generiert, z.B. p1, p2, p3 usw. und das Polynom wird in der GUI angezeigt (z.B. p1 = 3x^2 + 2x + 1).
 
 -}
@@ -1543,7 +1543,7 @@ handleLatexClick resultStore output = do
 Diese Funktion wird aufgerufen, wenn der Button "Ergebnis" geklickt wird.
 Sie dient dazu, das Ergebnis einer Berechnung mathematisch anzuzeigen.
 
-GLeiches Vorgehen wie bei handleLatexClick, nur dass hier die mathematische Darstellung (toPrettyMathPoly und toPrettyMathRational) verwendet wird,
+Gleiches Vorgehen wie bei handleLatexClick, nur dass hier die mathematische Darstellung (toPrettyMathPoly und toPrettyMathRational) verwendet wird,
 um das Ergebnis in einer mathematischen Form anzuzeigen, die für den Benutzer leichter verständlich ist.
 
 -}
