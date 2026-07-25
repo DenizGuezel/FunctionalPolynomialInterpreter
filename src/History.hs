@@ -1,0 +1,159 @@
+module History where
+
+import Poly
+import Format (Pretty(..))
+
+{- In dieses Modul werden die Historie der Berechnungen gespeichert und verwaltet, damit vergangene Berechnungen angezeigt werden können.  -}
+
+{- 
+
+Dieser Datentyp repräsentiert die Historie der Berechnungen. Er kann entweder leer sein / bzw. keinen Eintrag haben (Empty) 
+oder einen Eintrag (Entry) enthalten, der ein Ergebnis und die restliche Historie enthält.
+
+z.B. wenn wir eine Historie mit zwei Einträgen haben, sieht das so aus:
+Entry (PolyResult "f" (P [M 1 0, M 2 1])) 
+ (Entry (ValueResult "g" 3) Empty)
+
+mit drei Einträgen:
+Entry (PolyResult "f" (P [M 1 0, M 2 1])) 
+ (Entry (ValueResult "g" 3) 
+  (Entry (DivResult "h" (P [M 1 0]) (P [M 2 0])) Empty))
+
+Am Ende kommt immer Empty, um das Ende der Historie zu markieren und weil das Empty bei einem neuen Eintrag zu dem 
+neuen Eintrag hinzugefügt wird, um die Historie zu erweitern.
+
+-}
+
+data History a = 
+    Empty
+    | Entry a (History a)
+    deriving (Show, Eq)
+
+{- 
+
+Dieser Datentyp repräsentiert die verschiedenen Arten von Ergebnissen, die in der Historie gespeichert werden können.
+Es gibt drei Arten von Ergebnissen: PolyResult, ValueResult und DivResult.
+
+History ist ein Speicher für Einträge (HistoryEntry), die Ergebnisse von Berechnungen darstellen.
+
+z.B. HistoryPoly "f" (P [M 1 0, M 2 1]) repräsentiert ein Ergebnis, das ein Polynom ist.
+HistoryValue "g" 3 repräsentiert ein Ergebnis, das ein einzelner Wert ist.
+HistoryDiv "h" (P [M 1 0]) (P [M 2 0]) repräsentiert ein Ergebnis, das eine Division mit Quotient und Rest ist.
+
+HistoryPoly repräsentiert PolyResult, HistoryValue repräsentiert ValueResult und HistoryDiv repräsentiert DivResult.
+
+-}
+
+data HistoryEntry
+   = HistoryPoly String Poly
+   | HistoryValue String Rational
+   | HistoryDiv String Poly Poly
+   | HistoryParallel String [(String, Rational)]
+   deriving (Show, Eq)
+{-
+
+Diese Instanz sagt, wie ein HistoryEntry mit der allgemeinen Pretty-Typklasse dargestellt wird.
+
+Dadurch muss die Anzeige der Historie nicht mehr jedes Ergebnis komplett selbst formatieren.
+Stattdessen entscheidet der jeweilige HistoryEntry, wie er als lesbarer Text dargestellt wird.
+
+Beispiele:
+HistoryPoly "p1" poly      -> "p1: 3x² + 2x"
+HistoryValue "p1(2)" 10    -> "p1(2): 10"
+HistoryDiv "p1 / p2" q r   -> "p1 / p2: Quotient = ..., Rest = ..."
+
+-}
+
+instance Pretty HistoryEntry where
+   pretty (HistoryPoly name poly) =
+      name ++ ": " ++ pretty poly
+   pretty (HistoryValue name value) =
+      name ++ ": " ++ pretty value
+   pretty (HistoryDiv name quotient rest) =
+      name ++ ": Quotient = " ++ pretty quotient ++ ", Rest = " ++ pretty rest
+   pretty (HistoryParallel name results) =
+      name ++ ": " ++ formatParallelHistory results
+
+{- Diese Hilfsfunktion stellt die Ergebnisse einer parallelen Auswertung für die Historie dar. -}
+
+formatParallelHistory :: [(String, Rational)] -> String
+formatParallelHistory [] = "-"
+formatParallelHistory [(name, value)] = name ++ " = " ++ pretty value
+formatParallelHistory ((name, value):xs) =
+   name ++ " = " ++ pretty value ++ ", " ++ formatParallelHistory xs
+
+{- 
+
+Diese Funktion fügt einen neuen Eintrag in die Historie ein.
+Sie nimmt als Eingabe z.B. ein bereits berechnetes Ergebnis (z.B. PolyResult, ValueResult oder DivResult) und
+die aktuelle Historie (kann Empty sein oder ein/mehrere Einträge enthalten) und gibt eine neue Historie zurück, die den neuen Eintrag enthält.
+
+Wir brauchen nicht nochmal extra zu überprüfen, ob wir den input auf eine nicht leere Historie anwenden, da wir Empty sowieso
+immer am Ende der Historie haben und den neuen Eintrag immer an den Anfang der Historie setzen. Dadurch können wir die Historie immer erweitern.
+
+-}
+
+addHistory :: a -> History a -> History a
+addHistory input history = Entry input history
+
+{- 
+
+Diese Funktion gibt die History als Liste zurück.
+Sie nimmt als Eingabe eine Historie und gibt eine Liste von Einträgen zurück, die in der Historie enthalten sind.
+Also es folgt, dass derselbe Datentyp, der in der History verwendet wird, auch als Liste zurückgegeben wird.
+Wenn die History z.B. History HistoryEntry enthält, kommt am Ende eine Liste [HistoryEntry] zurück.
+
+Wenn die Historie leer ist, wird eine leere Liste zurückgegeben.
+Ansonsten, wenn mindestens ein Eintrag vorhanden ist, wird der erste Eintrag der Historie in die Liste aufgenommen und die Funktion
+wird rekursiv auf die restliche Historie angewendet, um die restlichen Einträge in die Liste aufzunehmen.
+
+Mit ":" hängen wir den ersten Eintrag (erster) der Historie an die Liste der restlichen Einträge (resthistorie) an, um eine neue Liste zu erstellen.
+
+-}
+
+historyToList :: History a -> [a]
+historyToList Empty = []
+historyToList (Entry erster resthistorie) = erster : historyToList resthistorie
+
+{- 
+
+Diese Funktion gibt den letzten Eintrag der Historie zurück, welcher hinzugefügt wurde, also quasi der letzte hinzugefügte Eintrag.
+Sie nimmt als Eingabe eine Historie und gibt ein Maybe von dem gleichen Datentyp zurück, 
+der in der Historie verwendet wird (z.B. wenn History PolyResult eingegeben wird, wird Maybe PolyResult zurückgegeben, 
+das sagt Entweder bekommt man den Eintrag oder Nothing).
+
+Wenn die Historie leer ist, wird Nothing zurückgegeben.
+Wenn die Historie nicht leer ist, wird der erste Eintrag der Historie zurückgegeben, da wir die Historie immer an 
+den Anfang erweitern und somit der erste Eintrag der letzte hinzugefügte Eintrag ist.
+
+z.B. gibt latestHistory bei einer History mit zwei Einträgen:
+Entry (PolyResult "f" (P [M 1 0, M 2 1])) 
+(Entry (ValueResult "g" 3) Empty) = Just (PolyResult "f" (P [M 1 0, M 2 1])) 
+
+-}
+
+latestHistory :: History a -> Maybe a
+latestHistory Empty = Nothing
+latestHistory (Entry input _) = Just input
+
+{- 
+
+Diese Funktion entfernt den zuletzt hinzugefügten Eintrag der Historie.
+Sie nimmt als Eingabe eine Historie und gibt eine neue Historie zurück, die den zuletzt hinzugefügten Eintrag entfernt hat.
+
+Wenn die Historie leer ist, wird eine leere Historie zurückgegeben.
+Wenn die Historie nicht leer ist, wird der erste Eintrag der Historie entfernt und die Funktion gibt die restliche Historie zurück.
+
+z.B. bei einer Historie mit zwei Einträgen: undoHistory (Entry (PolyResult "f" (P [M 1 0, M 2 1]))
+(Entry (ValueResult "g" 3) Empty)) = Entry (ValueResult "g" 3) Empty
+
+-}
+
+undoHistory :: History a -> History a
+undoHistory Empty = Empty
+undoHistory (Entry _ resthistorie) = resthistorie
+
+{- Diese Funktion leert die gesamte Historie -}
+
+clearHistory :: History a -> History a
+clearHistory _ = Empty

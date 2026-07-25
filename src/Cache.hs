@@ -1,0 +1,124 @@
+module Cache where
+
+import Poly
+
+{- 
+
+Dieses Modul dient dazu, bereits berechnete Ergebnisse wiederverwendbar machen zu können. 
+Anders als Library.hs ist der Cache nicht für den Benutzer sichtbar und speichert auch nicht bewusst Polynome mit Namen,
+sondern ist eher intern für das Programm und speichert berechnete Operationsergebnisse.
+
+Library: "Welche Polynome hat der Benutzer bewusst gespeichert?"
+Cache: "Welche Berechnungen hat das Programm durchgeführt?"
+
+-}
+
+{- 
+
+Dieser Datentyp repräsentiert die verschiedenen Operationen, 
+die angewendet werden können, um ein Ergebnis zu berechnen.
+
+z.B. Normalize P [M 1 0, M 2 1] repräsentiert die Normalisierung des Polynoms P [M 1 0, M 2 1].
+
+Es wird nicht das Ergebnis einer Operation gespeichert, sondern die Operation selbst, welche ausgeführt werden soll.
+
+-}
+
+data Operation
+    = Normalize Poly
+    | Negate Poly
+    | Derive Poly
+    | Evaluate Poly Rational
+    | Add Poly Poly
+    | Sub Poly Poly
+    | Mul Poly Poly
+    | Div Poly Poly
+   deriving (Show, Eq)
+
+
+{-
+
+Dieser Datentyp wird für den Cache benutzt.
+Anders als GuiResult speichert CachedResult keinen Anzeigenamen wie "p1 + p2".
+
+Der Cache soll nur das mathematische Ergebnis wiederverwenden.
+Der aktuelle Name der Operation wird danach in der GUI neu ergänzt.
+
+Das ist sauberer, weil ein gecachtes Ergebnis nicht mehr an alte GUI-Namen gebunden ist.
+
+-}
+
+data CachedResult
+   = CachedPoly Poly
+   | CachedValue Rational
+   | CachedDiv Poly Poly
+   deriving (Show, Eq)
+
+
+{- 
+
+Dieser Datentyp repräsentiert den Cache, der verschiedene Operationen als Paar mit einem String speichert. 
+z.B. [(Normalize (P [M 1 0, M 2 1]), "f"), (Negate (P [M 1 0, M 2 1]), "g")].
+
+Bei diesem Datentyp arbeiten wir mit type, da wir nur einen neuen Namen für bereits existierende 
+Datentypen erstellen wollen und keine neuen Konstruktoren oder Funktionen benötigen.
+
+-}
+
+type Cache a = [(Operation, a)]
+
+{- 
+
+Diese Funktion sucht nach einer Operation in der Cache und gibt den zugehörigen Namen zurück.
+
+Sie nimmt als Eingabe eine Operation und einen Cache (Liste von Operationen und Namen) und gibt, wenn die Operation gefunden wurde,
+den zugehörigen Namen zurück, wenn nicht, dann Nothing.
+
+Wenn der Cache leer ist, wird Nothing zurückgegeben. 
+Wenn ein Cache mit mindestens einer Operation vorhanden ist, wird die erste Operation überprüft und wenn sie mit der gesuchten Operation 
+übereinstimmt, wird der zugehörige Name zurückgegeben. Wenn der erste Eintrag nicht mit der gesuchten Operation übereinstimmt, 
+wird die Funktion rekursiv auf den restlichen Cache angewendet, um die restlichen Einträge zu überprüfen.
+
+-}
+
+lookupCache :: Operation -> Cache a -> Maybe a
+lookupCache _ [] = Nothing
+lookupCache op ((cachedOp, name):rest) =
+    if op == cachedOp
+        then Just name
+        else lookupCache op rest
+
+{- 
+
+Diese Funktion fügt eine neue Operation und ihren zugehörigen Namen zum Cache hinzu.
+
+Sie bekommt als Eingabe eine Operation, einen Namen und einen Cache (Liste von Operationen und Namen, wo es eingefügt werden soll)
+und gibt einen neuen Cache zurück, der die neue Operation und den Namen enthält.
+
+Wir rufen noch removeCache auf, um sicherzustellen, dass die Operation nicht bereits in der Cache vorhanden ist, bevor wir sie hinzufügen.
+
+-}
+
+insertCache :: Operation -> a -> Cache a -> Cache a
+insertCache op name cache = (op, name) : removeCache op cache
+
+{- 
+
+Diese Funktion entfernt eine Operation aus der Cache, wenn sie vorhanden ist.
+Sie nimmt als Eingabe eine Operation und einen Cache (Liste von Operationen und Namen) und
+gibt einen neuen Cache zurück, der die Operation entfernt hat, wenn sie vorhanden war.
+
+Wenn der Cache leer ist, wird eine leere Liste zurückgegeben.
+Wenn der Cache mindestens eine Operation enthält, wird die erste Operation überprüft und wenn
+sie mit der zu entfernenden Operation übereinstimmt, wird der restliche Cache zurückgegeben, um die Operation zu entfernen.
+Wenn die erste Operation nicht mit der zu entfernenden Operation übereinstimmt, wird die Funktion rekursiv auf die restliche 
+Cache angewendet, um die restlichen Einträge zu überprüfen und die Operation zu entfernen, wenn sie vorhanden ist.
+
+-}
+
+removeCache :: Operation -> Cache a -> Cache a
+removeCache _ [] = []
+removeCache op ((cachedOp, name):rest) =
+    if op == cachedOp
+        then rest
+        else (cachedOp, name) : removeCache op rest
