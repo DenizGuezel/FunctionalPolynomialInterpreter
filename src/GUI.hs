@@ -1501,7 +1501,7 @@ handleLoadExamplesClick polyStore selectedStore resultStore polyListOutput polyL
    liftIO $ writeIORef selectedStore []
    liftIO $ writeIORef resultStore NoResult
    refreshPolyList polyStore selectedStore polyListOutput
-   setPolyListSuccess polyListMessage "Template-Haskell-Beispiele wurden geladen."
+   setPolyListSuccess polyListMessage "Template-Haskell-Beispiele wurden geladen/aktualisiert."
              
 {- Darstellungshandler -}
 
