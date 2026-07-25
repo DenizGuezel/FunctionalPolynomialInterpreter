@@ -4,9 +4,6 @@ module Poly where {- Modulbennung, damit Sie importierbar ist im Nachhinein, z.B
 {- Imports -}
 import Data.Ratio
 import Data.List
-import qualified Control.Applicative as Liste
-import qualified Control.Applicative as Polynoms
-import qualified Control.Applicative as Polynom
 
 {-
 
@@ -152,8 +149,7 @@ Das Ergebnis ist somit immer ein vollständig normalisiertes Polynom.
 -}
 
 normalize :: Poly -> Poly
-normalize (P xs) =
-    P (combine (sortBy compareExponent xs))
+normalize (P xs) = P (combine (sortBy compareExponent xs))
 
 {-
 
@@ -255,7 +251,6 @@ combine ((M k1 e1):(M k2 e2):xs)
     | otherwise =
         (M k1 e1) : combine ((M k2 e2):xs)
 
-
 {-
 
 compareExponent wird von sortBy verwendet, um zwei einzelne Monome
@@ -287,8 +282,7 @@ vor dem Monom mit Exponent 2 einsortiert.
 -}
 
 compareExponent :: Monom -> Monom -> Ordering
-compareExponent (M k1 e1) (M k2 e2) =
-    compare e2 e1
+compareExponent (M _ e1) (M _ e2) = compare e2 e1
 
 {-
 
@@ -313,7 +307,7 @@ let P rest = negatRec (P xs).
 
 Wie bereits zuvor entsteht rechts ein Poly der Form P [Monom]. rest übernimmt dabei automatisch den inneren Teil [Monom] und kann deshalb hinter
 
-(M (-k) e) :`
+(M (-k) e) :
 
 eingesetzt werden.
 
@@ -420,7 +414,6 @@ infix 9 §
 (§) :: Poly -> Rational -> Rational 
 (§) = evaluate
 
-
 {-
 
 Diese Funktion soll zwei Polynome dividieren, dabei gibt p1 /% p2 am Ende ein Paar zurück.
@@ -473,7 +466,7 @@ p1 /% p2 = let dividend = normalize p1
        P [] ->
          error "division by zero polynomial"
 
-       P ds ->
+       P _ ->
          divStep dividend divisor []
 
 {-
@@ -558,8 +551,8 @@ vom Rest kleiner als der Exponent vom Divisor ist.
 -}
 
 divStep :: Poly -> Poly -> [Monom] -> (Poly, Poly)
-divStep (P []) divisor qAcc = (normalize (P qAcc), P [])
-divStep rest (P []) qAcc = error "division by zero polynomial"
+divStep (P []) _ qAcc = (normalize (P qAcc), P [])
+divStep _ (P []) _ = error "division by zero polynomial"
 divStep (P (M kr er : rs)) (P (M kd ed : ds)) qAcc
   | er < ed = (normalize (P qAcc), normalize (P (M kr er : rs)))
   | otherwise =
@@ -666,7 +659,6 @@ Instanzen definiert.
 
 class ToLaTeX a where
   toLaTeX :: a -> String
-
 
 {-
 

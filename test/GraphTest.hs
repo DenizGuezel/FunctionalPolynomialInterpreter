@@ -22,7 +22,6 @@ tests =
   testGroup "Graph Tests"
 
     [
-
       testCase "berechnet Punkte für eine gegebene x-Liste" $
         samplePoints (P [M 1 2]) [-2, -1, 0, 1, 2] @?=
           [(-2, 4), (-1, 1), (0, 0), (1, 1), (2, 4)]

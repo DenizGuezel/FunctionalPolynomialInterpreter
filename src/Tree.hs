@@ -71,7 +71,6 @@ treeLabel (TVar e) = prettyVariable e
 treeLabel (TAdd _ _) = "+"
 treeLabel (TMul _ _) = "*"
 
-
 {- 
 
 Diese Funktion stellt einen Ausdrucksbaum als lesbaren Textbaum dar.
@@ -96,6 +95,7 @@ Dadurch kann man später in anderen Modulen einfach pretty tree schreiben, ohne 
 -}
 
 instance Pretty ExprTree where
+   pretty :: ExprTree -> String
    pretty = prettyTree
 
 {- 

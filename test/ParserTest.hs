@@ -30,20 +30,16 @@ tests =
         parseMonomSimple "3 2" @?= Right (M 3 2)
 
     , testCase "parst ein Polynom mit mehreren Monomen" $
-        parsePolySimple "3 2;5 1;7 0" @?=
-          Right (P [M 3 2, M 5 1, M 7 0])
+        parsePolySimple "3 2;5 1;7 0" @?= Right (P [M 3 2, M 5 1, M 7 0])
 
     , testCase "parst ein Polynom und normalisiert gleiche Exponenten" $
-        parsePolySimple "2 1;3 1" @?=
-          Right (P [M 5 1])
+        parsePolySimple "2 1;3 1" @?= Right (P [M 5 1])
 
     , testCase "parst ein Polynom und entfernt Nullmonome durch normalize" $
-        parsePolySimple "0 5;3 2" @?=
-          Right (P [M 3 2])
+        parsePolySimple "0 5;3 2" @?= Right (P [M 3 2])
 
     , testCase "parst negative Koeffizienten" $
-        parsePolySimple "-3 2;5 1" @?=
-          Right (P [M (-3) 2, M 5 1])
+        parsePolySimple "-3 2;5 1" @?= Right (P [M (-3) 2, M 5 1])
 
     {- Tests für ungültige Eingaben: -}
 

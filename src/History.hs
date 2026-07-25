@@ -48,6 +48,7 @@ data HistoryEntry
    = HistoryPoly String Poly
    | HistoryValue String Rational
    | HistoryDiv String Poly Poly
+   | HistoryParallel String [(String, Rational)]
    deriving (Show, Eq)
 {-
 
@@ -70,6 +71,16 @@ instance Pretty HistoryEntry where
       name ++ ": " ++ pretty value
    pretty (HistoryDiv name quotient rest) =
       name ++ ": Quotient = " ++ pretty quotient ++ ", Rest = " ++ pretty rest
+   pretty (HistoryParallel name results) =
+      name ++ ": " ++ formatParallelHistory results
+
+{- Diese Hilfsfunktion stellt die Ergebnisse einer parallelen Auswertung für die Historie dar. -}
+
+formatParallelHistory :: [(String, Rational)] -> String
+formatParallelHistory [] = "-"
+formatParallelHistory [(name, value)] = name ++ " = " ++ pretty value
+formatParallelHistory ((name, value):xs) =
+   name ++ " = " ++ pretty value ++ ", " ++ formatParallelHistory xs
 
 {- 
 

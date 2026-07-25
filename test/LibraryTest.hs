@@ -29,12 +29,10 @@ tests =
         savePoly "p1" (P [M 3 2]) [] @?= [("p1", P [M 3 2])]
 
     , testCase "überschreibt ein vorhandenes Polynom mit gleichem Namen" $
-        savePoly "p1" (P [M 5 1]) [("p1", P [M 3 2])] @?=
-          [("p1", P [M 5 1])]
+        savePoly "p1" (P [M 5 1]) [("p1", P [M 3 2])] @?= [("p1", P [M 5 1])]
 
     , testCase "findet ein gespeichertes Polynom" $
-        lookupPoly "p2" [("p1", P [M 1 1]), ("p2", P [M 2 2])] @?=
-          Just (P [M 2 2])
+        lookupPoly "p2" [("p1", P [M 1 1]), ("p2", P [M 2 2])] @?= Just (P [M 2 2])
 
     , testCase "gibt Nothing zurück, wenn ein Polynom nicht existiert" $
         lookupPoly "p3" [("p1", P [M 1 1])] @?= Nothing
@@ -42,16 +40,13 @@ tests =
     {- Tests für Löschen und Auflisten: -}
 
     , testCase "löscht ein Polynom aus der Library" $
-        deletePoly "p1" [("p1", P [M 1 1]), ("p2", P [M 2 2])] @?=
-          [("p2", P [M 2 2])]
+        deletePoly "p1" [("p1", P [M 1 1]), ("p2", P [M 2 2])] @?= [("p2", P [M 2 2])]
 
     , testCase "lässt die Library unverändert, wenn der Name nicht existiert" $
-        deletePoly "p3" [("p1", P [M 1 1])] @?=
-          [("p1", P [M 1 1])]
+        deletePoly "p3" [("p1", P [M 1 1])] @?= [("p1", P [M 1 1])]
 
     , testCase "listet alle Polynomnamen auf" $
-        listPolys [("p1", P [M 1 1]), ("p2", P [M 2 2])] @?=
-          ["p1", "p2"]
+        listPolys [("p1", P [M 1 1]), ("p2", P [M 2 2])] @?= ["p1", "p2"]
 
     {- Tests für automatische Namen und Auswahl: -}
 
@@ -64,5 +59,9 @@ tests =
     , testCase "wählt genau die ausgewählten Polynome aus" $
         selectedPolys [("p1", P [M 1 1]), ("p2", P [M 2 2]), ("p3", P [M 3 3])] ["p1", "p3"] @?=
           [("p1", P [M 1 1]), ("p3", P [M 3 3])]
+
+    , testCase "behaelt die Reihenfolge der Auswahl bei" $
+        selectedPolys [("p1", P [M 1 1]), ("b1", P [M 2 2])] ["b1", "p1"] @?=
+          [("b1", P [M 2 2]), ("p1", P [M 1 1])]
 
     ]

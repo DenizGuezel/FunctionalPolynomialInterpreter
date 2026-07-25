@@ -3,8 +3,6 @@ module Main where
 import Poly
 import GUI
 
-import qualified Control.Applicative as Strings
-
 {- 
 
 Funktion, um die GUI zu starten. 

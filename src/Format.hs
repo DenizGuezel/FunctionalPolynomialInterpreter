@@ -59,6 +59,7 @@ prettyRational :: Rational -> String
 prettyRational = pretty
 
 instance (Integral a, Show a) => Pretty (Ratio a) where
+   pretty :: (Integral a, Show a) => Ratio a -> String
    pretty r
       | denominator r == 1 = show (numerator r)
       | otherwise = show (numerator r) ++ "/" ++ show (denominator r)

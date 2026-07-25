@@ -119,4 +119,4 @@ Das Ergebnis benutzen die Operationen wie Addieren, Subtrahieren, Multiplizieren
 
 selectedPolys :: PolyLibrary -> [String] -> PolyLibrary
 selectedPolys library selectedNames =
-   filter (\(name, _) -> name `elem` selectedNames) library
+   [(name, poly) | selectedName <- selectedNames, (name, poly) <- library, name == selectedName]

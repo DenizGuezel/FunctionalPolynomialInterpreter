@@ -22,7 +22,6 @@ tests =
   testGroup "Cache Tests"
 
     [
-
       testCase "findet nichts in einem leeren Cache" $
         lookupCache (Normalize (P [M 1 1])) ([] :: Cache CachedResult) @?= Nothing
 

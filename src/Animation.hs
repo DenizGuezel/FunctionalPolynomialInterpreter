@@ -55,6 +55,6 @@ makeTraversalStepsRec (x:xs) visited stepnumber = TraversalStep stepnumber x vis
 {- Diese Funktion dient zu der Anzeige der Animationsschritte in der GUI -}
 
 showTraversalStep :: TraversalStep -> String
-showTraversalStep (TraversalStep stepnumber current visited) = 
+showTraversalStep (TraversalStep _ current visited) =
    "Traversierung: " ++ formatVisitedSteps visited ++ "\n" ++
    "Aktueller Knoten: " ++ current 

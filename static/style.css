@@ -42,11 +42,23 @@ input {
   flex: 0 0 auto;
 }
 
+.title-block {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
 .app-title {
   margin: 0;
   font-size: 32px;
   color: #0f172a;
   letter-spacing: 0;
+}
+
+.app-subtitle {
+  color: #0a6370;
+  font-size: 16px;
+  font-weight: 500;
 }
 
 .top-grid {
@@ -139,7 +151,30 @@ input {
 
 .poly-list {
   padding: 0;
-  overflow: auto;
+  /* Die Polynomliste scrollt intern, damit die gesamte GUI nicht nach unten wächst. */
+  max-height: 260px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: #9fb3c8 #eef3f8;
+}
+
+.poly-list::-webkit-scrollbar {
+  width: 8px;
+}
+
+.poly-list::-webkit-scrollbar-track {
+  background: #eef3f8;
+  border-radius: 999px;
+}
+
+.poly-list::-webkit-scrollbar-thumb {
+  background: #9fb3c8;
+  border-radius: 999px;
+}
+
+.poly-list::-webkit-scrollbar-thumb:hover {
+  background: #6f879f;
 }
 
 .poly-row {
@@ -294,7 +329,7 @@ input {
   overflow: hidden;
   align-self: stretch;
   display: grid;
-  grid-template-rows: repeat(4, 1fr);
+  grid-template-rows: repeat(4, minmax(52px, auto));
 }
 
 .result-overview div {
@@ -302,6 +337,7 @@ input {
   grid-template-columns: 42% 58%;
   min-height: 52px;
   border-bottom: 1px solid #d7dee8;
+  min-width: 0;
 }
 
 .result-overview div:last-child {
@@ -314,6 +350,7 @@ input {
   align-items: center;
   padding: 0 12px;
   font-size: 14px;
+  min-width: 0;
 }
 
 .result-overview span {
@@ -324,6 +361,10 @@ input {
 
 .result-overview strong {
   font-weight: 500;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+  white-space: normal;
+  word-break: break-word;
 }
 
 .output-panel {

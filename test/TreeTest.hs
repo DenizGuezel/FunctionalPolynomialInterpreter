@@ -21,7 +21,6 @@ tests =
   testGroup "Tree Tests"
 
     [
-
       testCase "wandelt ein konstantes Monom in einen Baum um" $
         monomToExprTree (M 5 0) @?= TConst 5
 
@@ -50,12 +49,10 @@ tests =
         treeLabel (TMul (TConst 2) (TVar 1)) @?= "*"
 
     , testCase "stellt einen Baum lesbar dar" $
-        prettyTree (TAdd (TConst 1) (TVar 1)) @?=
-          "+\n|-- 1\n`-- x\n"
+        prettyTree (TAdd (TConst 1) (TVar 1)) @?= "+\n|-- 1\n`-- x\n"
 
     , testCase "markiert einen Knoten im Baum" $
-        prettyTreeMarked 2 (TAdd (TConst 1) (TVar 1)) @?=
-          "+\n|-- >> 1 <<\n`-- x\n"
+        prettyTreeMarked 2 (TAdd (TConst 1) (TVar 1)) @?= "+\n|-- >> 1 <<\n`-- x\n"
 
     , testCase "nutzt die Pretty-Instanz für ExprTree" $
         pretty (TVar 2) @?= "x²\n"

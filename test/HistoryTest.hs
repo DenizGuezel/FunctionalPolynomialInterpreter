@@ -23,7 +23,6 @@ tests =
   testGroup "History Tests"
 
     [
-
       testCase "fügt einen Eintrag in eine leere Historie ein" $
         addHistory "a" Empty @?= Entry "a" Empty
 

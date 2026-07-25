@@ -22,7 +22,6 @@ tests =
   testGroup "Parallel Tests"
 
     [
-
       testCase "wertet mehrere Polynome sequentiell aus" $
         evaluateMany 2 [P [M 3 2], P [M 1 1, M 1 0]] @?= [12, 3]
 

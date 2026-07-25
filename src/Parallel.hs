@@ -52,8 +52,7 @@ Diese Funktion ist wichtig, weil wir damit zeigen können, dass die parallele Ve
 -}
 
 evaluateNamedMany :: Rational -> NamedPolys -> NamedResults
-evaluateNamedMany x namedPolys =
-   map (\(name, poly) -> (name, evaluate poly x)) namedPolys
+evaluateNamedMany x namedPolys = map (\(name, poly) -> (name, evaluate poly x)) namedPolys
 
 {- 
 

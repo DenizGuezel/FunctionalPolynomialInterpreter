@@ -88,11 +88,28 @@ showDivAnalysisText name quotient rest =
 
 showStepsText :: ExprTree -> [TraversalStep] -> Int -> String
 showStepsText tree steps currentIndex
-   | currentIndex >= length steps = "Baum:\n" ++ prettyTree tree ++ "\nTraversierung abgeschlossen."
+   | currentIndex >= length steps =
+      "Baum:\n" ++ prettyTree tree ++ "\n\n"
+      ++ "Traversierung:\n"
+      ++ unlines [ "Schritt " ++ show stepnumber ++ ": " ++ current
+                 | TraversalStep stepnumber current _ <- steps
+                 ]
+      ++ "\nTraversierung abgeschlossen."
    | otherwise =
       let currentStep = steps !! currentIndex
           TraversalStep stepnumber _ _ = currentStep
       in "Baum:\n" ++ prettyTreeMarked stepnumber tree ++ "\n" ++ showTraversalStep currentStep
+
+{- Diese Funktion stellt alle Traversierungsschritte eines Baumes als feste Übersicht dar. -}
+
+showStepsOverviewText :: String -> ExprTree -> [TraversalStep] -> String
+showStepsOverviewText title tree steps =
+   title ++ "\n"
+   ++ "Baum:\n" ++ prettyTree tree ++ "\n"
+   ++ "Traversierung:\n"
+   ++ unlines [ "Schritt " ++ show stepnumber ++ ": " ++ current
+              | TraversalStep stepnumber current _ <- steps
+              ]
 
 {- Detail-Darstellung -}
 

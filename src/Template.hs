@@ -84,5 +84,4 @@ wird beim Kompilieren ungefähr:
 -}
 
 namedPolyExp :: String -> [(Integer, Int)] -> Q Exp
-namedPolyExp name monoms =
-   tupE [litE (stringL name), polyExp monoms]
+namedPolyExp name monoms = tupE [litE (stringL name), polyExp monoms]
