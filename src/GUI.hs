@@ -3,6 +3,7 @@ module GUI where
 import Graphics.UI.Threepenny.Core
 import qualified Graphics.UI.Threepenny as UI
 import Control.Monad (void)
+import Data.Char (isSpace)
 import Data.IORef (IORef, newIORef, readIORef, writeIORef, modifyIORef)
 import Data.List (intercalate)
 
@@ -1002,18 +1003,21 @@ Es wird ein Name automatisch generiert, z.B. p1, p2, p3 usw. und das Polynom wir
 handleAddPolyClick :: Element -> IORef PolyLibrary -> IORef [String] -> Element -> Element -> UI GuiActionResult
 handleAddPolyClick input polyStore selectedStore polyListOutput polyListMessage = do
    polyStr <- get value input
-   let result = parsePolySimple polyStr
-   case result of
-      Left err ->
-         setPolyListError polyListMessage err
-      Right poly -> do
-         library <- liftIO $ readIORef polyStore
-         let name = nextPolyName library
-         let newLibrary = savePoly name poly library
-         liftIO $ writeIORef polyStore newLibrary
-         refreshPolyList polyStore selectedStore polyListOutput
-         void $ element input # set value ""
-         clearPolyListSuccess polyListMessage "OK: Polynomliste aktualisiert."
+   if all isSpace polyStr
+      then setPolyListError polyListMessage "Fehler: Bitte geben Sie ein Polynom ein."
+      else do
+         let result = parsePolySimple polyStr
+         case result of
+            Left err ->
+               setPolyListError polyListMessage err
+            Right poly -> do
+               library <- liftIO $ readIORef polyStore
+               let name = nextPolyName library
+               let newLibrary = savePoly name poly library
+               liftIO $ writeIORef polyStore newLibrary
+               refreshPolyList polyStore selectedStore polyListOutput
+               void $ element input # set value ""
+               clearPolyListSuccess polyListMessage "OK: Polynomliste aktualisiert."
 
 {- 
 
