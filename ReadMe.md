@@ -131,6 +131,7 @@ Template Haskell wird für feste Beispielpolynome genutzt, die beim Kompilieren 
 
 Im Projektordner kann die Anwendung so gestartet werden:
 
+cabal build
 cabal run FunctionalPolynomialInterpreter
 
 Falls es unter Windows Probleme mit langen Pfaden gibt, kann ein eigener Build-Ordner verwendet werden:
